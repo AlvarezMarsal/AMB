@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ImportLocations": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\AMB\\World Cities.xlsx\" server database"
+    }
+  }
+}

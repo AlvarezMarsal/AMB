@@ -1,0 +1,6 @@
+.vs
+bin
+obj
+
+/EPPlus/EPPlusExcelCalculationSample/*.user
+/EPPlus/*.vsmdi
