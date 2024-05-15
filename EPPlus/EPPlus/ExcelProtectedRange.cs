@@ -106,11 +106,11 @@ namespace OfficeOpenXml
             SpinCount = SpinCount < 100000 ? 100000 : SpinCount;
 
             //Combine salt and password and calculate the initial hash
-#if Core 
+//#if Core 
             var hp = SHA512.Create();
-#else
-            var hp = new SHA512CryptoServiceProvider();
-#endif
+//#else
+ //           var hp = new SHA512CryptoServiceProvider();
+//#endif
             var buffer = new byte[byPwd.Length + bySalt.Length];
             Array.Copy(bySalt, buffer, bySalt.Length);
             Array.Copy(byPwd, 0, buffer, 16, byPwd.Length);

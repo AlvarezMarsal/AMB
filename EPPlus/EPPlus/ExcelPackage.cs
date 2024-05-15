@@ -423,11 +423,11 @@ namespace OfficeOpenXml
 		}
 		internal ImageInfo AddImage(byte[] image, Uri uri, string contentType)
 		{
-#if (Core)
+//#if (Core)
 			var hashProvider = SHA1.Create();
-#else
-			var hashProvider = new SHA1CryptoServiceProvider();
-#endif
+//#else
+//			var hashProvider = new SHA1CryptoServiceProvider();
+//#endif
 			var hash = BitConverter.ToString(hashProvider.ComputeHash(image)).Replace("-", "");
 			lock (_images)
 			{
@@ -457,11 +457,11 @@ namespace OfficeOpenXml
 		}
 		internal ImageInfo LoadImage(byte[] image, Uri uri, Packaging.ZipPackagePart imagePart)
 		{
-#if (Core)
+//#if (Core)
 			var hashProvider = SHA1.Create();
-#else
-			var hashProvider = new SHA1CryptoServiceProvider();
-#endif
+//#else
+//			var hashProvider = new SHA1CryptoServiceProvider();
+//#endif
 			var hash = BitConverter.ToString(hashProvider.ComputeHash(image)).Replace("-", "");
 			if (_images.ContainsKey(hash))
 			{
@@ -491,11 +491,11 @@ namespace OfficeOpenXml
 		}
 		internal ImageInfo GetImageInfo(byte[] image)
 		{
-#if (Core)
+//#if (Core)
 			var hashProvider = SHA1.Create();
-#else
-			var hashProvider = new SHA1CryptoServiceProvider();
-#endif
+//#else
+//			var hashProvider = new SHA1CryptoServiceProvider();
+//#endif
 			var hash = BitConverter.ToString(hashProvider.ComputeHash(image)).Replace("-", "");
 
 			if (_images.ContainsKey(hash))

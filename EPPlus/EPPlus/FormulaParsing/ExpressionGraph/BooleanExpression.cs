@@ -31,6 +31,9 @@
 
 namespace OfficeOpenXml.FormulaParsing.ExpressionGraph
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class BooleanExpression : AtomicExpression
     {
         private bool? _precompiledValue;

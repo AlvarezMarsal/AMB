@@ -102,7 +102,9 @@ namespace OfficeOpenXml.Packaging
                 catch
                 {
                     //The URI is not a valid URI. Encode it to make i valid.
+#pragma warning disable SYSLIB0013
                     rel.TargetUri = new Uri(Uri.EscapeUriString("Invalid:URI " + c.GetAttribute("Target")), UriKind.RelativeOrAbsolute);
+#pragma warning restore SYSLIB0013
                 }
                 if (!string.IsNullOrEmpty(source))
                 {

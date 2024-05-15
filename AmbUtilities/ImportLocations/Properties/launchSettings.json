@@ -1,6 +1,14 @@
 {
   "profiles": {
-    "ImportLocations": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "Test": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\AMB\\World Cities.xlsx\" \"Cities\" \"B1000713:H1048552\" . AMBenchmark_DB"
+    },
+    "Import Locations": {
       "commandName": "Project",
       "commandLineArgs": "\"C:\\AMB\\World Cities.xlsx\" \"Cities\" \"B1000713:H1048552\" USE1DEVDRPSQL01 AMBenchmark_DB"
     }

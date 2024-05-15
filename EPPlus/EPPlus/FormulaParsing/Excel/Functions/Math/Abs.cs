@@ -29,6 +29,9 @@ using System.Linq;
 
 namespace OfficeOpenXml.FormulaParsing.Excel.Functions.Math
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public class Abs : ExcelFunction
     {
         public override CompileResult Execute(IEnumerable<FunctionArgument> arguments, ParsingContext context)

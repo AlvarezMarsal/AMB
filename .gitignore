@@ -4,3 +4,4 @@ obj
 
 /EPPlus/EPPlusExcelCalculationSample/*.user
 /EPPlus/*.vsmdi
+/AmbUtilities/ImportLocations/*.user
