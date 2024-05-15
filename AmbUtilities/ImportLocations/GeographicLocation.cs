@@ -12,7 +12,8 @@ internal enum GeographicLocationKind
     World,
     Continent,
     Country,
-    Region, 
+    State,          // or privince or postal area or whatever
+    County,         // or whatever is smaller than a State, if anything 
     City
 }
 

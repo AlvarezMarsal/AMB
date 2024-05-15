@@ -1,4 +1,5 @@
-﻿using OfficeOpenXml;
+﻿using System.Data;
+using OfficeOpenXml;
 using System.Data.SqlClient;
 
 namespace ImportLocations
@@ -9,7 +10,6 @@ namespace ImportLocations
         private readonly Guid _creationSession = new ();
         private long _creatorId;
         private SqlConnection? _connection;
-        private readonly HashSet<long> _geographicLocationOidsInUse = [];
         private GeographicLocation? _world;
         private SortedList<GeographicLocationKind, SortedList<string, GeographicLocation>> _aliases = [];
 
@@ -46,91 +46,58 @@ namespace ImportLocations
                 _connection.Open();
                 LoadWorld();
                 LoadAliases(_world!);
-            }
-            
-            // Process the template (the excel spreadsheet)
-            var argIndex = 0;
-            var excelFilename = args[argIndex++];
-            if (!File.Exists(excelFilename))
-                throw new FileNotFoundException(excelFilename);
-            var sheetName = args[argIndex++];
-            var rangeName = args[argIndex];
 
-            using var package = new ExcelPackage(new FileInfo(excelFilename));
-            var zero = package.Compatibility.IsWorksheets1Based ? 1 : 0;
-            using var sheet = package.Workbook.Worksheets[sheetName];
+                
+                // Process the template (the excel spreadsheet)
+                var argIndex = 0;
+                var excelFilename = args[argIndex++];
+                if (!File.Exists(excelFilename))
+                    throw new FileNotFoundException(excelFilename);
+                var sheetName = args[argIndex++];
+                var rangeName = args[argIndex];
 
-            if (!ParseAddress(rangeName, out var top, out var left, out var bottom, out var right))
-                throw new ArgumentException("Invalid range");
+                using var package = new ExcelPackage(new FileInfo(excelFilename));
+                var zero = package.Compatibility.IsWorksheets1Based ? 1 : 0;
+                using var sheet = package.Workbook.Worksheets[sheetName];
 
-            // Examine each row
-            for (var row=top; row<=bottom; ++row)
-            {
-                var column = left;
-                var continentName = sheet.Cells[row, column++].Text.Trim();
-                var country = sheet.Cells[row, column++].Text.Trim();
-                var alias1 = sheet.Cells[row, column++].Text.Trim();
-                var alias2 = sheet.Cells[row, column++].Text.Trim();
-                var state = sheet.Cells[row, column++].Text.Trim();
-                var city = sheet.Cells[row, column++].Text.Trim();
-                var cityAscii = sheet.Cells[row, column].Text.Trim();
+                if (!ParseAddress(rangeName, out var top, out var left, out var bottom, out var right))
+                    throw new ArgumentException("Invalid range");
 
-                if (!_aliases[GeographicLocationKind.Continent].TryGetValue(continentName, out var continent))
+                // Examine each row
+                for (var row=top; row<=bottom; ++row)
                 {
-                    if (!_world!.Children.TryGetValue(continentName, out var continent))
+                    var column = left;
+                    var continentName = sheet.Cells[row, column++].Text.Trim();
+                    var countryName = sheet.Cells[row, column++].Text.Trim();
+                    var countryAlias1= sheet.Cells[row, column++].Text.Trim();
+                    var countryAlias2= sheet.Cells[row, column++].Text.Trim();
+                    var regionName = sheet.Cells[row, column++].Text.Trim();
+                    var cityName = sheet.Cells[row, column++].Text.Trim();
+                    var cityAscii = sheet.Cells[row, column].Text.Trim();
+
+                    if (!_aliases[GeographicLocationKind.Continent].TryGetValue(continentName, out var continent))
                     {
-                        continent = AddGeographicLocation(_world, continentName);
+                        continent = AddGeographicLocation(_world!, continentName);
                         Console.WriteLine($"Continent {continentName} added");
                     }
 
-                    /*
-                    if (_aliases[GeographicLocationKind.Country].TryGetValue(country, out var countryEntity))
+                    if (!_aliases[GeographicLocationKind.Country].TryGetValue(countryName, out var country))
                     {
-                        if (_aliases[GeographicLocationKind.Region].TryGetValue(state, out var stateEntity))
-                        {
-                            if (_aliases[GeographicLocationKind.City].TryGetValue(city, out var cityEntity))
-                            {
-                                if (cityEntity.Parent != stateEntity)
-                                {
-                                    Console.WriteLine($"City {city} is not in state {state}");
-                                }
-                            }
-                            else
-                            {
-                                cityEntity = AddGeographicLocation(stateEntity, city);
-                                Console.WriteLine($"City {city} added");
-                            }
-                        }
-                        else
-                        {
-                            stateEntity = AddGeographicLocation(countryEntity, state);
-                            Console.WriteLine($"State {state} added");
-                            var cityEntity = AddGeographicLocation(stateEntity, city);
-                            Console.WriteLine($"City {city} added");
-                        }
+                        country = AddGeographicLocation(continent, countryName, countryAlias1, countryAlias2);
+                        Console.WriteLine($"Country {countryName} added");
                     }
-                    else
+
+                    if (!_aliases[GeographicLocationKind.State].TryGetValue(regionName, out var region))
                     {
-                        countryEntity = AddGeographicLocation(continent, country);
-                        Console.WriteLine($"Country {country} added");
-                        var stateEntity = AddGeographicLocation(countryEntity, state);
-                        Console.WriteLine($"State {state} added");
-                        var cityEntity = AddGeographicLocation(stateEntity, city);
-                        Console.WriteLine($"City {city} added");
+                        region = AddGeographicLocation(country, regionName);
+                        Console.WriteLine($"Region {regionName} added");
                     }
-                }
-                else
-                {
-                    continent = AddGeographicLocation(_world, continentName);
-                    Console.WriteLine($"Continent {continentName} added");
-                    var countryEntity = AddGeographicLocation(continent, country);
-                    Console.WriteLine($"Country {country} added");
-                    var stateEntity = AddGeographicLocation(countryEntity, state);
-                    Console.WriteLine($"State {state} added");
-                    var cityEntity = AddGeographicLocation(stateEntity, city);
-                    Console.WriteLine($"City {city} added");
-                }
-                    */
+
+                    if (!_aliases[GeographicLocationKind.City].TryGetValue(cityName, out var city))
+                    {
+                        city = AddGeographicLocation(region, cityName, cityAscii);
+                        Console.WriteLine($"City {cityName} added");
+                    }
                 }
             }
         }
@@ -154,7 +121,6 @@ namespace ImportLocations
             }
             
             LoadDescendants(_world); 
-            _world.Walk(entity => _geographicLocationOidsInUse.Add(entity.Oid));
         }
         
  
@@ -238,27 +204,45 @@ namespace ImportLocations
             }
         }
 
-        private GeographicLocation AddGeographicLocation(GeographicLocation parent, string name)
+        private GeographicLocation AddGeographicLocation(GeographicLocation parent, string name, params string[] aliases)
         {
-            if (parent.Children.Count == 0)
-                throw new InvalidOperationException("Parent has no children");
-
-            var oid = parent.Children.Values.Max(entity => entity.Oid) + 1;
-            while (_geographicLocationOidsInUse.Contains(oid))
-                ++oid;
-            var index = parent.Children.Values.Max(entity => entity.Index) + 1;
+            var oid = GetNextOid();
+            var index = (parent.Children.Count == 0) ? 0 : parent.Children.Values.Max(entity => entity.Index) + 1;
             var description = name + "-RS-Test";
             var practiceAreaId = parent.PracticeAreaId;
 
             // Connect to the database and load the world and continent records
-            using var command = new SqlCommand($"INSERT [dbo].[t_GeographicLocation] ([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorID],[PracticeAreaID],[CreationSession]) " +
-                                               $"VALUES({oid},{parent.Oid},1,'{name}',{index},'{description}','{_startTime}',{_creatorId},{practiceAreaId},'{_creationSession}')", _connection);
+            using (var command = new SqlCommand($"INSERT [dbo].[t_GeographicLocation] ([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorID],[PracticeAreaID],[CreationSession]) " +
+                                               $"VALUES({oid},{parent.Oid},1,'{name}',{index},'{description}','{_startTime}',{_creatorId},{practiceAreaId},'{_creationSession}')", _connection))
+            {
+                var result = command.ExecuteNonQuery();
+                if (result != 1)
+                    throw new InvalidOperationException($"Insert failed for {name}");
+            }
+            parent.Children.Add(name, new GeographicLocation(parent, oid, name, index, description, practiceAreaId));
+            var entity = new GeographicLocation(parent, oid, name, index, description, parent.PracticeAreaId);
+
+            AddAlias(entity, name, true);
+            foreach (var alias in aliases)
+            {
+                AddAlias(entity, alias, false);
+            }
+            
+            return entity;
+        }
+
+        private void AddAlias(GeographicLocation entity, string alias, bool isPrimary)
+        {
+            _aliases[entity.Kind].Add(alias, entity);
+            var oid = GetNextOid();
+            var description = alias + "-RS-Test";
+            var practiceAreaId = entity.PracticeAreaId;
+
+            using var command = new SqlCommand($"INSERT [dbo].[t_GeographicLocationAlias] ([OID],[GeographicLocationID],[Alias],[Description],[IsPrimary],[PracticeAreaID],[CreationDate],[CreatorID],[CreationSession],[LID]) " +
+                                               $"VALUES({oid},{entity.Oid},'{alias}','{description}',{isPrimary},{practiceAreaId},'{_startTime}',{_creatorId},'{_creationSession}', 500)", _connection);
             var result = command.ExecuteNonQuery();
             if (result != 1)
-                throw new InvalidOperationException($"Insert failed for {name}");
-            parent.Children.Add(name, new GeographicLocation(parent, oid, name, index, description, practiceAreaId));
-            _geographicLocationOidsInUse.Add(oid);
-            return new GeographicLocation(parent, oid, name, index, description, parent.PracticeAreaId);
+                throw new InvalidOperationException($"Insert failed for {alias}");
         }
 
 
@@ -278,6 +262,16 @@ namespace ImportLocations
             bottom = a.End.Row;
             right = a.End.Column;
             return true;
+        }
+
+        private long GetNextOid()
+        {
+            using var command = new SqlCommand("sp_GetNextOID", _connection);
+            command.CommandType = CommandType.StoredProcedure; 
+            var result = command.ExecuteScalar();
+            if (result is long oid)
+                return oid;
+            throw new InvalidOperationException("No OID returned");
         }
     }
 }
