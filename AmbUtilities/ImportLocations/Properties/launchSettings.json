@@ -2,7 +2,7 @@
   "profiles": {
     "ImportLocations": {
       "commandName": "Project",
-      "commandLineArgs": "\"C:\\AMB\\World Cities.xlsx\" \"Cities\" \"B1000713:H1048552\" server database"
+      "commandLineArgs": "\"C:\\AMB\\World Cities.xlsx\" \"Cities\" \"B1000713:H1048552\" USE1DEVDRPSQL01 AMBenchmark_DB"
     }
   }
 }
