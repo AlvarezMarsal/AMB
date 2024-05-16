@@ -15,17 +15,20 @@ public class Settings
     {
         public string FilePath { get; set; } = "";
         public string Sheet { get; set; } = "";
-        public string Range { get; set; } = "";
-        public string Name { get; set; } = "";                      // The column that the entity's name is in
-        public List<string> Aliases { get; set; } = [];             // The columns that the entity's aliases are in
-        public List<HierarchyInfo> Hierarchy { get; set; } = [];    // The entity's parents, grandparents, etc. in ascending order of size (world is last)
+        public int FirstRow { get; set; } = -1;
+        public int LastRow { get; set; } = -1;
+        public List<Settings.ColumnDefinition> ColumnDefinitions { get; set; } = [];    // The entity's parents, grandparents, etc. in ascending order of size (world is last)
     }
 
-    public class HierarchyInfo
+    // Each column contains a string that is the name or alias of some GeographicalLocation.
+    // The relationships among the columns are defined by the ColumnDefinitions.
+    public class ColumnDefinition
     {
-        public string? Column { get; set; } = "";            // The column that the parent's name is in ...
-        public long? Oid { get; set; }                       // ... or its OID
-        public List<string> Aliases { get; set; } = [];     // We can assign aliases to parents, too
+        public string Tag { get; set; } = "";               // A useful tag like 'Country' or 'City'
+        public string Column { get; set; } = "";            // Which column in the spreadsheet
+        public List<string> ParentOf { get; set; } = [];    // The value in the column can identify a parent of something in another column
+        public string? AliasOf { get; set; } = null;        // The value in the column can be an alias of the entity identified by another column
+        public bool MustExist { get; set; } = false;
     }
 
     public class Preset

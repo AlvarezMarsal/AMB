@@ -25,12 +25,13 @@ internal class GeographicLocation
     public readonly int Index;
     public readonly string Description;
     public readonly long PracticeAreaId;
+    public readonly bool IsSystemOwned;
     //public readonly GeographicLocationKind Kind;
     public readonly SortedList<string, GeographicLocation> Children = [];
     public override string ToString() => $"{Name} ({Oid})";
     public bool ChildrenLoaded { get; set; } = false;
 
-    public GeographicLocation(long oid, long? pid, string name, int index, string description, long practiceAreaId)
+    public GeographicLocation(long oid, long? pid, string name, int index, string description, long practiceAreaId, bool isSystemOwned)
     {
         Oid = oid;
         Pid = pid;
@@ -40,6 +41,7 @@ internal class GeographicLocation
         Index = index;
         Description = description;
         PracticeAreaId = practiceAreaId;
+        IsSystemOwned = isSystemOwned;
     }
 
     public void Walk(Action<GeographicLocation> action)

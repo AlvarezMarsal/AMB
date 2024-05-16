@@ -40,23 +40,54 @@
       "Name": "Africa",
       "Oid": 20014,
       "Pid": 20000
+    },
+    {
+      "Name": "Antarctica",
+      "Pid": 20000
     }
   ],
   "ImportFiles": [
     {
       "FilePath": "..\\..\\World Cities.xlsx",
       "Sheet": "Cities",
-      "Range": "B1000713:H1048552",
-      "Name": "G",
-      "Aliases": [ "H" ],
-      "Hierarchy": [
-        { "Column": "F" },
+      "FirstRow": 1000713,
+      "LastRow": 1048552,
+      "ColumnDefinitions": [
         {
-          "Column": "C",
-          "Aliases": [ "D", "E" ]
+          "Tag": "Continent",
+          "Column": "B",
+          "ParentOf": [ "C" ],
+          "MustExist": true
         },
-        { "Column": "B" },
-        { "Oid": 20000 }
+        {
+          "Tag": "Country",
+          "Column": "C",
+          "ParentOf": [ "F" ]
+        },
+        {
+          "Tag": "Alias1",
+          "Column": "D",
+          "AliasOf": "C"
+        },
+        {
+          "Tag": "Alias2",
+          "Column": "E",
+          "AliasOf": "C"
+        },
+        {
+          "Tag": "State",
+          "Column": "F",
+          "ParentOf": [ "G" ]
+        },
+        {
+          "Tag": "City",
+          "Column": "G"
+        },
+        {
+          "Tag": "CityAscii",
+          "Column": "H",
+          "AliasOf": "G"
+        }
       ]
     }
   ]
