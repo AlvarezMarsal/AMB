@@ -1,0 +1,63 @@
+{
+  "ConnectionString": "Server=.;Database=AMBenchmark_DB;Integrated Security=True;",
+  "Presets": [
+    {
+      "Name": "World",
+      "Oid": 20000,
+      "Pid": null
+    },
+    {
+      "Name": "Latin America",
+      "Oid": 20004,
+      "Pid": 20000
+    },
+    {
+      "Name": "Europe",
+      "Oid": 20006,
+      "Pid": 20000
+    },
+    {
+      "Name": "Middle East",
+      "Oid": 20008,
+      "Pid": 20000
+    },
+    {
+      "Name": "North Asia",
+      "Oid": 20022,
+      "Pid": 20000
+    },
+    {
+      "Name": "Central Asia",
+      "Oid": 20024,
+      "Pid": 20000
+    },
+    {
+      "Name": "Southeast Asia & Australia",
+      "Oid": 20026,
+      "Pid": 20000
+    },
+    {
+      "Name": "Africa",
+      "Oid": 20014,
+      "Pid": 20000
+    }
+  ],
+  "ImportFiles": [
+    {
+      "FilePath": "..\\..\\World Cities.xlsx",
+      "Sheet": "Cities",
+      "Range": "B1000713:H1048552",
+      "Name": "G",
+      "Aliases": [ "H" ],
+      "Hierarchy": [
+        { "Column": "F" },
+        {
+          "Column": "C",
+          "Aliases": [ "D", "E" ]
+        },
+        { "Column": "B" },
+        { "Oid": 20000 }
+      ]
+    }
+  ]
+}

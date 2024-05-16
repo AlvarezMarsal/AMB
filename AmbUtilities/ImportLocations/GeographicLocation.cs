@@ -17,22 +17,24 @@ internal enum GeographicLocationKind
     City
 }
 
-internal record GeographicLocation
+internal class GeographicLocation
 {
-    public readonly GeographicLocation? Parent;
     public readonly long Oid;
+    public readonly long? Pid;
     public readonly string Name;
     public readonly int Index;
     public readonly string Description;
     public readonly long PracticeAreaId;
-    public readonly GeographicLocationKind Kind;
+    //public readonly GeographicLocationKind Kind;
     public readonly SortedList<string, GeographicLocation> Children = [];
     public override string ToString() => $"{Name} ({Oid})";
+    public bool ChildrenLoaded { get; set; } = false;
 
-    public GeographicLocation(GeographicLocation? parent, long oid, string name, int index, string description, long practiceAreaId)
+    public GeographicLocation(long oid, long? pid, string name, int index, string description, long practiceAreaId)
     {
-        Parent = parent;
-        Kind = (parent == null) ? GeographicLocationKind.World : (parent.Kind+1);
+        Oid = oid;
+        Pid = pid;
+        //Kind = (parent == null) ? GeographicLocationKind.World : (parent.Kind+1);
         Oid = oid;
         Name = name;
         Index = index;
