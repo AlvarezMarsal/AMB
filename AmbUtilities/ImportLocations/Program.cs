@@ -166,6 +166,8 @@ namespace ImportLocations
                 foreach (var cd in columnDefinitions)
                 {
                     cd.CurrentValue = sheet.Cells[row, cd.ColumnNumber].Text.Trim();
+                    if (cd.CurrentValue != cd.AssignedGeographicLocation?.Name)
+                        cd.AssignedGeographicLocation = null;
 
                     // If a non-optional cell is empty, that indicates the end of the data
                     // (if we don't have a predefined range).
@@ -186,8 +188,6 @@ namespace ImportLocations
 
                         throw new InvalidOperationException($"No value for cell {cd.ColumnNumber}:{row}");
                     }
-                    if (cd.CurrentValue != cd.AssignedGeographicLocation?.Name)
-                        cd.AssignedGeographicLocation = null;
                 }
 
                 if (skipRow)
@@ -204,49 +204,73 @@ namespace ImportLocations
                 // that parents are processed before children.
                 foreach (var cd in columnDefinitions)
                 {
-                    // If the cell is empty, it must be optional (otherwise we threw an exception above)
-                    // Since it might still be someone's parent, we use this cell's parent as its
-                    // assigned location.
-                    if (string.IsNullOrEmpty(cd.CurrentValue))
-                    {
-                        if (cd.Parents.Count == 0)
-                            throw new InvalidOperationException("Empty optional cell with no parents");
-                        cd.AssignedGeographicLocation = cd.Parents[0].AssignedGeographicLocation;
-                        continue;
-                    }
-
                     if (cd.AssignedGeographicLocation == null)
-                    {
-                        if (cd.SettingsDefinition.MustExist)
-                        { 
-                            cd.AssignedGeographicLocation = LoadGeographicLocationByName(cd.CurrentValue, null);
-                            if (cd.AssignedGeographicLocation == null) 
-                                throw new InvalidOperationException($"Missing {cd.CurrentValue}");
-                        }
-                        else if (cd.Parents.Count > 0)
-                        {
-                            cd.AssignedGeographicLocation = LoadGeographicLocationByName(cd.CurrentValue, cd.Parents[0].AssignedGeographicLocation!.Oid);
-                            if (cd.AssignedGeographicLocation == null) 
-                            {
-                                cd.AssignedGeographicLocation = AddGeographicLocation(null, cd.Parents[0].AssignedGeographicLocation!.Oid, cd.Parents[0].AssignedGeographicLocation!.PracticeAreaId, cd.CurrentValue);
-                                for (var i = 1; i < cd.Parents.Count; ++i)
-                                    AddGeographicLocation(cd.AssignedGeographicLocation.Oid, cd.Parents[i].AssignedGeographicLocation!.Oid, cd.Parents[i].AssignedGeographicLocation!.PracticeAreaId, cd.CurrentValue);
-                            }
-                        }
-                    }
+                        ProcessCell(cd);
                 }
 
                 // Now for aliases
                 foreach (var cd in columnDefinitions)
                 {
-                    foreach (var alias in cd.AliasedBy)
+                    if (!string.IsNullOrEmpty(cd.CurrentValue) && (cd.AliasOf != null))
                     {
-                        AddAliasIfNotPresent(cd.AssignedGeographicLocation!, alias.CurrentValue, false);
+                        AddAliasIfNotPresent(cd.AliasOf.AssignedGeographicLocation!, cd.CurrentValue, false);
                     }
                 }
             }
 
             Dump();
+            return;
+
+            void ProcessCell(ColumnDefinition coldef)
+            {
+                // Make sure that the columns it requires have been satisfied
+                if (coldef.Parent is { AssignedGeographicLocation: null })
+                {
+                    ProcessCell(coldef.Parent);
+                    if (coldef.Parent.AssignedGeographicLocation == null)
+                        throw new InvalidOperationException("Parent cell is empty");
+                }
+
+                if (coldef.AliasOf is { AssignedGeographicLocation: null })
+                {
+                    ProcessCell(coldef.AliasOf);
+                    if (coldef.AliasOf.AssignedGeographicLocation == null)
+                        throw new InvalidOperationException("Predecessor cell is empty");
+                }
+                
+                // If the cell is empty, it must be optional (otherwise we threw an exception above)
+                // Since it might still be someone's parent, we use this cell's parent as its
+                // assigned location.
+                if (string.IsNullOrEmpty(coldef.CurrentValue))
+                {
+                    if (coldef.MustExist)
+                        throw new InvalidOperationException("Empty cell");
+                    if (coldef.AliasOf != null)
+                        coldef.AssignedGeographicLocation = coldef.AliasOf.AssignedGeographicLocation;
+                    else if (coldef.Parent != null)
+                        coldef.AssignedGeographicLocation = coldef.Parent.AssignedGeographicLocation;
+                }
+                else if (coldef.MustExist)
+                { 
+                    coldef.AssignedGeographicLocation = 
+                        LoadGeographicLocationByName(coldef.CurrentValue, null) ??
+                        throw new InvalidOperationException($"Missing {coldef.CurrentValue}");
+                }
+                else if (coldef.Parent != null)
+                {
+                    var pal = coldef.Parent.AssignedGeographicLocation!;
+                    coldef.AssignedGeographicLocation = 
+                        LoadGeographicLocationByName(coldef.CurrentValue, pal.Oid) ??
+                        AddGeographicLocation(null, pal.Oid, pal.PracticeAreaId, coldef.CurrentValue);
+                }
+
+                if (coldef.AliasOf != null)
+                {
+                    var pal = coldef.AliasOf.AssignedGeographicLocation!;
+                    coldef.AssignedGeographicLocation = pal;
+                    AddAliasIfNotPresent(coldef.AssignedGeographicLocation, coldef.CurrentValue, false);
+                }
+            }
         }
 
         /// <summary>
@@ -274,17 +298,21 @@ namespace ImportLocations
                 {
                     if (!columnDefinitions.TryGetValue(childColumnName, out var child))
                         throw new InvalidOperationException($"Unknown parent {childColumnName}");
-                    child.Parents.Add(cd);
+                    if (child.Parent != null)
+                        throw new InvalidOperationException($"Duplicate parent {childColumnName}");
+                    child.Parent = cd;
                 }
 
                 if (cd.SettingsDefinition.AliasOf != null)
                 {
                     if (!columnDefinitions.TryGetValue(cd.SettingsDefinition.AliasOf, out var aliased))
                         throw new InvalidOperationException($"Unknown alias {cd.SettingsDefinition.AliasOf}");
-                    aliased.AliasedBy.Add(cd);
+                    cd.AliasOf = aliased;
                 }
             }
 
+            return columnDefinitions.Values.ToList();
+            /*
             // Set up for generation indexing
             var orderedByParentage = new List<ColumnDefinition>(columnDefinitions.Count);
             var columnsNotProcessed = new HashSet<ColumnDefinition>(); // column numbers
@@ -308,10 +336,8 @@ namespace ImportLocations
 
                 foreach (var cd in notProcessed)
                 {
-                    var ready = true;
-                    foreach (var parent in cd.Parents)
-                        if (columnsNotProcessed.Contains(parent))
-                            ready = false;
+                    var ready = ((cd.Parent == null) || orderedByParentage.Contains(cd.Parent)) &&
+                        ((cd.AliasOf == null) || orderedByParentage.Contains(cd.AliasOf));
                     if (ready)
                     {
                         orderedByParentage.Add(cd);
@@ -327,6 +353,7 @@ namespace ImportLocations
             // we want to process the columns.
             //orderedByParentage.Reverse();
             return orderedByParentage;
+            */
         }
 
         internal static int ColumnAlphaToColumnNumber(string alpha, bool isOneBased)

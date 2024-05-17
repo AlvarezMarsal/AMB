@@ -6,9 +6,10 @@ internal class ColumnDefinition
     public string Tag => SettingsDefinition.Tag;
     public string ColumnName => SettingsDefinition.Column;
     public bool Optional => SettingsDefinition.Optional;
+    public bool MustExist => SettingsDefinition.MustExist;
     public readonly int ColumnNumber; 
-    public readonly List<ColumnDefinition> Parents = []; // I assume it's possible that an entity can have more than one parent -- for example, a city and a zipcode
-    public readonly List<ColumnDefinition> AliasedBy = [];
+    public ColumnDefinition? Parent = null;
+    public ColumnDefinition? AliasOf = null;
     public GeographicLocation? AssignedGeographicLocation { get; set; }
     public string CurrentValue { get; set; } = "";
 
@@ -16,5 +17,10 @@ internal class ColumnDefinition
     {
         SettingsDefinition = columnDefinition;
         ColumnNumber = Program.ColumnAlphaToColumnNumber(SettingsDefinition.Column, spreadsheetIsOneBased);
+    }
+
+    public override string ToString()
+    {
+        return $"{ColumnName} {Tag}";
     }
 }
