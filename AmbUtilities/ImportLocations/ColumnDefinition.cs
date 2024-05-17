@@ -5,6 +5,7 @@ internal class ColumnDefinition
     public readonly Settings.ColumnDefinition SettingsDefinition;
     public string Tag => SettingsDefinition.Tag;
     public string ColumnName => SettingsDefinition.Column;
+    public bool Optional => SettingsDefinition.Optional;
     public readonly int ColumnNumber; 
     public readonly List<ColumnDefinition> Parents = []; // I assume it's possible that an entity can have more than one parent -- for example, a city and a zipcode
     public readonly List<ColumnDefinition> AliasedBy = [];

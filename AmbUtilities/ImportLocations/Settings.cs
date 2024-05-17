@@ -29,6 +29,7 @@ public class Settings
         public List<string> ParentOf { get; set; } = [];    // The value in the column can identify a parent of something in another column
         public string? AliasOf { get; set; } = null;        // The value in the column can be an alias of the entity identified by another column
         public bool MustExist { get; set; } = false;
+        public bool Optional { get; set; } = false;
     }
 
     public class Preset

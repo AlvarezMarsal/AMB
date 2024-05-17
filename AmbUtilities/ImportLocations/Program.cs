@@ -2,14 +2,7 @@
 using OfficeOpenXml;
 using System.Data.SqlClient;
 using System.Diagnostics;
-using OfficeOpenXml.FormulaParsing.Excel.Functions.RefAndLookup;
-using OfficeOpenXml.FormulaParsing.Excel.Functions.Text;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Xml.Linq;
-using System;
-using OfficeOpenXml.FormulaParsing.Excel.Functions.Math;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+
 
 namespace ImportLocations
 {
@@ -114,15 +107,20 @@ namespace ImportLocations
             foreach (var preset in _settings.Presets)
             {
                 var pidPhrase = (preset.Pid == null) ? "IS NULL" : $"= {preset.Pid}";
-                using var command = new SqlCommand($"SELECT COUNT(*) FROM [dbo].[t_GeographicLocationAlias] A " +
-                                                   $"JOIN [dbo].[t_GeographicLocation] L ON A.[GeographicLocationID] = L.[OID] " +
-                                                   $"WHERE A.[GeographicLocationID] = {preset.Oid} AND A.[Alias] = N'{preset.Name}' AND L.PID {pidPhrase}",
-                                                   _connection);
+                var query = $"SELECT COUNT(*) FROM [dbo].[t_GeographicLocationAlias] A " +
+                            $"JOIN [dbo].[t_GeographicLocation] L ON A.[GeographicLocationID] = L.[OID] " +
+                            $"WHERE A.[Alias] = N'{preset.Name}' AND L.PID {pidPhrase}";
+                if (preset.Oid != 0)
+                    query += $" AND A.[GeographicLocationID] = {preset.Oid}";
+                
+                using var command = new SqlCommand(query, _connection);
                 var result = command.ExecuteScalar();
-                if ((result is long and < 1))
+                if (result is long and < 1 or int and < 1)
                 {
                     Debug.WriteLine($"Missing preset {preset.Name} {preset.Oid} {preset.Pid}");
-                    //AddGeographicLocation(preset);
+                    if (preset.Oid != 0)
+                        throw new InvalidOperationException($"Missing preset {preset.Name}");
+                    AddGeographicLocation(GetNextOid(), preset.Pid, 2501, preset.Name);
                 }
             }
         }
@@ -149,26 +147,74 @@ namespace ImportLocations
 
             var top = importInfo.FirstRow;
             var scanningTop = (top < 0);
+            if (scanningTop)
+                top = isOneBased ? 1 : 0;
             var bottom = importInfo.LastRow;
             var scanningBottom = (bottom < 0);
+            if (scanningBottom)
+                bottom = int.MaxValue;
+            var dataStarted = !scanningTop;
+            var dataEnded = false;
 
             var columnDefinitions = PreprocessColumnDefinitions(importInfo, isOneBased);
             
             // For each row in the spreadsheet, process each column
             for (var row=top; row<=bottom; ++row)
             {
+                var skipRow = false;
                 // reset, but keep any useful results from the last time through the loop
                 foreach (var cd in columnDefinitions)
                 {
                     cd.CurrentValue = sheet.Cells[row, cd.ColumnNumber].Text.Trim();
+
+                    // If a non-optional cell is empty, that indicates the end of the data
+                    // (if we don't have a predefined range).
+                    if (string.IsNullOrEmpty(cd.CurrentValue) && !cd.SettingsDefinition.Optional)
+                    {
+                        if (scanningTop && !dataStarted)
+                        {
+                            skipRow = true;
+                            break;
+                        }
+
+                        if (scanningBottom)
+                        {
+                            dataEnded = true;
+                            Console.WriteLine($"Detected end of data at row {row}");
+                            break;
+                        }
+
+                        throw new InvalidOperationException($"No value for cell {cd.ColumnNumber}:{row}");
+                    }
                     if (cd.CurrentValue != cd.AssignedGeographicLocation?.Name)
                         cd.AssignedGeographicLocation = null;
+                }
+
+                if (skipRow)
+                    continue;
+                if (dataEnded)
+                    break;
+                if (!dataStarted)
+                {
+                    Console.WriteLine($"Detected start of data at row {row}");
+                    dataStarted = true;
                 }
 
                 // process each in turn.  The way PreprocessColumnDefinitions works, we are guaranteed
                 // that parents are processed before children.
                 foreach (var cd in columnDefinitions)
                 {
+                    // If the cell is empty, it must be optional (otherwise we threw an exception above)
+                    // Since it might still be someone's parent, we use this cell's parent as its
+                    // assigned location.
+                    if (string.IsNullOrEmpty(cd.CurrentValue))
+                    {
+                        if (cd.Parents.Count == 0)
+                            throw new InvalidOperationException("Empty optional cell with no parents");
+                        cd.AssignedGeographicLocation = cd.Parents[0].AssignedGeographicLocation;
+                        continue;
+                    }
+
                     if (cd.AssignedGeographicLocation == null)
                     {
                         if (cd.SettingsDefinition.MustExist)
@@ -195,7 +241,7 @@ namespace ImportLocations
                 {
                     foreach (var alias in cd.AliasedBy)
                     {
-                        AddAlias(cd.AssignedGeographicLocation!, alias.CurrentValue, false);
+                        AddAliasIfNotPresent(cd.AssignedGeographicLocation!, alias.CurrentValue, false);
                     }
                 }
             }
@@ -490,7 +536,7 @@ namespace ImportLocations
             return LoadGeographicLocation(oid);
         }
 
-        private GeographicLocation AddGeographicLocation(long? oid, long? pid, long? practiceAreaId, string name, params string[] aliases)
+        private GeographicLocation AddGeographicLocation(long? oid, long? pid, long? practiceAreaId, string name)
         {
             oid ??= GetNextOid();
             var parent = (pid == null) ? null : LoadGeographicLocation(pid.Value, 1); // includes children
@@ -523,26 +569,14 @@ namespace ImportLocations
             _locations.Add(oid.Value, location);
             parent?.Children.Add(name, location);
 
-            AddAlias(location, name, true);
-            foreach (var alias in aliases)
-            {
-                AddAlias(location, alias, false);
-            }
-            
+            AddAliasIfNotPresent(location, name, true);
             return location;
         }
         
-        private void AddAlias(GeographicLocation location, string alias, bool isPrimary)
+        private void AddAliasIfNotPresent(GeographicLocation location, string alias, bool isPrimary)
         {
-            if (_aliases.TryGetValue(alias, out var existing))
-            {
-                if (!existing.Add(location.Oid))
-                    return;
-            }
-            else
-            {
-                _aliases.Add(alias, [location.Oid]);
-            }
+            if (_aliases.TryGetValue(alias, out var existing) && existing.Contains(location.Oid))
+                return;
 
             var a = alias.Replace("'", "''");
             try
@@ -570,8 +604,15 @@ namespace ImportLocations
                 if (result != 1)
                     throw new InvalidOperationException($"Insert failed for {alias}");
             }
+
+            if (_aliases.TryGetValue(alias, out existing))
+                existing.Add(location.Oid);
+            else
+                _aliases.Add(alias, [location.Oid]);
+
         }
         
+        /*
         private static bool ParseAddress(string address, out int row, out int column)
         {
             var a = new ExcelAddressBase(address);
@@ -589,13 +630,14 @@ namespace ImportLocations
             right = a.End.Column;
             return true;
         }
+        */
 
         private long GetNextOid()
         {
             using var command = new SqlCommand("[dbo].sp_internalGetNextOID", _connection);
             command.CommandType = CommandType.StoredProcedure; 
             command.Parameters.Add("@oid", SqlDbType.BigInt).Direction = ParameterDirection.Output;
-            var result = command.ExecuteNonQuery();
+            command.ExecuteNonQuery();
             return Convert.ToInt64(command.Parameters["@oid"].Value);
         }
 

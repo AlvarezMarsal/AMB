@@ -32,7 +32,7 @@
       "Pid": 20000
     },
     {
-      "Name": "Southeast Asia & Australia",
+      "Name": "Southeast Asia & Australia (SEAA)",
       "Oid": 20026,
       "Pid": 20000
     },
@@ -62,22 +62,26 @@
         {
           "Tag": "Country",
           "Column": "C",
-          "ParentOf": [ "F" ]
+          "ParentOf": [ "F" ],
+          "Optional": true
         },
         {
           "Tag": "Alias1",
           "Column": "D",
-          "AliasOf": "C"
+          "AliasOf": "C",
+          "Optional": true
         },
         {
           "Tag": "Alias2",
           "Column": "E",
-          "AliasOf": "C"
+          "AliasOf": "C",
+          "Optional": true
         },
         {
           "Tag": "State",
           "Column": "F",
-          "ParentOf": [ "G" ]
+          "ParentOf": [ "G" ],
+          "Optional": true
         },
         {
           "Tag": "City",
