@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 
 
+
 namespace ImportLocations
 {
     internal class Program
@@ -15,6 +16,7 @@ namespace ImportLocations
         private readonly Dictionary<long, GeographicLocation> _locations = new();
         //private GeographicLocation? _world;
         private readonly SortedList<string, HashSet<long>> _aliases = [];
+        private readonly string _collation = "COLLATE Latin1_General_100_BIN2";
 
         //"D:\AMB\World Cities.xlsx" "Cities" "B1000713:H1048552" . AMBenchmark_DB 1
         static void Main(string[] args)
@@ -45,37 +47,6 @@ namespace ImportLocations
                 Console.WriteLine(e);
                 throw;
             }
-
-
-
-            /*
-            if (args.Length == 1)
-                settingsFileName = args[0];
-            else if (args.Length == 0)
-                settingsFileName = "importLocations.json";
-            var settings = new Settings();
-            settings.ConnectionString = "Server=.;Database=AMBenchmark_DB;Integrated Security=True;";
-            settings.ImportFiles.Add(new Settings.ImportFileInfo { FilePath = @"D:\AMB\World Cities.xlsx" });
-            var json = System.Text.Json.JsonSerializer.Serialize(settings);
-            File.WriteAllText("importLocations.json", json);
-
-
-            if (args.Length != 6)
-            {
-                Console.WriteLine("ImportLocations excelFileName sheetName rangeName server database creatorId");
-                return;
-            }
-
-            try
-            {
-                var program = new Program();
-                program.Run(args);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-            }
-            */
         }
 
         private Program(Settings settings)
@@ -89,58 +60,97 @@ namespace ImportLocations
         {
             using (_connection)
             {
-                _connection.Open();
-
-                EnforcePresets();
-
-                foreach (var importFile in _settings.ImportFiles)
+                try
                 {
-                    Run(importFile);
-                }
+                   _connection.Open();
+                    CreateViews();
 
-                Dump();
+                    EnforcePresets();
+
+                    foreach (var importFile in _settings.ImportFiles)
+                    {
+                        Run(importFile);
+                    }
+
+                    Dump();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+                finally
+                {
+                    DeleteViews();
+                }
             }
         }
-
+        
+        private void CreateViews()
+        {
+            var view = """
+                        CREATE OR ALTER VIEW [dbo].[vw_GeographicLocationNames]
+                        AS
+                        	SELECT [OID],[PID],[Name], 1 AS IsSystemOwned
+                        	FROM [dbo].[t_GeographicLocation]
+                        
+                        	UNION
+                        
+                        	SELECT L.[OID],L.[PID],A.[Alias] AS [Name], 0 AS IsSystemOwned
+                        	FROM [dbo].[t_GeographicLocationAlias] A 
+                        	JOIN [dbo].[t_GeographicLocation] L ON L.OID = A.GeographicLocationID
+                        	WHERE A.Alias <> L.Name COLLATE Latin1_General_100_BIN2
+                        """;
+            using var command = new SqlCommand(view, _connection);
+            command.ExecuteNonQuery();
+        }
+        
+        private void DeleteViews()
+        {
+            var drop = "DROP VIEW [dbo].[vw_GeographicLocationNames]";
+            using var command = new SqlCommand(drop, _connection);
+            command.ExecuteNonQuery();
+        }
+        
         private void EnforcePresets()
         {
             foreach (var preset in _settings.Presets)
             {
-                var pidPhrase = (preset.Pid == null) ? "IS NULL" : $"= {preset.Pid}";
-                var query = $"SELECT COUNT(*) FROM [dbo].[t_GeographicLocationAlias] A " +
-                            $"JOIN [dbo].[t_GeographicLocation] L ON A.[GeographicLocationID] = L.[OID] " +
-                            $"WHERE A.[Alias] = N'{preset.Name}' AND L.PID {pidPhrase}";
-                if (preset.Oid != 0)
-                    query += $" AND A.[GeographicLocationID] = {preset.Oid}";
-                
-                using var command = new SqlCommand(query, _connection);
-                var result = command.ExecuteScalar();
-                if (result is long and < 1 or int and < 1)
+                try
                 {
-                    Debug.WriteLine($"Missing preset {preset.Name} {preset.Oid} {preset.Pid}");
+                    var n = preset.Name.Replace("'", "''");
+                    var pidPhrase = (preset.Pid == null) ? "IS NULL" : $"= {preset.Pid}";
+                    var query = $"SELECT [OID] FROM [dbo].[vw_GeographicLocationNames] V " +
+                                $"WHERE [NAME] = N'{n}' {_collation} AND PID {pidPhrase}";
+                    if (preset.Oid != 0)
+                        query += $" AND [OID] = {preset.Oid}";
+                    
+                    using var command = new SqlCommand(query, _connection);
+                    using var reader = command.ExecuteReader();
+                    if (reader.Read())
+                        return;
+                    
                     if (preset.Oid != 0)
                         throw new InvalidOperationException($"Missing preset {preset.Name}");
                     AddGeographicLocation(GetNextOid(), preset.Pid, 2501, preset.Name);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    if (Debugger.IsAttached)
+                        Debugger.Break();
+                    throw;
                 }
             }
         }
 
         private void Run(Settings.ImportFileInfo importInfo)
         {
-            /*
-            LoadWorld();
-            LoadAliases(_world!);
-            */
-            /*
-                // Process the template (the excel spreadsheet)
-                var argIndex = 0;
-                var excelFilename = args[argIndex++];
-            */
             if (!File.Exists(importInfo.FilePath))
                 throw new FileNotFoundException(importInfo.FilePath);
-            //var sheetName = args[argIndex++];
-            //var rangeName = args[argIndex];
 
+            Console.WriteLine($"Processing {importInfo.FilePath}");
+            
             using var package = new ExcelPackage(new FileInfo(importInfo.FilePath));
             var isOneBased = package.Compatibility.IsWorksheets1Based;
             using var sheet = package.Workbook.Worksheets[importInfo.Sheet];
@@ -161,6 +171,9 @@ namespace ImportLocations
             // For each row in the spreadsheet, process each column
             for (var row=top; row<=bottom; ++row)
             {
+                if (row % 100 == 0)
+                    Console.WriteLine($"Processing row {row}");
+                
                 var skipRow = false;
                 // reset, but keep any useful results from the last time through the loop
                 foreach (var cd in columnDefinitions)
@@ -312,48 +325,6 @@ namespace ImportLocations
             }
 
             return columnDefinitions.Values.ToList();
-            /*
-            // Set up for generation indexing
-            var orderedByParentage = new List<ColumnDefinition>(columnDefinitions.Count);
-            var columnsNotProcessed = new HashSet<ColumnDefinition>(); // column numbers
-            foreach (var cd in columnDefinitions.Values)
-            {
-                if (cd.SettingsDefinition.MustExist)
-                    orderedByParentage.Add(cd);
-                else
-                    columnsNotProcessed.Add(cd);
-            }
-
-            if (orderedByParentage.Count == 0)
-                throw new InvalidOperationException("No columns marked as 'MustExist'");
-
-            while (true)
-            {
-                var notProcessed = columnsNotProcessed.ToList();
-                if (notProcessed.Count == 0)
-                    break;
-                var count = notProcessed.Count;
-
-                foreach (var cd in notProcessed)
-                {
-                    var ready = ((cd.Parent == null) || orderedByParentage.Contains(cd.Parent)) &&
-                        ((cd.AliasOf == null) || orderedByParentage.Contains(cd.AliasOf));
-                    if (ready)
-                    {
-                        orderedByParentage.Add(cd);
-                        columnsNotProcessed.Remove(cd);
-                    }
-                }
-
-                if (columnsNotProcessed.Count == count)
-                    throw new InvalidOperationException("Circular reference in column definitions");
-            }
-
-            // The 'orderedByParentage' list is now in the reverse of the order
-            // we want to process the columns.
-            //orderedByParentage.Reverse();
-            return orderedByParentage;
-            */
         }
 
         internal static int ColumnAlphaToColumnNumber(string alpha, bool isOneBased)
@@ -370,132 +341,51 @@ namespace ImportLocations
             return result + (isOneBased ? 1 : 0);
         }
 
-        /*
-        private void LoadWorld()
-        {
-            using var command = new SqlCommand("SELECT [OID],[Name],[Index],[Description],[PracticeAreaID] FROM [dbo].[t_GeographicLocation] WHERE [PID] IS NULL", _connection);
-            using (var reader = command.ExecuteReader())
-            {
-                var result = reader.Read();
-                if (!result)
-                    throw new InvalidOperationException("No world record found");
-
-                var columnIndex = 0;
-                var oid = reader.GetInt64(columnIndex++);
-                var name = reader.GetString(columnIndex++);
-                var index = reader.GetInt32(columnIndex++);
-                var description = reader.GetString(columnIndex++);
-                var paid = reader.GetInt64(columnIndex);
-                _world = new GeographicLocation(null, oid, name, index, description, paid);
-            }
-            
-            LoadDescendants(_world); 
-        }
-        */
-        /*
-        private void LoadDescendants(GeographicLocation parent, int generations = int.MaxValue)
-        {
-            var currentGeneration = new List<GeographicLocation> { parent };
-            while (generations-- > 0)
-            {
-                var nextGeneration = new List<GeographicLocation>();
-                foreach (var entity in currentGeneration)
-                {
-                    LoadChildren(entity);
-                    nextGeneration.AddRange(entity.Children.Values);
-                }
-                currentGeneration = nextGeneration;
-                if (currentGeneration.Count == 0)
-                    break;
-            }
-        }
-
-        private void LoadAliases(GeographicLocation entity)
-        {
-            if (!_aliases.TryGetValue(entity.Kind, out var aliasesByKind))
-                _aliases.Add(entity.Kind, aliasesByKind = new SortedList<string, GeographicLocation>());
-            if (aliasesByKind.TryGetValue(entity.Name, out var existing))
-            {
-                if (existing.Oid != entity.Oid)
-                    throw new InvalidOperationException($"Duplicate oid {entity.Oid}");
-            }
-            else
-            {
-                aliasesByKind.Add(entity.Name, entity);
-            }
-
-            var command = new SqlCommand($"SELECT [OID],[Alias],[Description],[IsPrimary],[PracticeAreaID] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {entity.Oid}", _connection);
-            using (var reader = command.ExecuteReader())
-            {
-                while (reader.Read())
-                {
-                    var columnIndex = 0;
-                    var oid = reader.GetInt64(columnIndex++);
-                    var alias = reader.GetString(columnIndex++);
-                    var description = reader.GetString(columnIndex++);
-                    var isPrimary = reader.GetBoolean(columnIndex++);
-                    var paid = reader.GetInt64(columnIndex);
-
-                    if (aliasesByKind.TryGetValue(alias, out existing))
-                    {
-                        if (existing.Oid != entity.Oid)
-                            throw new InvalidOperationException($"Duplicate oid {entity.Oid}");
-                    }
-                    else
-                    {
-                        aliasesByKind.Add(alias, entity);
-                    }
-                }
-            }
-
-            foreach (var child in entity.Children.Values)
-            {
-                LoadAliases(child);
-            }
-        }
-
-        */
-
         private void LoadChildren(GeographicLocation parent)
         {
             // Connect to the database and load the world and continent records
-            var oids = new List<long>();
-            using (var command = new SqlCommand($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parent.Oid}", _connection))
+            var children = Select<(long,string)>($"SELECT [OID], [Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [PID] = {parent.Oid}", 
+                reader => new (reader.GetInt64(0), reader.GetString(1)));
+            
+            foreach (var child in children)
             {
-                using var reader = command.ExecuteReader();
-                while (reader.Read())
-                {
-                    oids.Add(reader.GetInt64(0));
-                }
-            }
-
-            foreach (var oid in oids)
-            {
-                var child = LoadGeographicLocation(oid);
-                parent.Children.TryAdd(child.Name, child);
+                if (_aliases.TryGetValue(child.Item2, out var oids))
+                    oids.Add(child.Item1);
+                else
+                    _aliases.Add(child.Item2, [child.Item1]);
+                
+                LoadGeographicLocation(child.Item1, true);
             }
 
             parent.ChildrenLoaded = true;
         }
 
-        private GeographicLocation LoadGeographicLocation(long oid, int recursionLevel = 0)
+        /// <summary>
+        /// Checks the cache before loading
+        /// </summary>
+        /// <param name="oid"></param>
+        /// <param name="loadAliases"></param>
+        /// <param name="recursionLevel"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        private GeographicLocation LoadGeographicLocation(long oid, bool loadAliases, int recursionLevel = 0)
         {
             if (!_locations.TryGetValue(oid, out var location))
             {
-                using (var command = new SqlCommand($"SELECT [OID],[PID],[Name],[Index],[Description],[PracticeAreaID],[IsSystemOwned] FROM [dbo].[t_GeographicLocation] WHERE [OID] = {oid}", _connection))
+                using (var command = new SqlCommand($"SELECT [PID], [Name], [Index], [Description], [PracticeAreaID], [IsSystemOwned] FROM [dbo].[t_GeographicLocation] WHERE [OID] = {oid}", _connection))
                 {
                     using var reader = command.ExecuteReader();
                     if (!reader.Read())
                         throw new InvalidOperationException($"No record found for {oid}");
+                    
                     var columnIndex = 0;
-                    /*var oid = reader.GetInt64(*/ columnIndex++ /*)*/;
                     var pid = reader.IsDBNull(columnIndex) ? (long?) null : reader.GetInt64(columnIndex);
-                    ++columnIndex;
-                    var name = reader.GetString(columnIndex++);
-                    var index = reader.GetInt32(columnIndex++);
-                    var description = reader.GetString(columnIndex++);
-                    var paid = reader.GetInt64(columnIndex++);
-                    var isSystemOwned = reader.GetBoolean(columnIndex);
+                    var name = reader.GetString(++columnIndex);
+                    var index = reader.GetInt32(++columnIndex);
+                    var description = reader.GetString(++columnIndex);
+                    var paid = reader.GetInt64(++columnIndex);
+                    var isSystemOwned = reader.GetBoolean(++columnIndex);
+                    
                     location = new GeographicLocation(oid, pid, name, index, description, paid, isSystemOwned);
                     _locations.Add(oid, location);
                     if (!_aliases.TryGetValue(location.Name, out var existingAliases))
@@ -504,17 +394,19 @@ namespace ImportLocations
                         existingAliases.Add(oid);
                 }
 
-                using (var command = new SqlCommand($"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid}", _connection))
+                if (loadAliases)
                 {
-                    using var reader = command.ExecuteReader();
-                    while (reader.Read())
+                    using (var command = new SqlCommand($"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid}", _connection))
                     {
-                        var alias = reader.GetString(0);
-
-                        if (!_aliases.TryGetValue(alias, out var existingAliases))
-                            _aliases.Add(alias, [oid]);
-                        else
-                            existingAliases.Add(oid);
+                        using var reader = command.ExecuteReader();
+                        while (reader.Read())
+                        {
+                            var alias = reader.GetString(0);
+                            if (!_aliases.TryGetValue(alias, out var existingAliases))
+                                _aliases.Add(alias, [oid]);
+                            else
+                                existingAliases.Add(oid);
+                        }
                     }
                 }
             }
@@ -524,31 +416,31 @@ namespace ImportLocations
                 LoadChildren(location);
                 foreach (var child in location.Children.Values)
                 {
-                    LoadGeographicLocation(child.Oid, recursionLevel);
+                    LoadGeographicLocation(child.Oid, loadAliases, recursionLevel);
                 }
             }
             
             return location;
         }
 
+        
         private GeographicLocation? LoadGeographicLocationByName(string name, long? pid)
         {
             if ((pid != null) && _aliases.TryGetValue(name, out var oids))
             {
                 foreach (var o in oids)
                 {
-                    var location = LoadGeographicLocation(o);
+                    var location = LoadGeographicLocation(o, false);
                     if (location.Pid == pid)
                         return location;
                 }
             }
 
             var n = name.Replace("'", "''");
-            var query = $"SELECT A.[GeographicLocationID] FROM [dbo].[t_GeographicLocationAlias] A " +
-                        $"JOIN [dbo].[t_GeographicLocation] L ON A.[GeographicLocationID] = L.[OID] " +
-                        $"WHERE A.[Alias] = N'{n}'";
+            var query = $"SELECT V.[OID] FROM [dbo].[vw_GeographicLocationNames] V " +
+                        $"WHERE V.[Name] = N'{n}' {_collation}";
             if (pid != null)
-                query += $" AND L.[PID] = {pid}";
+                query += $" AND V.[PID] = {pid}";
 
             using var command = new SqlCommand(query, _connection);
             long oid;
@@ -561,16 +453,16 @@ namespace ImportLocations
                 {
                     var otherOid = reader.GetInt64(0);
                     if (otherOid != oid)
-                        throw new InvalidOperationException($"Conflicting records found for records found for {name}");
+                        throw new InvalidOperationException($"Conflicting records found for {name}");
                 }
             }
-            return LoadGeographicLocation(oid);
+            return LoadGeographicLocation(oid, true);
         }
 
         private GeographicLocation AddGeographicLocation(long? oid, long? pid, long? practiceAreaId, string name)
         {
             oid ??= GetNextOid();
-            var parent = (pid == null) ? null : LoadGeographicLocation(pid.Value, 1); // includes children
+            var parent = (pid == null) ? null : LoadGeographicLocation(pid.Value, true, 1); // includes children
             int index;
             if (parent == null)
             {
@@ -622,7 +514,9 @@ namespace ImportLocations
             var a = alias.Replace("'", "''");
             try
             {
-                using var command = new SqlCommand($"SELECT COUNT(*) FROM [dbo].[t_GeographicLocationAlias] WHERE [Alias] = N'{a}' AND [GeographicLocationID] = {location.Oid}", _connection);
+                using var command = new SqlCommand($"SELECT COUNT(*) FROM [dbo].[vw_GeographicLocationNames] " +
+                                                   $"WHERE [Name] = N'{a}' {_collation} AND [OID] = {location.Oid}",
+                                                   _connection);
                 var result = command.ExecuteScalar();
                 if ((result is long and > 0))
                     return;
@@ -635,11 +529,12 @@ namespace ImportLocations
              
             var aliasOid = GetNextOid();
             var description = a + "-RS-Test";
+            var d = description.Replace("'", "''");
             var practiceAreaId = location.PracticeAreaId;
             var isPrimaryInt = isPrimary ? 1 : 0;
             var isSystemOwnedInt = location.IsSystemOwned ? 1 : 0;
             using (var command = new SqlCommand($"INSERT [dbo].[t_GeographicLocationAlias] ([OID],[GeographicLocationID],[Alias],[Description],[IsPrimary],[PracticeAreaID],[CreationDate],[CreatorID],[CreationSession],[LID],[IsSystemOwned]) " +
-                                               $"VALUES({aliasOid},{location.Oid},N'{a}',N'{description}',{isPrimaryInt},{practiceAreaId},'{_startTime}',{_settings.CreatorId},'{_creationSession}', 500, {isSystemOwnedInt})", _connection))
+                                               $"VALUES({aliasOid}, {location.Oid}, N'{a}', N'{d}', {isPrimaryInt}, {practiceAreaId}, '{_startTime}', {_settings.CreatorId}, '{_creationSession}', 500, {isSystemOwnedInt})", _connection))
             { 
                 var result = command.ExecuteNonQuery();
                 if (result != 1)
@@ -653,25 +548,6 @@ namespace ImportLocations
 
         }
         
-        /*
-        private static bool ParseAddress(string address, out int row, out int column)
-        {
-            var a = new ExcelAddressBase(address);
-            row = a.Start.Row;
-            column = a.Start.Column;
-            return true;
-        }
-
-        private static bool ParseAddress(string address, out int top, out int left, out int bottom, out int right)
-        {
-            var a = new ExcelAddressBase(address);
-            top = a.Start.Row;
-            left = a.Start.Column;
-            bottom = a.End.Row;
-            right = a.End.Column;
-            return true;
-        }
-        */
 
         private long GetNextOid()
         {
@@ -708,7 +584,7 @@ namespace ImportLocations
 
             using var file = File.CreateText(filename);
 
-            var worlds = Select("SELECT [OID],[Name] FROM [dbo].[t_GeographicLocation] WHERE [PID] IS NULL",
+            var worlds = Select("SELECT [OID], [Name] FROM [dbo].[t_GeographicLocation] WHERE [PID] IS NULL",
                 reader => new { OID = reader.GetInt64(0), Name = reader.GetString(1) });
             foreach (var world in worlds)
             {
@@ -719,14 +595,18 @@ namespace ImportLocations
 
         private void DumpChildren(long oid, int indent, StreamWriter file)
         {
-            var children = Select($"SELECT [OID],[Name] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {oid}",
-                reader => new { OID = reader.GetInt64(0), Name = reader.GetString(1) });
+            var children = Select($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {oid}",
+                reader => reader.GetInt64(0));
+            
             foreach (var child in children)
             {
                 for (var i=0; i < indent; ++i)
                     file.Write("\t");
-                file.WriteLine($"{child.Name} ({child.OID})");
-                DumpChildren(child.OID, indent+1, file);
+                var names = Select($"SELECT [Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [OID] = {child}",
+                    reader => reader.GetString(0));
+                var n = string.Join(", ", names);
+                file.WriteLine($"{child} {n}");
+                DumpChildren(child, indent+1, file);
             }
         }
     }

@@ -48,6 +48,45 @@
   ],
   "ImportFiles": [
     {
+      "FilePath": "..\\..\\uscities.xlsx",
+      "Sheet": "Sheet1",
+      "FirstRow": 2,
+      "ColumnDefinitions": [
+        {
+          "Tag": "City",
+          "Column": "A",
+          "AliasOf": "B"
+        },
+        {
+          "Tag": "CityAscii",
+          "Column": "B"
+
+        },
+        {
+          "Tag": "StateId",
+          "Column": "C",
+          "AliasOf": "D"
+        },
+        {
+          "Tag": "StateName",
+          "Column": "D",
+          "ParentOf": [ "F" ]
+        },
+        {
+          "Tag": "CountyName",
+          "Column": "F",
+          "ParentOf": [ "B" ]
+        },
+        {
+          "Tag": "Country",
+          "Column": "R",
+          "ParentOf": [ "D" ],
+          "MustExist": true
+        }
+      ]
+    },
+
+    {
       "FilePath": "..\\..\\World Cities.xlsx",
       "Sheet": "Cities",
       "FirstRow": 1000713,
@@ -92,43 +131,6 @@
           "Tag": "CityAscii",
           "Column": "H"
         }
-      ]
-    },
-    {
-      "FilePath": "..\\..\\uscities.xlsx",
-      "Sheet": "Sheet1",
-      "ColumnDefinitions": [
-        {
-          "Tag": "City",
-          "Column": "A",
-          "AliasOf": "CityAscii"
-        },
-        {
-          "Tag": "CityAscii",
-          "Column": "B"
-
-        },
-        {
-          "Tag": "StateId",
-          "Column": "C",
-          "AliasOf": "D"
-        },
-        {
-          "Tag": "StateName",
-          "Column": "D",
-          "ParentOf": [ "F" ]
-        },
-        {
-          "Tag": "CountyName",
-          "Column": "F",
-          "ParentOf": [ "B" ]
-        },
-        {
-          "Tag": "Country",
-          "Column": "R",
-          "ParentOf": [ "D" ],
-          "MustExist": true
-        }      
       ]
     }
   ]
