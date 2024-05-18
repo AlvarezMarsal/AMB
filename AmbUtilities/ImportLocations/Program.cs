@@ -544,7 +544,7 @@ namespace ImportLocations
             }
 
             var n = name.Replace("'", "''");
-            var query = $"SELECT L.[OID] FROM [dbo].[t_GeographicLocationAlias] A " +
+            var query = $"SELECT A.[GeographicLocationID] FROM [dbo].[t_GeographicLocationAlias] A " +
                         $"JOIN [dbo].[t_GeographicLocation] L ON A.[GeographicLocationID] = L.[OID] " +
                         $"WHERE A.[Alias] = N'{n}'";
             if (pid != null)
@@ -557,8 +557,12 @@ namespace ImportLocations
                 if (!reader.Read())
                     return null;
                 oid = reader.GetInt64(0);
-                if (reader.Read())
-                    throw new InvalidOperationException($"Multiple records found for {name}");
+                while (reader.Read())
+                {
+                    var otherOid = reader.GetInt64(0);
+                    if (otherOid != oid)
+                        throw new InvalidOperationException($"Conflicting records found for records found for {name}");
+                }
             }
             return LoadGeographicLocation(oid);
         }
@@ -582,14 +586,24 @@ namespace ImportLocations
             var description = name + "-RS-Test";
 
             // Connect to the database and load the world and continent records
-            var pidstr = (pid == null) ? "NULL" : pid.ToString();
-            var n = name.Replace("'", "''");
-            using (var command = new SqlCommand($"INSERT [dbo].[t_GeographicLocation] ([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorID],[PracticeAreaID],[CreationSession]) " +
-                                               $"VALUES({oid},{pidstr},1,N'{n}',{index},N'{description}','{_startTime}',{_settings.CreatorId},{practiceAreaId},'{_creationSession}')", _connection))
+            try
             {
+                var pidstr = (pid == null) ? "NULL" : pid.ToString();
+                var n = name.Replace("'", "''");
+                var d = description.Replace("'", "''");
+                using var command = new SqlCommand($"INSERT [dbo].[t_GeographicLocation] ([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorID],[PracticeAreaID],[CreationSession]) " +
+                                                   $"VALUES({oid}, {pidstr}, 1, N'{n}', {index}, N'{d}', '{_startTime}', {_settings.CreatorId}, {practiceAreaId}, '{_creationSession}')", _connection);
                 var result = command.ExecuteNonQuery();
                 if (result != 1)
                     throw new InvalidOperationException($"Insert failed for {name}");
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
+                Console.WriteLine(e);
+                if (Debugger.IsAttached)
+                    Debugger.Break();
+                throw;
             }
 
             var location = new GeographicLocation(oid.Value, pid, name, index, description, practiceAreaId.Value, true); // TODO : isSystemOwned

@@ -80,18 +80,55 @@
         {
           "Tag": "State",
           "Column": "F",
-          "ParentOf": [ "G" ],
+          "ParentOf": [ "H" ],
           "Optional": true
         },
         {
           "Tag": "City",
-          "Column": "G"
+          "Column": "G",
+          "AliasOf": "H"
         },
         {
           "Tag": "CityAscii",
-          "Column": "H",
-          "AliasOf": "G"
+          "Column": "H"
         }
+      ]
+    },
+    {
+      "FilePath": "..\\..\\uscities.xlsx",
+      "Sheet": "Sheet1",
+      "ColumnDefinitions": [
+        {
+          "Tag": "City",
+          "Column": "A",
+          "AliasOf": "CityAscii"
+        },
+        {
+          "Tag": "CityAscii",
+          "Column": "B"
+
+        },
+        {
+          "Tag": "StateId",
+          "Column": "C",
+          "AliasOf": "D"
+        },
+        {
+          "Tag": "StateName",
+          "Column": "D",
+          "ParentOf": [ "F" ]
+        },
+        {
+          "Tag": "CountyName",
+          "Column": "F",
+          "ParentOf": [ "B" ]
+        },
+        {
+          "Tag": "Country",
+          "Column": "R",
+          "ParentOf": [ "D" ],
+          "MustExist": true
+        }      
       ]
     }
   ]
