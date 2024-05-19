@@ -65,7 +65,7 @@ namespace ImportLocations
                 {
                     _connection.Open();
                     CreateViews();
-                    Dump();
+                    // Dump();
                     EnforcePresets();
 
                     foreach (var importFile in _settings.ImportFiles)
@@ -126,17 +126,19 @@ namespace ImportLocations
                     if (preset.Oid != 0)
                         query += $" AND [OID] = {preset.Oid}";
                     
-                    using var command = new SqlCommand(query, _connection);
-                    using var reader = command.ExecuteReader();
-                    if (reader.Read())
+                    using (var command = new SqlCommand(query, _connection))
                     {
-                        var oid = reader.GetInt64(0);
-                        if ((preset.Oid != 0) && (preset.Oid != oid))
-                            throw new InvalidOperationException($"Missing preset {preset.Name}");
-                        var pid = reader.GetInt64(1);
-                        if (preset.Pid.HasValue && (preset.Pid.Value != pid))
-                            throw new InvalidOperationException($"Missing preset {preset.Name}");
-                        return;
+                        using var reader = command.ExecuteReader();
+                        if (reader.Read())
+                        {
+                            var oid = reader.GetInt64(0);
+                            if ((preset.Oid != 0) && (preset.Oid != oid))
+                                throw new InvalidOperationException($"Missing preset {preset.Name}");
+                            var pid = reader.GetInt64(1);
+                            if (preset.Pid.HasValue && (preset.Pid.Value != pid))
+                                throw new InvalidOperationException($"Missing preset {preset.Name}");
+                            continue;
+                        }
                     }
                     
                     AddGeographicLocation(GetNextOid(), preset.Pid, 2501, preset.Name);
@@ -237,8 +239,7 @@ namespace ImportLocations
                     }
                 }
             }
-
-            Dump();
+            
             return;
 
             void ProcessCell(ColumnDefinition coldef)
