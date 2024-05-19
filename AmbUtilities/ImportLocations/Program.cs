@@ -2,6 +2,7 @@
 using OfficeOpenXml;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using OfficeOpenXml.FormulaParsing.Excel.Functions.Information;
 
 
 
@@ -62,9 +63,9 @@ namespace ImportLocations
             {
                 try
                 {
-                   _connection.Open();
+                    _connection.Open();
                     CreateViews();
-
+                    Dump();
                     EnforcePresets();
 
                     foreach (var importFile in _settings.ImportFiles)
@@ -72,7 +73,6 @@ namespace ImportLocations
                         Run(importFile);
                     }
 
-                    Dump();
                 }
                 catch (Exception e)
                 {
@@ -81,6 +81,7 @@ namespace ImportLocations
                 }
                 finally
                 {
+                    Dump();
                     DeleteViews();
                 }
             }
@@ -91,12 +92,12 @@ namespace ImportLocations
             var view = """
                         CREATE OR ALTER VIEW [dbo].[vw_GeographicLocationNames]
                         AS
-                        	SELECT [OID],[PID],[Name], 1 AS IsSystemOwned
+                        	SELECT [OID], ISNULL([PID],0) AS PID, [Name], 1 AS IsPrimary
                         	FROM [dbo].[t_GeographicLocation]
                         
                         	UNION
                         
-                        	SELECT L.[OID],L.[PID],A.[Alias] AS [Name], 0 AS IsSystemOwned
+                        	SELECT L.[OID], ISNULL(L.[PID],0) AS PID, A.[Alias] AS [Name], 0 AS IsPrimary
                         	FROM [dbo].[t_GeographicLocationAlias] A 
                         	JOIN [dbo].[t_GeographicLocation] L ON L.OID = A.GeographicLocationID
                         	WHERE A.Alias <> L.Name COLLATE Latin1_General_100_BIN2
@@ -119,8 +120,8 @@ namespace ImportLocations
                 try
                 {
                     var n = preset.Name.Replace("'", "''");
-                    var pidPhrase = (preset.Pid == null) ? "IS NULL" : $"= {preset.Pid}";
-                    var query = $"SELECT [OID] FROM [dbo].[vw_GeographicLocationNames] V " +
+                    var pidPhrase = $"= {preset.Pid ?? 0}";
+                    var query = $"SELECT [OID], [PID] FROM [dbo].[vw_GeographicLocationNames] " +
                                 $"WHERE [NAME] = N'{n}' {_collation} AND PID {pidPhrase}";
                     if (preset.Oid != 0)
                         query += $" AND [OID] = {preset.Oid}";
@@ -128,10 +129,16 @@ namespace ImportLocations
                     using var command = new SqlCommand(query, _connection);
                     using var reader = command.ExecuteReader();
                     if (reader.Read())
+                    {
+                        var oid = reader.GetInt64(0);
+                        if ((preset.Oid != 0) && (preset.Oid != oid))
+                            throw new InvalidOperationException($"Missing preset {preset.Name}");
+                        var pid = reader.GetInt64(1);
+                        if (preset.Pid.HasValue && (preset.Pid.Value != pid))
+                            throw new InvalidOperationException($"Missing preset {preset.Name}");
                         return;
+                    }
                     
-                    if (preset.Oid != 0)
-                        throw new InvalidOperationException($"Missing preset {preset.Name}");
                     AddGeographicLocation(GetNextOid(), preset.Pid, 2501, preset.Name);
                 }
                 catch (Exception e)
@@ -577,36 +584,30 @@ namespace ImportLocations
 
         private void Dump()
         {
-            var filename = "dump.txt";
+            const string filename = "dump.txt";
 
             if (File.Exists(filename))
                 File.Delete(filename);
 
             using var file = File.CreateText(filename);
-
-            var worlds = Select("SELECT [OID], [Name] FROM [dbo].[t_GeographicLocation] WHERE [PID] IS NULL",
-                reader => new { OID = reader.GetInt64(0), Name = reader.GetString(1) });
-            foreach (var world in worlds)
-            {
-                file.WriteLine($"{world.Name} ({world.OID})");
-                DumpChildren(world.OID, 1, file);
-            }
+            DumpLocationsUnder(0, 0, file);
         }
 
-        private void DumpChildren(long oid, int indent, StreamWriter file)
+        private void DumpLocationsUnder(long pid, int indent, StreamWriter file)
         {
-            var children = Select($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {oid}",
+            var children = Select($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE ISNULL([PID],0) = {pid} ORDER BY [Name]",
                 reader => reader.GetInt64(0));
             
             foreach (var child in children)
             {
                 for (var i=0; i < indent; ++i)
                     file.Write("\t");
-                var names = Select($"SELECT [Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [OID] = {child}",
+                var names = Select($"SELECT [Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [OID] = {child} ORDER BY IsPrimary DESC, Name ASC",
                     reader => reader.GetString(0));
                 var n = string.Join(", ", names);
+                Debug.WriteLine($"{child} {n}");
                 file.WriteLine($"{child} {n}");
-                DumpChildren(child, indent+1, file);
+                DumpLocationsUnder(child, indent+1, file);
             }
         }
     }
