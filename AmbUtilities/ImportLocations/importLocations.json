@@ -1,5 +1,6 @@
 {
   "ConnectionString": "Server=.;Database=AMBenchmark_DB;Integrated Security=True;",
+  "CreatorId": 1003378,
   "Presets": [
     {
       "Name": "World",
