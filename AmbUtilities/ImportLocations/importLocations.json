@@ -55,33 +55,38 @@
         {
           "Tag": "City",
           "Column": "A",
-          "AliasOf": "B"
+          "AliasOf": "B",
+          "IsSystemOwned": true
         },
         {
           "Tag": "CityAscii",
-          "Column": "B"
-
+          "Column": "B",
+          "IsSystemOwned": true
         },
         {
           "Tag": "StateId",
           "Column": "C",
-          "AliasOf": "D"
+          "AliasOf": "D",
+          "IsSystemOwned": true
         },
         {
           "Tag": "StateName",
           "Column": "D",
-          "ParentOf": [ "F" ]
+          "ParentOf": [ "F" ],
+          "IsSystemOwned": true
         },
         {
           "Tag": "CountyName",
           "Column": "F",
-          "ParentOf": [ "B" ]
+          "ParentOf": [ "B" ],
+          "IsSystemOwned": true
         },
         {
           "Tag": "Country",
           "Column": "R",
           "ParentOf": [ "D" ],
-          "MustExist": true
+          "MustExist": true,
+          "IsSystemOwned": true
         }
       ]
     },
@@ -96,40 +101,47 @@
           "Tag": "Continent",
           "Column": "B",
           "ParentOf": [ "C" ],
-          "MustExist": true
+          "MustExist": true,
+          "IsSystemOwned": true
         },
         {
           "Tag": "Country",
           "Column": "C",
           "ParentOf": [ "F" ],
-          "Optional": true
+          "Optional": true,
+          "IsSystemOwned": true
         },
         {
           "Tag": "Alias1",
           "Column": "D",
           "AliasOf": "C",
-          "Optional": true
+          "Optional": true,
+          "IsSystemOwned": true
         },
         {
           "Tag": "Alias2",
           "Column": "E",
           "AliasOf": "C",
-          "Optional": true
+          "Optional": true,
+          "IsSystemOwned": true
         },
         {
           "Tag": "State",
           "Column": "F",
           "ParentOf": [ "H" ],
-          "Optional": true
+          "Optional": true,
+          "IsSystemOwned": true
         },
         {
           "Tag": "City",
           "Column": "G",
-          "AliasOf": "H"
+          "AliasOf": "H",
+          "IsSystemOwned": true
         },
         {
           "Tag": "CityAscii",
-          "Column": "H"
+          "Column": "H",
+          "IsSystemOwned": true
         }
       ]
     }

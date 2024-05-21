@@ -15,7 +15,6 @@ namespace ImportLocations
         private readonly SqlConnection _connection;
         private readonly Guid _creationSession;
         private readonly Dictionary<long, GeographicLocation> _locations = new();
-        //private GeographicLocation? _world;
         private readonly SortedList<string, HashSet<long>> _aliases = [];
         private readonly string _collation = "COLLATE Latin1_General_100_BIN2";
 
@@ -119,10 +118,13 @@ namespace ImportLocations
             {
                 try
                 {
+                    var pid = preset.Pid.GetValueOrDefault(0);
+                    if (pid != 0)
+                        LoadGeographicLocation(pid, true, 1);
+                    
                     var n = preset.Name.Replace("'", "''");
-                    var pidPhrase = $"= {preset.Pid ?? 0}";
                     var query = $"SELECT [OID], [PID] FROM [dbo].[vw_GeographicLocationNames] " +
-                                $"WHERE [NAME] = N'{n}' {_collation} AND PID {pidPhrase}";
+                                $"WHERE [NAME] = N'{n}' {_collation} AND [PID] = {pid}";
                     if (preset.Oid != 0)
                         query += $" AND [OID] = {preset.Oid}";
                     
@@ -134,14 +136,14 @@ namespace ImportLocations
                             var oid = reader.GetInt64(0);
                             if ((preset.Oid != 0) && (preset.Oid != oid))
                                 throw new InvalidOperationException($"Missing preset {preset.Name}");
-                            var pid = reader.GetInt64(1);
-                            if (preset.Pid.HasValue && (preset.Pid.Value != pid))
+                            var npid = reader.GetInt64(1);
+                            if (npid != pid)
                                 throw new InvalidOperationException($"Missing preset {preset.Name}");
                             continue;
                         }
                     }
                     
-                    AddGeographicLocation(GetNextOid(), preset.Pid, 2501, preset.Name);
+                    AddGeographicLocation(0, pid, 2501, preset.Name, true);
                 }
                 catch (Exception e)
                 {
@@ -282,7 +284,7 @@ namespace ImportLocations
                     var pal = coldef.Parent.AssignedGeographicLocation!;
                     coldef.AssignedGeographicLocation = 
                         LoadGeographicLocationByName(coldef.CurrentValue, pal.Oid) ??
-                        AddGeographicLocation(null, pal.Oid, pal.PracticeAreaId, coldef.CurrentValue);
+                        AddGeographicLocation(0, pal.Oid, pal.PracticeAreaId, coldef.CurrentValue, coldef.IsSystemOwned);
                 }
 
                 if (coldef.AliasOf != null)
@@ -355,6 +357,7 @@ namespace ImportLocations
             var children = Select<(long,string)>($"SELECT [OID], [Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [PID] = {parent.Oid}", 
                 reader => new (reader.GetInt64(0), reader.GetString(1)));
             
+            var toBeLoaded = new List<long>();
             foreach (var child in children)
             {
                 if (_aliases.TryGetValue(child.Item2, out var oids))
@@ -362,7 +365,8 @@ namespace ImportLocations
                 else
                     _aliases.Add(child.Item2, [child.Item1]);
                 
-                LoadGeographicLocation(child.Item1, true);
+                var childLocation = LoadGeographicLocation(child.Item1, true);
+                parent.Children.Add(child.Item2, childLocation);
             }
 
             parent.ChildrenLoaded = true;
@@ -421,7 +425,8 @@ namespace ImportLocations
 
             if (recursionLevel-- > 0)
             {
-                LoadChildren(location);
+                if (!location.ChildrenLoaded)
+                    LoadChildren(location);
                 foreach (var child in location.Children.Values)
                 {
                     LoadGeographicLocation(child.Oid, loadAliases, recursionLevel);
@@ -467,10 +472,11 @@ namespace ImportLocations
             return LoadGeographicLocation(oid, true);
         }
 
-        private GeographicLocation AddGeographicLocation(long? oid, long? pid, long? practiceAreaId, string name)
+        private GeographicLocation AddGeographicLocation(long oid, long pid, long? practiceAreaId, string name, bool isSystemOwned)
         {
-            oid ??= GetNextOid();
-            var parent = (pid == null) ? null : LoadGeographicLocation(pid.Value, true, 1); // includes children
+            if (oid < 1)
+                oid = GetNextOid();
+            var parent = (pid == 0) ? null : LoadGeographicLocation(pid, true, 1); // includes children
             int index;
             if (parent == null)
             {
@@ -479,20 +485,22 @@ namespace ImportLocations
             }
             else
             {
+                if (!parent.ChildrenLoaded)
+                    LoadChildren(parent);
                 index = (parent.Children.Count == 0) ? 0 : parent.Children.Values.Max(entity => entity.Index) + 1;
                 practiceAreaId ??= parent.PracticeAreaId;
             }
 
-            var description = name + "-RS-Test";
+            var description = name;
 
-            // Connect to the database and load the world and continent records
             try
             {
-                var pidstr = (pid == null) ? "NULL" : pid.ToString();
+                var pidstr = (pid == 0) ? "NULL" : pid.ToString();
                 var n = name.Replace("'", "''");
                 var d = description.Replace("'", "''");
+                var iso = isSystemOwned ? 1 : 0;
                 using var command = new SqlCommand($"INSERT [dbo].[t_GeographicLocation] ([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorID],[PracticeAreaID],[CreationSession]) " +
-                                                   $"VALUES({oid}, {pidstr}, 1, N'{n}', {index}, N'{d}', '{_startTime}', {_settings.CreatorId}, {practiceAreaId}, '{_creationSession}')", _connection);
+                                                   $"VALUES({oid}, {pidstr}, {iso}, N'{n}', {index}, N'{d}', '{_startTime}', {_settings.CreatorId}, {practiceAreaId}, '{_creationSession}')", _connection);
                 var result = command.ExecuteNonQuery();
                 if (result != 1)
                     throw new InvalidOperationException($"Insert failed for {name}");
@@ -506,8 +514,8 @@ namespace ImportLocations
                 throw;
             }
 
-            var location = new GeographicLocation(oid.Value, pid, name, index, description, practiceAreaId.Value, true); // TODO : isSystemOwned
-            _locations.Add(oid.Value, location);
+            var location = new GeographicLocation(oid, pid, name, index, description, practiceAreaId.Value, isSystemOwned);
+            _locations.Add(oid, location);
             parent?.Children.Add(name, location);
 
             AddAliasIfNotPresent(location, name, true);
@@ -536,7 +544,7 @@ namespace ImportLocations
             }
              
             var aliasOid = GetNextOid();
-            var description = a + "-RS-Test";
+            var description = alias;
             var d = description.Replace("'", "''");
             var practiceAreaId = location.PracticeAreaId;
             var isPrimaryInt = isPrimary ? 1 : 0;

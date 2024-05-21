@@ -30,6 +30,7 @@ public class Settings
         public string? AliasOf { get; set; } = null;        // The value in the column can be an alias of the entity identified by another column
         public bool MustExist { get; set; } = false;
         public bool Optional { get; set; } = false;
+        public bool IsSystemOwned { get; set; } = false;
     }
 
     public class Preset
