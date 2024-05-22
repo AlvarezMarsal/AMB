@@ -2,7 +2,6 @@
 using OfficeOpenXml;
 using System.Data.SqlClient;
 using System.Diagnostics;
-using OfficeOpenXml.FormulaParsing.Excel.Functions.Information;
 
 
 
@@ -357,7 +356,6 @@ namespace ImportLocations
             var children = Select<(long,string)>($"SELECT [OID], [Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [PID] = {parent.Oid}", 
                 reader => new (reader.GetInt64(0), reader.GetString(1)));
             
-            var toBeLoaded = new List<long>();
             foreach (var child in children)
             {
                 if (_aliases.TryGetValue(child.Item2, out var oids))

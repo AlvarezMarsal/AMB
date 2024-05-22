@@ -9,37 +9,30 @@
     },
     {
       "Name": "Latin America",
-      "Oid": 20004,
       "Pid": 20000
     },
     {
       "Name": "Europe",
-      "Oid": 20006,
       "Pid": 20000
     },
     {
       "Name": "Middle East",
-      "Oid": 20008,
       "Pid": 20000
     },
     {
       "Name": "North Asia",
-      "Oid": 20022,
       "Pid": 20000
     },
     {
       "Name": "Central Asia",
-      "Oid": 20024,
       "Pid": 20000
     },
     {
       "Name": "Southeast Asia & Australia (SEAA)",
-      "Oid": 20026,
       "Pid": 20000
     },
     {
       "Name": "Africa",
-      "Oid": 20014,
       "Pid": 20000
     },
     {
