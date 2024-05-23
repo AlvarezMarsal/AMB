@@ -31,6 +31,7 @@ public class Settings
         public bool MustExist { get; set; } = false;
         public bool Optional { get; set; } = false;
         public bool IsSystemOwned { get; set; } = false;
+        public List<string> ExcludedValues { get; set; } = [];
     }
 
     public class Preset

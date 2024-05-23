@@ -18,6 +18,7 @@ internal class ColumnDefinition
     public GeographicLocation? AssignedGeographicLocation { get; set; }
     public string CurrentValue { get; set; } = "";
     public bool IsSystemOwned => SettingsDefinition.IsSystemOwned;
+    public List<string> Exclusions => SettingsDefinition.ExcludedValues;
 
     public ColumnDefinition(Settings.ColumnDefinition columnDefinition, bool spreadsheetIsOneBased)
     {
@@ -27,6 +28,6 @@ internal class ColumnDefinition
 
     public override string ToString()
     {
-        return $"{ColumnName} {Tag}";
+        return $"{ColumnName} {Tag} '{CurrentValue}'";
     }
 }

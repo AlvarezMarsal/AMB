@@ -16,6 +16,14 @@ namespace ImportLocations
         private readonly Dictionary<long, GeographicLocation> _locations = new();
         private readonly SortedList<string, HashSet<long>> _aliases = [];
         private readonly string _collation = "COLLATE Latin1_General_100_BIN2";
+        // ReSharper disable once CollectionNeverUpdated.Local
+        private static readonly HashSet<string> Breakpoints;
+        
+        static Program()
+        {
+            Breakpoints = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            Breakpoints.Add("Morton Grove");
+        }
 
         //"D:\AMB\World Cities.xlsx" "Cities" "B1000713:H1048552" . AMBenchmark_DB 1
         static void Main(string[] args)
@@ -63,7 +71,6 @@ namespace ImportLocations
                 {
                     _connection.Open();
                     CreateViews();
-                    // Dump();
                     EnforcePresets();
 
                     foreach (var importFile in _settings.ImportFiles)
@@ -189,8 +196,22 @@ namespace ImportLocations
                 foreach (var cd in columnDefinitions)
                 {
                     cd.CurrentValue = sheet.Cells[row, cd.ColumnNumber].Text.Trim();
-                    if (cd.CurrentValue != cd.AssignedGeographicLocation?.Name)
-                        cd.AssignedGeographicLocation = null;
+                    cd.AssignedGeographicLocation = null;
+                }
+                
+                foreach (var cd in columnDefinitions)
+                {
+                    if (cd.Exclusions.Contains(cd.CurrentValue))
+                    {
+                        skipRow = true;
+                        break;
+                    }
+                    
+                    if (Debugger.IsAttached && Breakpoints.Contains(cd.CurrentValue))
+                    {
+                        Debug.WriteLine(cd.ToString());
+                        Debugger.Break();
+                    }
 
                     // If a non-optional cell is empty, that indicates the end of the data
                     // (if we don't have a predefined range).
@@ -403,6 +424,20 @@ namespace ImportLocations
                     else
                         existingAliases.Add(oid);
                 }
+                
+                var n = location.Name.Replace("'", "''");
+                using (var command = new SqlCommand($"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid} AND [Alias] <> N'{n}'", _connection))
+                {
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
+                    {
+                        var alias = reader.GetString(0);
+                        if (!_aliases.TryGetValue(alias, out var existingAliases))
+                            _aliases.Add(alias, [oid]);
+                        else
+                            existingAliases.Add(oid);
+                    }
+                }
 
                 if (loadAliases)
                 {
@@ -612,7 +647,8 @@ namespace ImportLocations
                 var names = Select($"SELECT [Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [OID] = {child} ORDER BY IsPrimary DESC, Name ASC",
                     reader => reader.GetString(0));
                 var n = string.Join(", ", names);
-                Debug.WriteLine($"{child} {n}");
+                if (Debugger.IsAttached)
+                    Debug.WriteLine($"{child} {n}");
                 file.WriteLine($"{child} {n}");
                 DumpLocationsUnder(child, indent+1, file);
             }

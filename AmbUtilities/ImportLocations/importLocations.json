@@ -1,11 +1,15 @@
 {
   "ConnectionString": "Server=.;Database=AMBenchmark_DB;Integrated Security=True;",
-  "CreatorId": 1003378,
+  "CreatorId": 100,
   "Presets": [
     {
       "Name": "World",
       "Oid": 20000,
       "Pid": null
+    },
+    {
+      "Name": "North America",
+      "Pid": 20000
     },
     {
       "Name": "Latin America",
@@ -103,7 +107,8 @@
           "Column": "C",
           "ParentOf": [ "F" ],
           "Optional": true,
-          "IsSystemOwned": true
+          "IsSystemOwned": true,
+          "ExcludedValues": [ "United States", "U.S. Virgin Islands" ]
         },
         {
           "Tag": "Alias1",
