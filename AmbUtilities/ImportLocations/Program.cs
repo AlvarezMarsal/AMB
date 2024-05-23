@@ -441,17 +441,15 @@ namespace ImportLocations
 
                 if (loadAliases)
                 {
-                    using (var command = new SqlCommand($"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid}", _connection))
+                    using var command = new SqlCommand($"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid}", _connection);
+                    using var reader = command.ExecuteReader();
+                    while (reader.Read())
                     {
-                        using var reader = command.ExecuteReader();
-                        while (reader.Read())
-                        {
-                            var alias = reader.GetString(0);
-                            if (!_aliases.TryGetValue(alias, out var existingAliases))
-                                _aliases.Add(alias, [oid]);
-                            else
-                                existingAliases.Add(oid);
-                        }
+                        var alias = reader.GetString(0);
+                        if (!_aliases.TryGetValue(alias, out var existingAliases))
+                            _aliases.Add(alias, [oid]);
+                        else
+                            existingAliases.Add(oid);
                     }
                 }
             }
@@ -607,19 +605,15 @@ namespace ImportLocations
             return Convert.ToInt64(command.Parameters["@oid"].Value);
         }
 
-        private IReadOnlyList<T> Select<T>(string query, Func<IDataReader, T> build)
+        private List<T> Select<T>(string query, Func<IDataReader, T> build)
         {
             var list = new List<T>();
-            using (var command = new SqlCommand(query, _connection))
+            using var command = new SqlCommand(query, _connection);
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
             {
-                using (var reader = command.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        var t = build(reader);
-                        list.Add(t);
-                    }
-                }
+                var t = build(reader);
+                list.Add(t);
             }
             return list;
         }
@@ -647,8 +641,8 @@ namespace ImportLocations
                 var names = Select($"SELECT [Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [OID] = {child} ORDER BY IsPrimary DESC, Name ASC",
                     reader => reader.GetString(0));
                 var n = string.Join(", ", names);
-                if (Debugger.IsAttached)
-                    Debug.WriteLine($"{child} {n}");
+                //if (Debugger.IsAttached)
+                //    Debug.WriteLine($"{child} {n}");
                 file.WriteLine($"{child} {n}");
                 DumpLocationsUnder(child, indent+1, file);
             }

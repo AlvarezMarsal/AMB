@@ -1,148 +1,148 @@
 {
-  "ConnectionString": "Server=.;Database=AMBenchmark_DB;Integrated Security=True;",
-  "CreatorId": 100,
-  "Presets": [
-    {
-      "Name": "World",
-      "Oid": 20000,
-      "Pid": null
-    },
-    {
-      "Name": "North America",
-      "Pid": 20000
-    },
-    {
-      "Name": "Latin America",
-      "Pid": 20000
-    },
-    {
-      "Name": "Europe",
-      "Pid": 20000
-    },
-    {
-      "Name": "Middle East",
-      "Pid": 20000
-    },
-    {
-      "Name": "North Asia",
-      "Pid": 20000
-    },
-    {
-      "Name": "Central Asia",
-      "Pid": 20000
-    },
-    {
-      "Name": "Southeast Asia & Australia (SEAA)",
-      "Pid": 20000
-    },
-    {
-      "Name": "Africa",
-      "Pid": 20000
-    },
-    {
-      "Name": "Antarctica",
-      "Pid": 20000
-    }
-  ],
-  "ImportFiles": [
-    {
-      "FilePath": "..\\..\\uscities.xlsx",
-      "Sheet": "Sheet1",
-      "FirstRow": 2,
-      "ColumnDefinitions": [
-        {
-          "Tag": "City",
-          "Column": "A",
-          "AliasOf": "B",
-          "IsSystemOwned": true
-        },
-        {
-          "Tag": "CityAscii",
-          "Column": "B",
-          "IsSystemOwned": true
-        },
-        {
-          "Tag": "StateId",
-          "Column": "C",
-          "AliasOf": "D",
-          "IsSystemOwned": true
-        },
-        {
-          "Tag": "StateName",
-          "Column": "D",
-          "ParentOf": [ "F" ],
-          "IsSystemOwned": true
-        },
-        {
-          "Tag": "CountyName",
-          "Column": "F",
-          "ParentOf": [ "B" ],
-          "IsSystemOwned": true
-        },
-        {
-          "Tag": "Country",
-          "Column": "R",
-          "ParentOf": [ "D" ],
-          "MustExist": true,
-          "IsSystemOwned": true
-        }
-      ]
-    },
+	"ConnectionString": "Server=.;Database=AMBenchmark_DB;Integrated Security=True;",
+	"CreatorId": 100,
+	"Presets": [
+		{
+			"Name": "World",
+			"Oid": 20000,
+			"Pid": null
+		},
+		{
+			"Name": "North America",
+			"Pid": 20000
+		},
+		{
+			"Name": "Latin America",
+			"Pid": 20000
+		},
+		{
+			"Name": "Europe",
+			"Pid": 20000
+		},
+		{
+			"Name": "Middle East",
+			"Pid": 20000
+		},
+		{
+			"Name": "North Asia",
+			"Pid": 20000
+		},
+		{
+			"Name": "Central Asia",
+			"Pid": 20000
+		},
+		{
+			"Name": "Southeast Asia & Australia (SEAA)",
+			"Pid": 20000
+		},
+		{
+			"Name": "Africa",
+			"Pid": 20000
+		},
+		{
+			"Name": "Antarctica",
+			"Pid": 20000
+		}
+	],
+	"ImportFiles": [
+		{
+			"FilePath": "..\\..\\uscities.xlsx",
+			"Sheet": "Sheet1",
+			"FirstRow": 2,
+			"ColumnDefinitions": [
+				{
+					"Tag": "City",
+					"Column": "A",
+					"AliasOf": "B",
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "CityAscii",
+					"Column": "B",
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "StateId",
+					"Column": "C",
+					"AliasOf": "D",
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "StateName",
+					"Column": "D",
+					"ParentOf": [ "F" ],
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "CountyName",
+					"Column": "F",
+					"ParentOf": [ "B" ],
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "Country",
+					"Column": "R",
+					"ParentOf": [ "D" ],
+					"MustExist": true,
+					"IsSystemOwned": true
+				}
+			]
+		},
 
-    {
-      "FilePath": "..\\..\\World Cities.xlsx",
-      "Sheet": "Cities",
-      "FirstRow": 1000713,
-      "LastRow": 1048552,
-      "ColumnDefinitions": [
-        {
-          "Tag": "Continent",
-          "Column": "B",
-          "ParentOf": [ "C" ],
-          "MustExist": true,
-          "IsSystemOwned": true
-        },
-        {
-          "Tag": "Country",
-          "Column": "C",
-          "ParentOf": [ "F" ],
-          "Optional": true,
-          "IsSystemOwned": true,
-          "ExcludedValues": [ "United States", "U.S. Virgin Islands" ]
-        },
-        {
-          "Tag": "Alias1",
-          "Column": "D",
-          "AliasOf": "C",
-          "Optional": true,
-          "IsSystemOwned": true
-        },
-        {
-          "Tag": "Alias2",
-          "Column": "E",
-          "AliasOf": "C",
-          "Optional": true,
-          "IsSystemOwned": true
-        },
-        {
-          "Tag": "State",
-          "Column": "F",
-          "ParentOf": [ "H" ],
-          "Optional": true,
-          "IsSystemOwned": true
-        },
-        {
-          "Tag": "City",
-          "Column": "G",
-          "AliasOf": "H",
-          "IsSystemOwned": true
-        },
-        {
-          "Tag": "CityAscii",
-          "Column": "H",
-          "IsSystemOwned": true
-        }
-      ]
-    }
-  ]
+		{
+			"FilePath": "..\\..\\World Cities.xlsx",
+			"Sheet": "Cities",
+			"FirstRow": 1000713,
+			"LastRow": 1048552,
+			"ColumnDefinitions": [
+				{
+					"Tag": "Continent",
+					"Column": "B",
+					"ParentOf": [ "C" ],
+					"MustExist": true,
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "Country",
+					"Column": "C",
+					"ParentOf": [ "F" ],
+					"Optional": true,
+					"IsSystemOwned": true,
+					"ExcludedValues": [ "United States", "U.S. Virgin Islands" ]
+				},
+				{
+					"Tag": "Alias1",
+					"Column": "D",
+					"AliasOf": "C",
+					"Optional": true,
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "Alias2",
+					"Column": "E",
+					"AliasOf": "C",
+					"Optional": true,
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "State",
+					"Column": "F",
+					"ParentOf": [ "H" ],
+					"Optional": true,
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "City",
+					"Column": "G",
+					"AliasOf": "H",
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "CityAscii",
+					"Column": "H",
+					"IsSystemOwned": true
+				}
+			]
+		}
+	]
 }
