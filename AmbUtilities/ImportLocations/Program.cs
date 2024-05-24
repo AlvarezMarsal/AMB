@@ -15,14 +15,14 @@ namespace ImportLocations
         private readonly Guid _creationSession;
         private readonly Dictionary<long, GeographicLocation> _locations = new();
         private readonly SortedList<string, HashSet<long>> _aliases = [];
-        private readonly string _collation = "COLLATE Latin1_General_100_BIN2";
+        private string Collation => "COLLATE " + _settings.Collation;
         // ReSharper disable once CollectionNeverUpdated.Local
         private static readonly HashSet<string> Breakpoints;
         
         static Program()
         {
             Breakpoints = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            Breakpoints.Add("Morton Grove");
+            // Breakpoints.Add("Morton Grove");
         }
 
         //"D:\AMB\World Cities.xlsx" "Cities" "B1000713:H1048552" . AMBenchmark_DB 1
@@ -105,8 +105,8 @@ namespace ImportLocations
                         	SELECT L.[OID], ISNULL(L.[PID],0) AS PID, A.[Alias] AS [Name], 0 AS IsPrimary
                         	FROM [dbo].[t_GeographicLocationAlias] A 
                         	JOIN [dbo].[t_GeographicLocation] L ON L.OID = A.GeographicLocationID
-                        	WHERE A.Alias <> L.Name COLLATE Latin1_General_100_BIN2
-                        """;
+                        	WHERE A.Alias <> L.Name
+                        """ + " " + Collation;
             using var command = new SqlCommand(view, _connection);
             command.ExecuteNonQuery();
         }
@@ -130,7 +130,7 @@ namespace ImportLocations
                     
                     var n = preset.Name.Replace("'", "''");
                     var query = $"SELECT [OID], [PID] FROM [dbo].[vw_GeographicLocationNames] " +
-                                $"WHERE [NAME] = N'{n}' {_collation} AND [PID] = {pid}";
+                                $"WHERE [NAME] = N'{n}' {Collation} AND [PID] = {pid}";
                     if (preset.Oid != 0)
                         query += $" AND [OID] = {preset.Oid}";
                     
@@ -482,7 +482,7 @@ namespace ImportLocations
 
             var n = name.Replace("'", "''");
             var query = $"SELECT V.[OID] FROM [dbo].[vw_GeographicLocationNames] V " +
-                        $"WHERE V.[Name] = N'{n}' {_collation}";
+                        $"WHERE V.[Name] = N'{n}' {Collation}";
             if (pid != null)
                 query += $" AND V.[PID] = {pid}";
 
@@ -562,7 +562,7 @@ namespace ImportLocations
             try
             {
                 using var command = new SqlCommand($"SELECT COUNT(*) FROM [dbo].[vw_GeographicLocationNames] " +
-                                                   $"WHERE [Name] = N'{a}' {_collation} AND [OID] = {location.Oid}",
+                                                   $"WHERE [Name] = N'{a}' {Collation} AND [OID] = {location.Oid}",
                                                    _connection);
                 var result = command.ExecuteScalar();
                 if ((result is long and > 0))

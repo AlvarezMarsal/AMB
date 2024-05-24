@@ -46,4 +46,5 @@ public class Settings
     public string? CreationSession { get; set; } = null;
     public List<Preset> Presets { get; set; } = [];
     public List<ImportFileInfo> ImportFiles { get; set; } = [];
+    public string Collation { get; set; } = "Latin1_General_100_BIN2";
 }

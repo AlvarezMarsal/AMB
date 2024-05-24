@@ -1,6 +1,7 @@
 {
 	"ConnectionString": "Server=.;Database=AMBenchmark_DB;Integrated Security=True;",
 	"CreatorId": 100,
+	"Collation": "SQL_Latin1_General_CP1_CI_AS",
 	"Presets": [
 		{
 			"Name": "World",
@@ -93,7 +94,6 @@
 			"FilePath": "..\\..\\World Cities.xlsx",
 			"Sheet": "Cities",
 			"FirstRow": 1000713,
-			"LastRow": 1048552,
 			"ColumnDefinitions": [
 				{
 					"Tag": "Continent",
