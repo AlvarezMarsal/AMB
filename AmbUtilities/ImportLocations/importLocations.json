@@ -1,7 +1,8 @@
 {
 	"ConnectionString": "Server=.;Database=AMBenchmark_DB;Integrated Security=True;",
 	"CreatorId": 100,
-	"Collation": "SQL_Latin1_General_CP1_CI_AS",
+	"NameCollation": "SQL_Latin1_General_CP1_CI_AS",
+	"AliasCollation": "Latin1_General_100_BIN2",
 	"Presets": [
 		{
 			"Name": "World",
