@@ -62,17 +62,18 @@ namespace ImportLocations
         {
             _settings = settings;
             _connection = new AmbDbConnection(_settings.ConnectionString);
-            _creationSession = (_settings.CreationSession == null) ? Guid.NewGuid() : Guid.Parse(_settings.CreationSession);
+            _creationSession = Guid.Parse(_settings.CreationSession);
         }
 
         private void Run()
         {
             using (_connection)
             {
+
                 try
                 {
-                    _connection.Open();
                     CreateViews();
+                    Dump();
                     EnforcePresets();
 
                     foreach (var importFile in _settings.Imports)
@@ -110,6 +111,34 @@ namespace ImportLocations
                         	WHERE A.Alias <> L.Name {AliasCollation}
                         """;
             _connection.ExecuteNonQuery(view);
+
+            try
+            {
+                var disableIndex = "ALTER TABLE [dbo].[t_GeographicLocationAlias] DROP CONSTRAINT [UQ__t_Geogra__4C49A2004F2CE66A]";
+                _connection.ExecuteNonQuery(disableIndex);
+            }
+            catch
+            {
+            }
+            
+            try
+            {
+                var changeCollation = $"ALTER TABLE [dbo].[t_GeographicLocationAlias] ALTER COLUMN [Alias] NVARCHAR(512) {AliasCollation}";
+                _connection.ExecuteNonQuery(changeCollation);
+                
+                var createIndex = """
+                                    ALTER TABLE [dbo].[t_GeographicLocationAlias] ADD  CONSTRAINT [UQ__t_Geogra__4C49A2004F2CE66A] UNIQUE NONCLUSTERED
+                                    ([GeographicLocationID] ASC, [Alias] ASC)
+                                    WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+                                    """;
+                _connection.ExecuteNonQuery(createIndex);
+                
+                //var enableIndex = $"ALTER TABLE [dbo].[t_GeographicLocationAlias] CHECK CONSTRAINT [UQ__t_Geogra__4C49A2004F2CE66A]";
+                //_connection.ExecuteNonQuery(enableIndex);
+            }
+            catch
+            {
+            }
         }
         
         private void DeleteViews()
@@ -134,20 +163,20 @@ namespace ImportLocations
                     if (preset.Oid != 0)
                         query += $" AND [OID] = {preset.Oid}";
 
-                    using var reader = _connection.ExecuteReader(query);
-                    if (reader.Read())
+                    using (var reader = _connection.ExecuteReader(query))
                     {
-                        var oid = reader.GetInt64(0);
-                        if ((preset.Oid != 0) && (preset.Oid != oid))
-                            throw new InvalidOperationException($"Missing preset {preset.Name}");
-                        var npid = reader.GetInt64(1);
-                        if (npid != pid)
-                            throw new InvalidOperationException($"Missing preset {preset.Name}");
+                        if (reader.Read())
+                        {
+                            var oid = reader.GetInt64(0);
+                            if ((preset.Oid != 0) && (preset.Oid != oid))
+                                throw new InvalidOperationException($"Missing preset {preset.Name}");
+                            var npid = reader.GetInt64(1);
+                            if (npid != pid)
+                                throw new InvalidOperationException($"Missing preset {preset.Name}");
+                            continue;
+                        }
                     }
-                    else
-                    {
-                        AddGeographicLocation(0, pid, 2501, preset.Name, true);
-                    }
+                    AddGeographicLocation(0, pid, 2501, preset.Name, true);
                 }
                 catch (Exception e)
                 {
@@ -359,7 +388,7 @@ namespace ImportLocations
         private void LoadChildren(GeographicLocation parent)
         {
             // Connect to the database and load the world and continent records
-            var children = Select<(long,string)>($"SELECT [OID], [Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [PID] = {parent.Oid}", 
+            var children = _connection.Select<(long,string)>($"SELECT [OID], [Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [PID] = {parent.Oid}", 
                 reader => new (reader.GetInt64(0), reader.GetString(1)));
             
             foreach (var child in children)
@@ -575,20 +604,6 @@ namespace ImportLocations
 
         }
         
-
-        private List<T> Select<T>(string query, Func<IDataReader, T> build)
-        {
-            var list = new List<T>();
-            using var command = _connection.CreateCommand(query);
-            using var reader = command.ExecuteReader();
-            while (reader.Read())
-            {
-                var t = build(reader);
-                list.Add(t);
-            }
-            return list;
-        }
-
         private void Dump()
         {
             const string filename = "dump.txt";
@@ -597,25 +612,41 @@ namespace ImportLocations
                 File.Delete(filename);
 
             using var file = File.CreateText(filename);
-            DumpLocationsUnder(0, 0, file);
+            Dump(0, 0, file);
         }
 
-        private void DumpLocationsUnder(long pid, int indent, StreamWriter file)
+        private void Dump(long pid, int indent, StreamWriter file)
         {
-            var children = Select($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE ISNULL([PID],0) = {pid} ORDER BY [Name]",
-                reader => reader.GetInt64(0));
-            
-            foreach (var child in children)
+            while (true)
             {
-                for (var i=0; i < indent; ++i)
+                var children = _connection.Select($"SELECT [OID],[Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [PID] = ${pid} ORDER BY [OID], [IsPrimary], [Name]", reader => new { oid = reader.GetInt64(0), name = reader.GetString(1) });
+
+                if (children.Count == 0) return;
+
+                for (var i = 0; i < indent; ++i) 
                     file.Write("\t");
-                var names = Select($"SELECT [Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [OID] = {child} ORDER BY IsPrimary DESC, Name ASC",
-                    reader => reader.GetString(0));
-                var n = string.Join(", ", names);
-                //if (Debugger.IsAttached)
-                //    Debug.WriteLine($"{child} {n}");
-                file.WriteLine($"{child} {n}");
-                DumpLocationsUnder(child, indent+1, file);
+                var j = 0;
+                file.Write($"{children[j].oid: D10}\t{children[j].name}");
+                for (++j; j < children.Count; ++j)
+                {
+                    if (children[j].oid == children[j - 1].oid)
+                    {
+                        file.Write($", {children[j].name}");
+                    }
+                    else
+                    {
+                        file.WriteLine();
+                        Dump(children[j - 1].oid, indent + 1, file);
+                        for (var i = 0; i < indent; ++i) 
+                            file.Write("\t");
+                        file.Write($"{children[j].oid: D10}\t{children[j].name}");
+                    }
+                }
+
+                file.WriteLine();
+                file.Flush();
+                pid = children[j - 1].oid;
+                indent += 1;
             }
         }
     }

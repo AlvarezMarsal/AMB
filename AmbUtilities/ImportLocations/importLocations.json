@@ -54,36 +54,36 @@
 			"Columns": [
 				{
 					"Tag": "City",
-					"Column": "A",
+					"Name": "A",
 					"AliasOf": "B",
 					"IsSystemOwned": true
 				},
 				{
 					"Tag": "CityAscii",
-					"Column": "B",
+					"Name": "B",
 					"IsSystemOwned": true
 				},
 				{
 					"Tag": "StateId",
-					"Column": "C",
+					"Name": "C",
 					"AliasOf": "D",
 					"IsSystemOwned": true
 				},
 				{
 					"Tag": "StateName",
-					"Column": "D",
+					"Name": "D",
 					"ParentOf": [ "F" ],
 					"IsSystemOwned": true
 				},
 				{
 					"Tag": "CountyName",
-					"Column": "F",
+					"Name": "F",
 					"ParentOf": [ "B" ],
 					"IsSystemOwned": true
 				},
 				{
 					"Tag": "Country",
-					"Column": "R",
+					"Name": "R",
 					"ParentOf": [ "D" ],
 					"MustExist": true,
 					"IsSystemOwned": true
@@ -98,14 +98,14 @@
 			"Columns": [
 				{
 					"Tag": "Continent",
-					"Column": "B",
+					"Name": "B",
 					"ParentOf": [ "C" ],
 					"MustExist": true,
 					"IsSystemOwned": true
 				},
 				{
 					"Tag": "Country",
-					"Column": "C",
+					"Name": "C",
 					"ParentOf": [ "F" ],
 					"Optional": true,
 					"IsSystemOwned": true,
@@ -113,34 +113,34 @@
 				},
 				{
 					"Tag": "Alias1",
-					"Column": "D",
+					"Name": "D",
 					"AliasOf": "C",
 					"Optional": true,
 					"IsSystemOwned": true
 				},
 				{
 					"Tag": "Alias2",
-					"Column": "E",
+					"Name": "E",
 					"AliasOf": "C",
 					"Optional": true,
 					"IsSystemOwned": true
 				},
 				{
 					"Tag": "State",
-					"Column": "F",
+					"Name": "F",
 					"ParentOf": [ "H" ],
 					"Optional": true,
 					"IsSystemOwned": true
 				},
 				{
 					"Tag": "City",
-					"Column": "G",
+					"Name": "G",
 					"AliasOf": "H",
 					"IsSystemOwned": true
 				},
 				{
 					"Tag": "CityAscii",
-					"Column": "H",
+					"Name": "H",
 					"IsSystemOwned": true
 				}
 			]
