@@ -73,7 +73,6 @@ namespace ImportLocations
                 try
                 {
                     CreateViews();
-                    Dump();
                     EnforcePresets();
 
                     foreach (var importFile in _settings.Imports)
@@ -626,7 +625,7 @@ namespace ImportLocations
                 for (var i = 0; i < indent; ++i) 
                     file.Write("\t");
                 var j = 0;
-                file.Write($"{children[j].oid: D10}\t{children[j].name}");
+                file.Write($"{children[j].oid: 10}\t{children[j].name}");
                 for (++j; j < children.Count; ++j)
                 {
                     if (children[j].oid == children[j - 1].oid)
@@ -639,7 +638,7 @@ namespace ImportLocations
                         Dump(children[j - 1].oid, indent + 1, file);
                         for (var i = 0; i < indent; ++i) 
                             file.Write("\t");
-                        file.Write($"{children[j].oid: D10}\t{children[j].name}");
+                        file.Write($"{children[j].oid: 10}\t{children[j].name}");
                     }
                 }
 
