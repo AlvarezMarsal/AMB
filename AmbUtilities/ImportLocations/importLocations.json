@@ -46,12 +46,12 @@
 			"Pid": 20000
 		}
 	],
-	"ImportFiles": [
+	"Imports": [
 		{
 			"FilePath": "..\\..\\uscities.xlsx",
 			"Sheet": "Sheet1",
 			"FirstRow": 2,
-			"ColumnDefinitions": [
+			"Columns": [
 				{
 					"Tag": "City",
 					"Column": "A",
@@ -95,7 +95,7 @@
 			"FilePath": "..\\..\\World Cities.xlsx",
 			"Sheet": "Cities",
 			"FirstRow": 1000713,
-			"ColumnDefinitions": [
+			"Columns": [
 				{
 					"Tag": "Continent",
 					"Column": "B",
