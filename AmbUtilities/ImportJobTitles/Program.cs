@@ -3,6 +3,7 @@ using OfficeOpenXml;
 using System.Data.SqlClient;
 using System.Diagnostics;
 using AmbHelper;
+using ImportJobTitles;
 
 
 
@@ -19,15 +20,14 @@ namespace ImportLocations
         private string NameCollation => "COLLATE " + _settings.NameCollation;
         private string AliasCollation => "COLLATE " + _settings.AliasCollation;
         // ReSharper disable once CollectionNeverUpdated.Local
-        private static readonly HashSet<string> Breakpoints;
+        //private static readonly HashSet<string> Breakpoints;
 
         static Program()
         {
-            Breakpoints = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            //Breakpoints = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             // Breakpoints.Add("Morton Grove");
         }
 
-        //"D:\AMB\World Cities.xlsx" "Cities" "B1000713:H1048552" . AMBenchmark_DB 1
         static void Main(string[] args)
         {
             if (args.Length > 1)
@@ -77,7 +77,7 @@ namespace ImportLocations
 
                     foreach (var import in _settings.Imports)
                     {
-                        //Run(import);
+                        ProcessImport(import);
                     }
 
                 }
@@ -163,203 +163,268 @@ namespace ImportLocations
                 }
             }
         }
+#endif
 
-        private void Run(Settings.ImportFileInfo importInfo)
+        private void ProcessImport(Settings.Import import)
         {
-            if (!File.Exists(importInfo.FilePath))
-                throw new FileNotFoundException(importInfo.FilePath);
+            if (!File.Exists(import.FilePath))
+                throw new FileNotFoundException(import.FilePath);
 
-            Console.WriteLine($"Processing {importInfo.FilePath}");
+            Console.WriteLine($"Processing {import.FilePath}");
+            using var importer = new ImportProcessor(_settings, import);
+            importer.Run();
+        }
 
-            using var package = new ExcelPackage(new FileInfo(importInfo.FilePath));
-            var isOneBased = package.Compatibility.IsWorksheets1Based;
-            using var sheet = package.Workbook.Worksheets[importInfo.Sheet];
+        /*
+        private void ProcessImport(Settings.Import importInfo, ExcelWorksheet sheet, bool isOneBased, List<ColumnDefinition> columnDefinitions)
+        {
+            // Set up for finding the first and last row, if they aren't given
+            var scanningState = new ScanningState(importInfo, sheet, isOneBased);
 
-            var top = importInfo.FirstRow;
-            var scanningTop = (top < 0);
-            if (scanningTop)
-                top = isOneBased ? 1 : 0;
-            var bottom = importInfo.LastRow;
-            var scanningBottom = (bottom < 0);
-            if (scanningBottom)
-                bottom = int.MaxValue;
-            var dataStarted = !scanningTop;
-            var dataEnded = false;
-
-            var columnDefinitions = PreprocessColumnDefinitions(importInfo, isOneBased);
-
-            // For each row in the spreadsheet, process each column
-            for (var row = top; row <= bottom; ++row)
+            // If we aren't given the first row, we find it
+            FindFirstRow(importInfo, sheet);
+            if (scanningState.ScanningTop)
+            while (scanningState.Row <= scanningState.Bottom)
             {
-                if (row % 100 == 0)
-                    Console.WriteLine($"Processing row {row}");
-
-                var skipRow = false;
-                // reset, but keep any useful results from the last time through the loop
-                foreach (var cd in columnDefinitions)
+                try
                 {
-                    cd.CurrentValue = sheet.Cells[row, cd.ColumnNumber].Text.Trim();
-                    cd.AssignedGeographicLocation = null;
-                }
-
-                foreach (var cd in columnDefinitions)
-                {
-                    if (cd.Exclusions.Contains(cd.CurrentValue))
+                    var ok = ProcessRow(importInfo, columnDefinitions, scanningState);
+                    if (!ok)
                     {
-                        skipRow = true;
-                        break;
+                        Console.WriteLine($"Detected end of data at row {scanningState.Row}");
+                        return;
                     }
-
-                    if (Debugger.IsAttached && Breakpoints.Contains(cd.CurrentValue))
-                    {
-                        Debug.WriteLine(cd.ToString());
+                    scanningState.Row++;
+                }
+                catch (Exception e)
+                {
+                    var e1 = new Exception($"Error on row {scanningState.Row}", e);
+                    Console.WriteLine(e1);
+                    if (Debugger.IsAttached)
                         Debugger.Break();
-                    }
-
-                    // If a non-optional cell is empty, that indicates the end of the data
-                    // (if we don't have a predefined range).
-                    if (string.IsNullOrEmpty(cd.CurrentValue) && !cd.SettingsDefinition.Optional)
-                    {
-                        if (scanningTop && !dataStarted)
-                        {
-                            skipRow = true;
-                            break;
-                        }
-
-                        if (scanningBottom)
-                        {
-                            dataEnded = true;
-                            Console.WriteLine($"Detected end of data at row {row}");
-                            break;
-                        }
-
-                        throw new InvalidOperationException($"No value for cell {cd.ColumnNumber}:{row}");
-                    }
-                }
-
-                if (skipRow)
-                    continue;
-                if (dataEnded)
-                    break;
-                if (!dataStarted)
-                {
-                    Console.WriteLine($"Detected start of data at row {row}");
-                    dataStarted = true;
-                }
-
-                // process each in turn.  The way PreprocessColumnDefinitions works, we are guaranteed
-                // that parents are processed before children.
-                foreach (var cd in columnDefinitions)
-                {
-                    if (cd.AssignedGeographicLocation == null)
-                        ProcessCell(cd);
-                }
-
-                // Now for aliases
-                foreach (var cd in columnDefinitions)
-                {
-                    if (!string.IsNullOrEmpty(cd.CurrentValue) && (cd.AliasOf != null))
-                    {
-                        AddAliasIfNotPresent(cd.AliasOf.AssignedGeographicLocation!, cd.CurrentValue, false);
-                    }
-                }
-            }
-
-            return;
-
-            void ProcessCell(ColumnDefinition coldef)
-            {
-                // Make sure that the columns it requires have been satisfied
-                if (coldef.Parent is { AssignedGeographicLocation: null })
-                {
-                    ProcessCell(coldef.Parent);
-                    if (coldef.Parent.AssignedGeographicLocation == null)
-                        throw new InvalidOperationException("Parent cell is empty");
-                }
-
-                if (coldef.AliasOf is { AssignedGeographicLocation: null })
-                {
-                    ProcessCell(coldef.AliasOf);
-                    if (coldef.AliasOf.AssignedGeographicLocation == null)
-                        throw new InvalidOperationException("Predecessor cell is empty");
-                }
-
-                // If the cell is empty, it must be optional (otherwise we threw an exception above)
-                // Since it might still be someone's parent, we use this cell's parent as its
-                // assigned location.
-                if (string.IsNullOrEmpty(coldef.CurrentValue))
-                {
-                    if (coldef.MustExist)
-                        throw new InvalidOperationException("Empty cell");
-                    if (coldef.AliasOf != null)
-                        coldef.AssignedGeographicLocation = coldef.AliasOf.AssignedGeographicLocation;
-                    else if (coldef.Parent != null)
-                        coldef.AssignedGeographicLocation = coldef.Parent.AssignedGeographicLocation;
-                }
-                else if (coldef.MustExist)
-                {
-                    coldef.AssignedGeographicLocation =
-                        LoadGeographicLocationByName(coldef.CurrentValue, null) ??
-                        throw new InvalidOperationException($"Missing {coldef.CurrentValue}");
-                }
-                else if (coldef.Parent != null)
-                {
-                    var pal = coldef.Parent.AssignedGeographicLocation!;
-                    coldef.AssignedGeographicLocation =
-                        LoadGeographicLocationByName(coldef.CurrentValue, pal.Oid) ??
-                        AddGeographicLocation(0, pal.Oid, pal.PracticeAreaId, coldef.CurrentValue, coldef.IsSystemOwned);
-                }
-
-                if (coldef.AliasOf != null)
-                {
-                    var pal = coldef.AliasOf.AssignedGeographicLocation!;
-                    coldef.AssignedGeographicLocation = pal;
-                    AddAliasIfNotPresent(coldef.AssignedGeographicLocation, coldef.CurrentValue, false);
+                    throw e1;
                 }
             }
         }
 
-        /// <summary>
-        /// Retusn a list of ColumnDefinitions in the order they should be processed.
-        /// </summary>
-        /// <param name="importInfo"></param>
-        /// <param name="spreadsheetIsOneBased"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
-        private List<ColumnDefinition> PreprocessColumnDefinitions(Settings.ImportFileInfo importInfo, bool spreadsheetIsOneBased)
+        private int FindFirstRow( Settings.Import importInfo, List<ColumnDefinition> columnDefinitions, 
+            ScanningState scanningState)
         {
-            // Parse our column definitions
-            var columnDefinitions = new SortedList<string, ColumnDefinition>(); // columnName -> ColumnDefinition
-            foreach (var icd in importInfo.ColumnDefinitions)
+            if (scanningState.Row % 100 == 0)
+                Console.WriteLine($"Processing row {scanningState.Row}");
+
+            // reset, but keep any useful results from the last time through the loop
+            LoadColumnValues(importInfo, columnDefinitions, scanningState.Sheet, scanningState.Row);
+
+            // See if we should ignore the row, or if we have reached the end of the data
+            foreach (var cd in columnDefinitions)
             {
-                var cd = new ColumnDefinition(icd, spreadsheetIsOneBased);
-                if (!columnDefinitions.TryAdd(cd.ColumnName, cd))
-                    throw new InvalidOperationException($"Duplicate column {cd.ColumnName}");
+                if (cd.Exclusions.Contains(cd.CurrentValue))
+                    return true;
+
+                //if (Debugger.IsAttached && Breakpoints.Contains(cd.CurrentValue))
+                //{
+                //    Debug.WriteLine(cd.ToString());
+                //    Debugger.Break();
+                //}
+
+                // If a non-optional cell is empty, that indicates the end of the data
+                // (if we don't have a predefined range).
+                if (string.IsNullOrEmpty(cd.CurrentValue) && !cd.SettingsDefinition.Optional)
+                {
+                    if (scanningState.ScanningTop && !scanningState.DataStarted)
+                        return true;
+                    if (scanningState.ScanningBottom)
+                    {
+                        scanningState.DataEnded = true;
+                        Console.WriteLine($"Detected end of data at row {scanningState.Row}");
+                        return false;
+                    }
+
+                    throw new InvalidOperationException($"No value for cell {cd.ColumnNumber}{scanningState.Row}");
+                }
             }
 
-            // Rearrange the 'AliasOf' and 'ParentOf' data
-            foreach (var cd in columnDefinitions.Values)
+            if (!scanningState.ScanningTop)
             {
-                foreach (var childColumnName in cd.SettingsDefinition.ParentOf)
-                {
-                    if (!columnDefinitions.TryGetValue(childColumnName, out var child))
-                        throw new InvalidOperationException($"Unknown parent {childColumnName}");
-                    if (child.Parent != null)
-                        throw new InvalidOperationException($"Duplicate parent {childColumnName}");
-                    child.Parent = cd;
-                }
+                Console.WriteLine($"Detected start of data at row {scanningState.Row}");
+                scanningState.DataStarted = true;
+            }
 
-                if (cd.SettingsDefinition.AliasOf != null)
+            // Process each cell in turn.  The way PreprocessColumnDefinitions works, we are guaranteed
+            // that parents are processed before children.
+            foreach (var cd in columnDefinitions)
+            {
+                if (cd.AssignedValue == null)
+                    ProcessCell(cd);
+            }
+
+            /*
+            // Now for aliases
+            foreach (var cd in columnDefinitions)
+            {
+                if (!string.IsNullOrEmpty(cd.CurrentValue) && (cd.AliasOf != null))
                 {
-                    if (!columnDefinitions.TryGetValue(cd.SettingsDefinition.AliasOf, out var aliased))
-                        throw new InvalidOperationException($"Unknown alias {cd.SettingsDefinition.AliasOf}");
-                    cd.AliasOf = aliased;
+                    AddAliasIfNotPresent(cd.AliasOf.AssignedGeographicLocation!, cd.CurrentValue, false);
+                }
+            }
+            *  /
+        }
+        */
+        /*
+        private bool ProcessRow(Settings.Import importInfo, List<ColumnDefinition> columnDefinitions, 
+            ScanningState scanningState)
+        {
+            if (scanningState.Row % 100 == 0)
+                Console.WriteLine($"Processing row {scanningState.Row}");
+
+            // reset, but keep any useful results from the last time through the loop
+            LoadColumnValues(importInfo, columnDefinitions, scanningState.Sheet, scanningState.Row);
+
+            // See if we should ignore the row, or if we have reached the end of the data
+            foreach (var cd in columnDefinitions)
+            {
+                if (cd.Exclusions.Contains(cd.CurrentValue))
+                    return true;
+
+                //if (Debugger.IsAttached && Breakpoints.Contains(cd.CurrentValue))
+                //{
+                //    Debug.WriteLine(cd.ToString());
+                //    Debugger.Break();
+                //}
+
+                // If a non-optional cell is empty, that indicates the end of the data
+                // (if we don't have a predefined range).
+                if (string.IsNullOrEmpty(cd.CurrentValue) && !cd.SettingsDefinition.Optional)
+                {
+                    if (scanningState.ScanningTop && !scanningState.DataStarted)
+                        return true;
+                    if (scanningState.ScanningBottom)
+                    {
+                        scanningState.DataEnded = true;
+                        Console.WriteLine($"Detected end of data at row {scanningState.Row}");
+                        return false;
+                    }
+
+                    throw new InvalidOperationException($"No value for cell {cd.ColumnNumber}{scanningState.Row}");
                 }
             }
 
-            return columnDefinitions.Values.ToList();
+            if (!scanningState.ScanningTop)
+            {
+                Console.WriteLine($"Detected start of data at row {scanningState.Row}");
+                scanningState.DataStarted = true;
+            }
+
+            // Process each cell in turn.  The way PreprocessColumnDefinitions works, we are guaranteed
+            // that parents are processed before children.
+            foreach (var cd in columnDefinitions)
+            {
+                if (cd.AssignedValue == null)
+                    ProcessCell(cd);
+            }
+
+            /*
+            // Now for aliases
+            foreach (var cd in columnDefinitions)
+            {
+                if (!string.IsNullOrEmpty(cd.CurrentValue) && (cd.AliasOf != null))
+                {
+                    AddAliasIfNotPresent(cd.AliasOf.AssignedGeographicLocation!, cd.CurrentValue, false);
+                }
+            }
+            *    /
         }
 
+        private void LoadColumnValues(Settings.Import importInfo, List<ColumnDefinition> columnDefinitions, 
+            ExcelWorksheet sheet, int row)
+        {
+            foreach (var cd in columnDefinitions)
+            {
+                var cv = sheet.Cells[row, cd.ColumnNumber].Text.Trim();
+                if (string.IsNullOrEmpty(cv))
+                {
+                    if (cd.BlankIsDitto)
+                    {
+                        // leave the preceeding value in place
+                    }
+                    else if (cd.Optional)
+                    {
+                        cd.CurrentValue = "";
+                        cd.AssignedValue = null;
+                    }
+                    else
+                    {
+                        throw new Exception($"No value for cell {cd.ColumnName}{row}");
+                    }
+                }
+                else
+                {
+                    if (cd.CurrentValue != cv)
+                    {
+                        cd.CurrentValue = cv;
+                        cd.AssignedValue = null;
+                    }
+                }
+            }
+        }
+
+
+        private void ProcessCell(ColumnDefinition coldef)
+        {
+            // Make sure that the columns it requires have been satisfied
+            if (coldef.Parent is { AssignedGeographicLocation: null })
+            {
+                ProcessCell(coldef.Parent);
+                if (coldef.Parent.AssignedGeographicLocation == null)
+                    throw new InvalidOperationException("Parent cell is empty");
+            }
+
+            if (coldef.AliasOf is { AssignedGeographicLocation: null })
+            {
+                ProcessCell(coldef.AliasOf);
+                if (coldef.AliasOf.AssignedGeographicLocation == null)
+                    throw new InvalidOperationException("Predecessor cell is empty");
+            }
+
+            // If the cell is empty, it must be optional (otherwise we threw an exception above)
+            // Since it might still be someone's parent, we use this cell's parent as its
+            // assigned location.
+            if (string.IsNullOrEmpty(coldef.CurrentValue))
+            {
+                if (coldef.MustExist)
+                    throw new InvalidOperationException("Empty cell");
+                if (coldef.AliasOf != null)
+                    coldef.AssignedGeographicLocation = coldef.AliasOf.AssignedGeographicLocation;
+                else if (coldef.Parent != null)
+                    coldef.AssignedGeographicLocation = coldef.Parent.AssignedGeographicLocation;
+            }
+            else if (coldef.MustExist)
+            {
+                coldef.AssignedGeographicLocation =
+                    LoadGeographicLocationByName(coldef.CurrentValue, null) ??
+                    throw new InvalidOperationException($"Missing {coldef.CurrentValue}");
+            }
+            else if (coldef.Parent != null)
+            {
+                var pal = coldef.Parent.AssignedGeographicLocation!;
+                coldef.AssignedGeographicLocation =
+                    LoadGeographicLocationByName(coldef.CurrentValue, pal.Oid) ??
+                    AddGeographicLocation(0, pal.Oid, pal.PracticeAreaId, coldef.CurrentValue, coldef.IsSystemOwned);
+            }
+
+            if (coldef.AliasOf != null)
+            {
+                var pal = coldef.AliasOf.AssignedGeographicLocation!;
+                coldef.AssignedGeographicLocation = pal;
+                AddAliasIfNotPresent(coldef.AssignedGeographicLocation, coldef.CurrentValue, false);
+            }
+        }
+    }
+        */
+ 
+
+#if false
         internal static int ColumnAlphaToColumnNumber(string alpha, bool isOneBased)
         {
             var result = 0;

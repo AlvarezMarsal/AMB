@@ -17,5 +17,6 @@ public partial class Settings
         public bool Optional { get; set; } = false;
         public bool IsSystemOwned { get; set; } = false;
         public List<string> ExcludedValues { get; set; } = [];
+        public bool BlankIsDitto { get; set; } = false;
     }
 }

@@ -1,0 +1,85 @@
+{
+	"ConnectionString": "Server=.;Database=AMBenchmark_DB;Integrated Security=True;",
+	"CreatorId": 100,
+	"___NameCollation": "SQL_Latin1_General_CP1_CI_AS",
+	"___AliasCollation": "Latin1_General_100_BIN2",
+	"___Presets": [
+		{
+			"Name": "World",
+			"Oid": 20000,
+			"Pid": null
+		},
+		{
+			"Name": "North America",
+			"Pid": 20000
+		},
+		{
+			"Name": "Latin America",
+			"Pid": 20000
+		},
+		{
+			"Name": "Europe",
+			"Pid": 20000
+		},
+		{
+			"Name": "Middle East",
+			"Pid": 20000
+		},
+		{
+			"Name": "North Asia",
+			"Pid": 20000
+		},
+		{
+			"Name": "Central Asia",
+			"Pid": 20000
+		},
+		{
+			"Name": "Southeast Asia & Australia (SEAA)",
+			"Pid": 20000
+		},
+		{
+			"Name": "Africa",
+			"Pid": 20000
+		},
+		{
+			"Name": "Antarctica",
+			"Pid": 20000
+		}
+	],
+	"Imports": [
+		{
+			"FilePath": "..\\..\\JobTitles_Map_05292024.xlsx",
+			"Sheet": "Job Titles by Taxonomy",
+			"FirstRow": 2,
+			"Columns": [
+				{
+					"Tag": "TaxonomyNode",
+					"Name": "A",
+					"BlankIsDitto": true
+				},
+				{
+					"Tag": "JobTitleName",
+					"Name": "B",
+					"BlankIsDitto": true,
+					"Optional": true
+				},
+				{
+					"Tag": "JobTitleDescription",
+					"Name": "C",
+					"BlankIsDitto": true,
+					"Optional": true
+				},
+				{
+					"Tag": "Alias",
+					"Name": "D",
+					"Optional": true
+				},
+				{
+					"Tag": "AliasDescription",
+					"Name": "E",
+					"Optional": true
+				}
+			]
+		}
+	]
+}
