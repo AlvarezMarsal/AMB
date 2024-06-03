@@ -17,7 +17,7 @@ namespace ImportJobTitles
         public readonly ExcelPackage Package;
         public readonly ExcelWorksheet Sheet;
         public bool IsOneBased => Package.Compatibility.IsWorksheets1Based;
-        public readonly List<ColumnDefinition> ColumnDefinitions;
+        public readonly ColumnDefinitionCollection ColumnDefinitions;
         private bool _disposed;
 
 
@@ -134,6 +134,15 @@ namespace ImportJobTitles
                     }
                     throw new InvalidOperationException($"No value for cell {cd.ColumnNumber}{row}");
                 }
+            }
+
+            var alias = ColumnDefinitions["Alias"];
+            if (alias.CurrentValue != "")
+            {
+                var jt = ColumnDefinitions["JobTitleName"];
+                Debug.Assert(jt.CurrentValue != "");
+                if (jt.CurrentValue != "")
+                    Console.WriteLine($"Processing row {row} with Alias = {alias.CurrentValue} and JobTitle = {jt.CurrentValue}");
             }
 
             // Process each cell in turn.  The way PreprocessColumnDefinitions works, we are guaranteed

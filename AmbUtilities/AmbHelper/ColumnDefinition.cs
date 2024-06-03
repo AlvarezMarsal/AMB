@@ -39,23 +39,24 @@ public class ColumnDefinition
     /// <param name="spreadsheetIsOneBased"></param>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException"></exception>
-    public static List<ColumnDefinition> PreprocessColumnDefinitions(Settings.Import importInfo, bool spreadsheetIsOneBased)
+    public static ColumnDefinitionCollection PreprocessColumnDefinitions(Settings.Import importInfo, bool spreadsheetIsOneBased)
     {
+        var list = new ColumnDefinitionCollection();
+
         // Parse our column definitions
-        var columnDefinitions = new SortedList<string, ColumnDefinition>(); // columnName -> ColumnDefinition
         foreach (var icd in importInfo.Columns)
         {
             var cd = new ColumnDefinition(icd, spreadsheetIsOneBased);
-            if (!columnDefinitions.TryAdd(cd.ColumnName, cd))
+            if (!list.TryAdd(cd))
                 throw new InvalidOperationException($"Duplicate column {cd.ColumnName}");
         }
 
         // Rearrange the 'AliasOf' and 'ParentOf' data
-        foreach (var cd in columnDefinitions.Values)
+        foreach (var cd in list)
         {
             foreach (var childColumnName in cd.SettingsDefinition.ParentOf)
             {
-                if (!columnDefinitions.TryGetValue(childColumnName, out var child))
+                if (!list.TryGetValue(childColumnName, out var child))
                     throw new InvalidOperationException($"Unknown parent {childColumnName}");
                 if (child.Parent != null)
                     throw new InvalidOperationException($"Duplicate parent {childColumnName}");
@@ -64,13 +65,13 @@ public class ColumnDefinition
 
             if (cd.SettingsDefinition.AliasOf != null)
             {
-                if (!columnDefinitions.TryGetValue(cd.SettingsDefinition.AliasOf, out var aliased))
+                if (!list.TryGetValue(cd.SettingsDefinition.AliasOf, out var aliased))
                     throw new InvalidOperationException($"Unknown alias {cd.SettingsDefinition.AliasOf}");
                 cd.AliasOf = aliased;
             }
         }
 
-        return columnDefinitions.Values.ToList();
+        return list;
     }
 }
 
