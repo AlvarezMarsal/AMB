@@ -11,19 +11,13 @@ namespace ImportLocations
     {
         private readonly Settings _settings;
         private readonly DateTime _startTime = DateTime.Now;
-        private readonly SqlConnection _connection;
+        private readonly AmbDbConnection _connection;
         private readonly Guid _creationSession;
-        //private readonly Dictionary<long, GeographicLocation> _locations = new();
         private readonly SortedList<string, HashSet<long>> _aliases = [];
         private string NameCollation => "COLLATE " + _settings.NameCollation;
         private string AliasCollation => "COLLATE " + _settings.AliasCollation;
-        // ReSharper disable once CollectionNeverUpdated.Local
-        //private static readonly HashSet<string> Breakpoints;
-
         static Program()
         {
-            //Breakpoints = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            // Breakpoints.Add("Morton Grove");
         }
 
         static void Main(string[] args)
@@ -38,7 +32,7 @@ namespace ImportLocations
             var settingsFileName = Path.GetFullPath(arg0);
             if (!File.Exists(settingsFileName))
             {
-                Console.WriteLine($"Settings file not found: {settingsFileName}");
+                Log.WriteLine($"Settings file not found: {settingsFileName}");
                 return;
             }
 
@@ -51,7 +45,7 @@ namespace ImportLocations
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Log.WriteLine(e.ToString());
                 throw;
             }
         }
@@ -59,7 +53,7 @@ namespace ImportLocations
         private Program(Settings settings)
         {
             _settings = settings;
-            _connection = new SqlConnection(_settings.ConnectionString);
+            _connection = new AmbDbConnection(_settings.ConnectionString);
             _creationSession = (_settings.CreationSession == null) ? Guid.NewGuid() : Guid.Parse(_settings.CreationSession);
         }
 
@@ -69,13 +63,12 @@ namespace ImportLocations
             {
                 try
                 {
-                    _connection.Open();
                     //CreateViews();
                     //EnforcePresets();
 
                     foreach (var import in _settings.Imports)
                     {
-                        ProcessImport(import);
+                        ProcessImport(import, _connection);
                     }
 
                 }
@@ -163,13 +156,13 @@ namespace ImportLocations
         }
 #endif
 
-        private void ProcessImport(Settings.Import import)
+        private void ProcessImport(Settings.Import import, AmbDbConnection connection)
         {
             if (!File.Exists(import.FilePath))
                 throw new FileNotFoundException(import.FilePath);
 
-            Console.WriteLine($"Processing {import.FilePath}");
-            using var importer = new ImportProcessor(_settings, import);
+            Log.WriteLine($"Processing {import.FilePath}");
+            using var importer = new ImportProcessor(_settings, import, connection);
             importer.Run();
         }
     }
