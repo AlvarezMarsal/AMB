@@ -1,8 +1,4 @@
-﻿using System.Data;
-using OfficeOpenXml;
-using System.Data.SqlClient;
-using System.Diagnostics;
-using AmbHelper;
+﻿using AmbHelper;
 using ImportJobTitles;
 
 namespace ImportLocations
@@ -12,23 +8,29 @@ namespace ImportLocations
         private readonly Settings _settings;
         private readonly DateTime _startTime = DateTime.Now;
         private readonly AmbDbConnection _connection;
-        private readonly Guid _creationSession;
-        private readonly SortedList<string, HashSet<long>> _aliases = [];
-        private string NameCollation => "COLLATE " + _settings.NameCollation;
-        private string AliasCollation => "COLLATE " + _settings.AliasCollation;
+        //private readonly Guid _creationSession;
+        //private readonly SortedList<string, HashSet<long>> _aliases = [];
+        //private string NameCollation => "COLLATE " + _settings.NameCollation;
+        //private string AliasCollation => "COLLATE " + _settings.AliasCollation;
+        
         static Program()
         {
         }
 
         static void Main(string[] args)
         {
+            var exe = Environment.GetCommandLineArgs()[0];
+            var filename = Path.GetFileNameWithoutExtension(exe);
+
             if (args.Length > 1)
             {
-                Console.WriteLine("ImportJobTitles [settings.json]");
-                return;
+                Console.WriteLine($"{filename} [filename]");
+                Console.WriteLine($"    filename is the name of a JSON settings file.");
+                Console.WriteLine($"    If omitted, it defaults to {filename}.json.");
+               return;
             }
 
-            var arg0 = (args.Length > 0) ? args[0] : "importJobTitles.json";
+            var arg0 = (args.Length > 0) ? args[0] : $"{filename}.json";
             var settingsFileName = Path.GetFullPath(arg0);
             if (!File.Exists(settingsFileName))
             {
@@ -54,7 +56,6 @@ namespace ImportLocations
         {
             _settings = settings;
             _connection = new AmbDbConnection(_settings.ConnectionString);
-            _creationSession = (_settings.CreationSession == null) ? Guid.NewGuid() : Guid.Parse(_settings.CreationSession);
         }
 
         private void Run()
@@ -63,7 +64,7 @@ namespace ImportLocations
             {
                 try
                 {
-                    //CreateViews();
+                    CreateViews();
                     //EnforcePresets();
 
                     foreach (var import in _settings.Imports)
@@ -80,38 +81,34 @@ namespace ImportLocations
                 finally
                 {
                     //Dump();
-                    //DeleteViews();
+                    DeleteViews();
                 }
             }
         }
 
-#if false
         private void CreateViews()
         {
             var view = $"""
-                        CREATE OR ALTER VIEW [dbo].[vw_GeographicLocationNames]
+                        CREATE OR ALTER VIEW [dbo].[vw_TaxonomyNode]
                         AS
-                        	SELECT [OID], ISNULL([PID],0) AS PID, cast([Name] {AliasCollation} as nvarchar(512)) AS [Name], 1 AS IsPrimary
-                        	FROM [dbo].[t_GeographicLocation]
-                        
-                        	UNION
-                        
-                        	SELECT L.[OID], ISNULL(L.[PID],0) AS PID, cast(A.[Alias] {AliasCollation} as nvarchar(512)) AS [Name], 0 AS IsPrimary
-                        	FROM [dbo].[t_GeographicLocationAlias] A 
-                        	JOIN [dbo].[t_GeographicLocation] L ON L.OID = A.GeographicLocationID
-                        	WHERE A.Alias <> L.Name {AliasCollation}
+                            SELECT P.[OID], P.[PID], P.[Index], P.[Name], 't_TaxonomyNodeProcess' AS [Table] FROM [dbo].[t_TaxonomyNodeProcess] P
+                            UNION
+                            SELECT Q.[OID], Q.[PID], Q.[Index], Q.[Name], 't_TaxonomyNodeProcessGroup' AS [Table] FROM [dbo].[t_TaxonomyNodeProcessGroup] Q
+                            UNION
+                            SELECT F.[OID], F.[PID], F.[Index], F.[Name], 't_TaxonomyNodeFunction' AS [Table] FROM [dbo].[t_TaxonomyNodeFunction] F
+                            UNION
+                            SELECT G.[OID], G.[PID], G.[Index], G.[Name], 't_TaxonomyNodeFunctionGroup' AS [Table] FROM [dbo].[t_TaxonomyNodeFunctionGroup] G
                         """;
-            using var command = new SqlCommand(view, _connection);
-            command.ExecuteNonQuery();
+            _connection.ExecuteNonQuery(view);
         }
 
         private void DeleteViews()
         {
-            var drop = "DROP VIEW [dbo].[vw_GeographicLocationNames]";
-            using var command = new SqlCommand(drop, _connection);
-            command.ExecuteNonQuery();
+            var drop = "DROP VIEW [dbo].[vw_TaxonomyNode]";
+            _connection.ExecuteNonQuery(drop);
         }
 
+        #if false
         private void EnforcePresets()
         {
             foreach (var preset in _settings.Presets)

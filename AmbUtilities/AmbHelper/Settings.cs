@@ -12,4 +12,6 @@ public partial class Settings
     public List<Import> Imports { get; set; } = [];
     public string NameCollation { get; set; } = "SQL_Latin1_General_CP1_CI_AS";
     public string AliasCollation { get; set; } = "SQL_Latin1_General_CP1_CI_AS";
+    public bool JobTitlesAreGloballyUnique { get; set; }
+    public bool JobTitleAliasesAreGloballyUnique { get; set; }
 }

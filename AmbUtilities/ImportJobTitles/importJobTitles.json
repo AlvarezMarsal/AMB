@@ -1,6 +1,8 @@
 {
 	"ConnectionString": "Server=.;Database=AMBenchmark_DB;Integrated Security=True;",
 	"CreatorId": 100,
+	"JobTitlesAreGloballyUnique": true,
+	"JobTitleAliasesAreGloballyUnique": true,
 	"Imports": [
 		{
 			"FilePath": "..\\..\\JobTitles_Map_05292024.xlsx",
