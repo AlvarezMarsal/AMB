@@ -1,13 +1,35 @@
 AmbDbConnection: executing non-query `CREATE OR ALTER VIEW [dbo].[vw_TaxonomyNode]
 AS
-    SELECT P.[OID], P.[PID], P.[Index], P.[Name], 't_TaxonomyNodeProcess' AS [Table] FROM [dbo].[t_TaxonomyNodeProcess] P
-    UNION
-    SELECT Q.[OID], Q.[PID], Q.[Index], Q.[Name], 't_TaxonomyNodeProcessGroup' AS [Table] FROM [dbo].[t_TaxonomyNodeProcessGroup] Q
-    UNION
-    SELECT F.[OID], F.[PID], F.[Index], F.[Name], 't_TaxonomyNodeFunction' AS [Table] FROM [dbo].[t_TaxonomyNodeFunction] F
-    UNION
-    SELECT G.[OID], G.[PID], G.[Index], G.[Name], 't_TaxonomyNodeFunctionGroup' AS [Table] FROM [dbo].[t_TaxonomyNodeFunctionGroup] G`
+    SELECT A.[OID], A.[PID], A.[Index], A.[Name], A.[Table], T.[Type]
+    FROM
+    (
+        SELECT P.[OID], P.[PID], P.[Index], P.[Name], 't_TaxonomyNodeProcess' AS [Table] FROM [dbo].[t_TaxonomyNodeProcess] P
+        UNION
+        SELECT Q.[OID], Q.[PID], Q.[Index], Q.[Name], 't_TaxonomyNodeProcessGroup' AS [Table] FROM [dbo].[t_TaxonomyNodeProcessGroup] Q
+        UNION
+        SELECT F.[OID], F.[PID], F.[Index], F.[Name], 't_TaxonomyNodeFunction' AS [Table] FROM [dbo].[t_TaxonomyNodeFunction] F
+        UNION
+        SELECT G.[OID], G.[PID], G.[Index], G.[Name], 't_TaxonomyNodeFunctionGroup' AS [Table] FROM [dbo].[t_TaxonomyNodeFunctionGroup] G
+        UNION
+        SELECT A.[OID], A.[PID], A.[Index], A.[Name], 't_TaxonomyNodeActivity' AS [Table] FROM [dbo].[t_TaxonomyNodeActivity] A
+    ) AS A
+    JOIN t_TaxonomyNode T ON T.[OID] = A.[OID]`
 AmbDbConnection: nonquery command result -1
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 0`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 0`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100001 AND [Index] = 0`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 0`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100001 AND [Index] = 1`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
 AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 0`
 AmbDbConnection: reader succeeded
 AmbDbConnection: reader finished
@@ -15,7 +37,25 @@ AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyN
 AmbDbConnection: reader succeeded
 AmbDbConnection: reader finished
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'JD-Food Service Worker'`
-AmbDbConnection: scalar command result 1228956
+AmbDbConnection: scalar command result null
+AmbDbConnection: creating command `[dbo].sp_internalGetNextOID`
+AmbDbConnection: nonquery command result -1
+AmbDbConnection: new oid 1228956
+AmbDbConnection: executing non-query `    INSERT INTO [dbo].[t_JobTitle]
+    ([OID], [IsSystemOwned], [Name], [Description], [CreationDate], [CreatorID], [PracticeAreaID], [TaxonomyID], [CreationSession])
+    VALUES
+    (1228956, 0, 'JD-Food Service Worker', 'Food Service Worker', GETDATE(), 100, 2501, 1147353, '53ca8811-202f-4b6c-9775-e82563e666e1')`
+AmbDbConnection: nonquery command result 1
+AmbDbConnection: creating command `[dbo].sp_internalGetNextOID`
+AmbDbConnection: nonquery command result -1
+AmbDbConnection: new oid 1228957
+AmbDbConnection: executing non-query `    INSERT INTO [dbo].[t_JobTitleAlias]
+    ([OID], [Alias], [Description], [IsSystemOwned], [IsPrimary], [CreationDate], [CreatorID], [PracticeAreaID], [JobTitleID], [LID], [CreationSession])
+    VALUES
+    (1228957, 'JD-Food Service Worker', 'Food Service Worker', 0, 1, GETDATE(), 100, 2501, 1228956, 500, '53ca8811-202f-4b6c-9775-e82563e666e1')`
+AmbDbConnection: nonquery command result 1
+AmbDbConnection: executing non-query `INSERT INTO [dbo].[t_JobTitleAliasKeys] ([JobTitleAliasID],[Key]) VALUES (1228957, 'JD-Food'), (1228957, 'Service'), (1228957, 'Service')`
+AmbDbConnection: nonquery command result 3
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Barback'`
 AmbDbConnection: scalar command result 1147503
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Barista'`
@@ -37,9 +77,19 @@ AmbDbConnection: scalar command result 1150283
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Fast Food Worker'`
 AmbDbConnection: scalar command result 1147494
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'JD-Food Service Worker'`
-AmbDbConnection: scalar command result 1229112
+AmbDbConnection: scalar command result 1228957
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Line Cook'`
-AmbDbConnection: scalar command result 1229113
+AmbDbConnection: scalar command result null
+AmbDbConnection: creating command `[dbo].sp_internalGetNextOID`
+AmbDbConnection: nonquery command result -1
+AmbDbConnection: new oid 1228958
+AmbDbConnection: executing non-query `    INSERT INTO [dbo].[t_JobTitleAlias]
+    ([OID], [Alias], [Description], [IsSystemOwned], [IsPrimary], [CreationDate], [CreatorID], [PracticeAreaID], [JobTitleID], [LID], [CreationSession])
+    VALUES
+    (1228958, 'Line Cook', 'Line Cook', 0, 0, GETDATE(), 100, 2501, 1228956, 500, '53ca8811-202f-4b6c-9775-e82563e666e1')`
+AmbDbConnection: nonquery command result 1
+AmbDbConnection: executing non-query `INSERT INTO [dbo].[t_JobTitleAliasKeys] ([JobTitleAliasID],[Key]) VALUES (1228958, 'Line'), (1228958, 'Cook')`
+AmbDbConnection: nonquery command result 2
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Restaurant Manager'`
 AmbDbConnection: scalar command result 1147498
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Server'`
@@ -50,6 +100,36 @@ AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHE
 AmbDbConnection: scalar command result 1147490
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Waitress'`
 AmbDbConnection: scalar command result 1147491
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 1`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 1`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100198 AND [Index] = 0`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 1`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100198 AND [Index] = 1`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 1`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100198 AND [Index] = 2`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 1`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100198 AND [Index] = 3`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
 AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
 AmbDbConnection: reader succeeded
 AmbDbConnection: reader finished
@@ -169,9 +249,37 @@ AmbDbConnection: scalar command result 1152095
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP Investor Relations'`
 AmbDbConnection: scalar command result 1152096
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Administrative Assistant Finance Department'`
-AmbDbConnection: scalar command result 1229054
+AmbDbConnection: scalar command result null
+AmbDbConnection: creating command `[dbo].sp_internalGetNextOID`
+AmbDbConnection: nonquery command result -1
+AmbDbConnection: new oid 1228959
+AmbDbConnection: executing non-query `    INSERT INTO [dbo].[t_JobTitle]
+    ([OID], [IsSystemOwned], [Name], [Description], [CreationDate], [CreatorID], [PracticeAreaID], [TaxonomyID], [CreationSession])
+    VALUES
+    (1228959, 0, 'Administrative Assistant Finance Department', 'Administrative Assistant Finance Department', GETDATE(), 100, 2501, 100729, '53ca8811-202f-4b6c-9775-e82563e666e1')`
+AmbDbConnection: nonquery command result 1
+AmbDbConnection: creating command `[dbo].sp_internalGetNextOID`
+AmbDbConnection: nonquery command result -1
+AmbDbConnection: new oid 1228960
+AmbDbConnection: executing non-query `    INSERT INTO [dbo].[t_JobTitleAlias]
+    ([OID], [Alias], [Description], [IsSystemOwned], [IsPrimary], [CreationDate], [CreatorID], [PracticeAreaID], [JobTitleID], [LID], [CreationSession])
+    VALUES
+    (1228960, 'Administrative Assistant Finance Department', 'Administrative Assistant Finance Department', 0, 1, GETDATE(), 100, 2501, 1228959, 500, '53ca8811-202f-4b6c-9775-e82563e666e1')`
+AmbDbConnection: nonquery command result 1
+AmbDbConnection: executing non-query `INSERT INTO [dbo].[t_JobTitleAliasKeys] ([JobTitleAliasID],[Key]) VALUES (1228960, 'Administrative'), (1228960, 'Assistant'), (1228960, 'Assistant'), (1228960, 'Assistant')`
+AmbDbConnection: nonquery command result 4
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'EA Finance Department'`
-AmbDbConnection: scalar command result 1229114
+AmbDbConnection: scalar command result null
+AmbDbConnection: creating command `[dbo].sp_internalGetNextOID`
+AmbDbConnection: nonquery command result -1
+AmbDbConnection: new oid 1228961
+AmbDbConnection: executing non-query `    INSERT INTO [dbo].[t_JobTitleAlias]
+    ([OID], [Alias], [Description], [IsSystemOwned], [IsPrimary], [CreationDate], [CreatorID], [PracticeAreaID], [JobTitleID], [LID], [CreationSession])
+    VALUES
+    (1228961, 'EA Finance Department', 'EA Finance Department', 0, 0, GETDATE(), 100, 2501, 1228959, 500, '53ca8811-202f-4b6c-9775-e82563e666e1')`
+AmbDbConnection: nonquery command result 1
+AmbDbConnection: executing non-query `INSERT INTO [dbo].[t_JobTitleAliasKeys] ([JobTitleAliasID],[Key]) VALUES (1228961, 'EA'), (1228961, 'Finance'), (1228961, 'Finance')`
+AmbDbConnection: nonquery command result 3
 AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
 AmbDbConnection: reader succeeded
 AmbDbConnection: reader finished
@@ -240,7 +348,17 @@ AmbDbConnection: scalar command result 1137862
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supv, Accounts Payable'`
 AmbDbConnection: scalar command result 1137863
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'AP Manager'`
-AmbDbConnection: scalar command result 1229115
+AmbDbConnection: scalar command result null
+AmbDbConnection: creating command `[dbo].sp_internalGetNextOID`
+AmbDbConnection: nonquery command result -1
+AmbDbConnection: new oid 1228962
+AmbDbConnection: executing non-query `    INSERT INTO [dbo].[t_JobTitleAlias]
+    ([OID], [Alias], [Description], [IsSystemOwned], [IsPrimary], [CreationDate], [CreatorID], [PracticeAreaID], [JobTitleID], [LID], [CreationSession])
+    VALUES
+    (1228962, 'AP Manager', 'AP Manager', 0, 0, GETDATE(), 100, 2501, 1137858, 500, '53ca8811-202f-4b6c-9775-e82563e666e1')`
+AmbDbConnection: nonquery command result 1
+AmbDbConnection: executing non-query `INSERT INTO [dbo].[t_JobTitleAliasKeys] ([JobTitleAliasID],[Key]) VALUES (1228962, 'AP'), (1228962, 'Manager')`
+AmbDbConnection: nonquery command result 2
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'AP Specialist'`
 AmbDbConnection: scalar command result 1147556
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Accounts Payable Specialist 2'`
@@ -281,2151 +399,111 @@ AmbDbConnection: reader finished
 AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100820 AND [Index] = 2`
 AmbDbConnection: reader succeeded
 AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 0`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100729 AND [Index] = 0`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100820 AND [Index] = 3`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
 AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Accounts Receivable Manager'`
-AmbDbConnection: scalar command result 1229062
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'AR Mananger'`
-AmbDbConnection: scalar command result 1229116
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'AR Mgr'`
-AmbDbConnection: scalar command result 1229117
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Accounts Receivable Specialist'`
-AmbDbConnection: scalar command result 1229066
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'AR Specialist'`
-AmbDbConnection: scalar command result 1229118
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 0`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100729 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Director Tax Accounting'`
-AmbDbConnection: scalar command result 1146908
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Director Tax Accounting'`
-AmbDbConnection: scalar command result 1146909
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Director Tax Accounting'`
-AmbDbConnection: scalar command result 1146910
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Vice President Finance Tax'`
-AmbDbConnection: scalar command result 1146937
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President Finance Tax'`
-AmbDbConnection: scalar command result 1146938
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President Tax'`
-AmbDbConnection: scalar command result 1146941
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP Finance Tax'`
-AmbDbConnection: scalar command result 1146939
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP Tax'`
-AmbDbConnection: scalar command result 1146940
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Tax'`
-AmbDbConnection: scalar command result 1146942
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Corporate Tax'`
-AmbDbConnection: scalar command result 1146946
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Tax'`
-AmbDbConnection: scalar command result 1146943
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Corporate Tax'`
-AmbDbConnection: scalar command result 1146945
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Tax'`
-AmbDbConnection: scalar command result 1146944
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Tax Accountant'`
-AmbDbConnection: scalar command result 1146953
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Tax Accountant'`
-AmbDbConnection: scalar command result 1146954
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Analyst Tax'`
-AmbDbConnection: scalar command result 1146955
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Analyst Tax'`
-AmbDbConnection: scalar command result 1146956
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Analyst Tax 3'`
-AmbDbConnection: scalar command result 1147256
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Property Tax Analyst'`
-AmbDbConnection: scalar command result 1150135
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sales & Use Tax Analyst'`
-AmbDbConnection: scalar command result 1146957
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Tax Analyst I'`
-AmbDbConnection: scalar command result 1152031
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Tax Analyst I'`
-AmbDbConnection: scalar command result 1152046
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Tax Analyst'`
-AmbDbConnection: scalar command result 1146958
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Tax Analyst'`
-AmbDbConnection: scalar command result 1146959
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Tax Specialist'`
-AmbDbConnection: scalar command result 1146960
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Tax Specialist'`
-AmbDbConnection: scalar command result 1146961
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Tax Specialist'`
-AmbDbConnection: scalar command result 1146962
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Tax Specialist'`
-AmbDbConnection: scalar command result 1146963
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Tax Spec'`
-AmbDbConnection: scalar command result 1146965
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Tax Specialist'`
-AmbDbConnection: scalar command result 1146964
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Manager Corporate Tax'`
-AmbDbConnection: scalar command result 1146969
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager Corporate Tax'`
-AmbDbConnection: scalar command result 1146970
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager Tax'`
-AmbDbConnection: scalar command result 1146973
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Manager Corporate Tax'`
-AmbDbConnection: scalar command result 1146971
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Manager Tax'`
-AmbDbConnection: scalar command result 1146972
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Treasury Analyst'`
-AmbDbConnection: scalar command result 1150779
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Treasury Analyst'`
-AmbDbConnection: scalar command result 1152115
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Treasury Analyst'`
-AmbDbConnection: scalar command result 1150780
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'VP & Treasurer'`
-AmbDbConnection: scalar command result 1150840
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP & Treasurer'`
-AmbDbConnection: scalar command result 1150841
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director of Treasury'`
-AmbDbConnection: scalar command result 1150851
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director of Treasury'`
-AmbDbConnection: scalar command result 1150852
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Tax'`
-AmbDbConnection: scalar command result 1152080
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir Tax'`
-AmbDbConnection: scalar command result 1152113
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Tax'`
-AmbDbConnection: scalar command result 1152081
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior reasury Analyst'`
-AmbDbConnection: scalar command result 1152092
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior reasury Analyst'`
-AmbDbConnection: scalar command result 1152093
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 0`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100729 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Accounting'`
-AmbDbConnection: scalar command result 1146877
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Corporate Accounting Manager'`
-AmbDbConnection: scalar command result 1150850
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Cost Accounting Manager'`
-AmbDbConnection: scalar command result 1146890
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Accounting Manager'`
-AmbDbConnection: scalar command result 1146885
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Accounting Mgr'`
-AmbDbConnection: scalar command result 1146886
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Accounting'`
-AmbDbConnection: scalar command result 1146878
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager, Corporate Accounting'`
-AmbDbConnection: scalar command result 1150858
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Accounting'`
-AmbDbConnection: scalar command result 1146879
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Accounting 1'`
-AmbDbConnection: scalar command result 1147281
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Cost Accounting'`
-AmbDbConnection: scalar command result 1146884
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr, Accounting'`
-AmbDbConnection: scalar command result 1150537
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supervisor Accounting'`
-AmbDbConnection: scalar command result 1146880
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supervisor Accounting Finance'`
-AmbDbConnection: scalar command result 1146883
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supv Accounting'`
-AmbDbConnection: scalar command result 1150907
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supvr Accounting'`
-AmbDbConnection: scalar command result 1146881
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supvr Accounting Finance'`
-AmbDbConnection: scalar command result 1146882
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Accounting Assistant'`
-AmbDbConnection: scalar command result 1146887
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Accounting Assistant'`
-AmbDbConnection: scalar command result 1146888
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Accounting Associate'`
-AmbDbConnection: scalar command result 1146889
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Accounting Processor'`
-AmbDbConnection: scalar command result 1146905
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Manager Accounting'`
-AmbDbConnection: scalar command result 1146891
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager Accounting'`
-AmbDbConnection: scalar command result 1146892
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager Accounting and Reporting'`
-AmbDbConnection: scalar command result 1146895
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager Cost Accounting'`
-AmbDbConnection: scalar command result 1146907
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Mgr Accounting'`
-AmbDbConnection: scalar command result 1146893
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Mgr Accounting & Reporting'`
-AmbDbConnection: scalar command result 1146894
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Mgr Cost Accounting'`
-AmbDbConnection: scalar command result 1146906
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Accounting'`
-AmbDbConnection: scalar command result 1146896
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir Accounting'`
-AmbDbConnection: scalar command result 1146898
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir Accounting Operations'`
-AmbDbConnection: scalar command result 1146899
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir Cost Accounting'`
-AmbDbConnection: scalar command result 1146912
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir Financial Accounting'`
-AmbDbConnection: scalar command result 1150857
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Accounting'`
-AmbDbConnection: scalar command result 1146897
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Cost Accounting'`
-AmbDbConnection: scalar command result 1146911
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Finance & Accounting M&A'`
-AmbDbConnection: scalar command result 1146900
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Accounting Associate'`
-AmbDbConnection: scalar command result 1146901
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Accounting Associate'`
-AmbDbConnection: scalar command result 1146902
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Accounting Associate'`
-AmbDbConnection: scalar command result 1146903
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Accounting Processor'`
-AmbDbConnection: scalar command result 1146904
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Accountant'`
-AmbDbConnection: scalar command result 1150878
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Financial Reporting Analyst'`
-AmbDbConnection: scalar command result 1212624
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Finance Reporting Analyst'`
-AmbDbConnection: scalar command result 1229119
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Accountant Sales Tax'`
-AmbDbConnection: scalar command result 1146966
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Accountant Sales Tax'`
-AmbDbConnection: scalar command result 1146967
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Accountant Sales Tax'`
-AmbDbConnection: scalar command result 1146968
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Accountant'`
-AmbDbConnection: scalar command result 1147229
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Accountant'`
-AmbDbConnection: scalar command result 1147230
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Accountant I'`
-AmbDbConnection: scalar command result 1147585
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Accountant II'`
-AmbDbConnection: scalar command result 1147586
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Accountant-Staff'`
-AmbDbConnection: scalar command result 1150776
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Corporate GL Accountant'`
-AmbDbConnection: scalar command result 1150882
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Finance & Accounting Accountant III'`
-AmbDbConnection: scalar command result 1150854
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Revenue Accountant'`
-AmbDbConnection: scalar command result 1150872
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Cost Accountant'`
-AmbDbConnection: scalar command result 1229120
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Staff Accountant'`
-AmbDbConnection: scalar command result 1150541
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Executive - Accounting'`
-AmbDbConnection: scalar command result 1147314
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Executive - Accounting'`
-AmbDbConnection: scalar command result 1147315
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Team Lead - Accounting'`
-AmbDbConnection: scalar command result 1147336
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Team Lead - Accounting'`
-AmbDbConnection: scalar command result 1147337
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Team Lead - Accounting Process'`
-AmbDbConnection: scalar command result 1147338
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Accounting Clerk'`
-AmbDbConnection: scalar command result 1147344
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Accounting Clerk'`
-AmbDbConnection: scalar command result 1147345
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Clerk - Finance and Accounting'`
-AmbDbConnection: scalar command result 1147350
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Inventory Control Clerk'`
-AmbDbConnection: scalar command result 1150220
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Chief Accounting Officer'`
-AmbDbConnection: scalar command result 1147348
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Chief Accounting Officer'`
-AmbDbConnection: scalar command result 1147349
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Manager - Financial Reporting'`
-AmbDbConnection: scalar command result 1147461
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager - Financial Reporting'`
-AmbDbConnection: scalar command result 1147462
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Revenue Accounting'`
-AmbDbConnection: scalar command result 1150865
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Revenue'`
-AmbDbConnection: scalar command result 1150871
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Revenue Accounting'`
-AmbDbConnection: scalar command result 1150866
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Production Accounting'`
-AmbDbConnection: scalar command result 1150868
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Production Accounting'`
-AmbDbConnection: scalar command result 1150869
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager FP&A'`
-AmbDbConnection: scalar command result 1150873
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager FP&A'`
-AmbDbConnection: scalar command result 1150874
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr FP&A'`
-AmbDbConnection: scalar command result 1152100
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Accountant'`
-AmbDbConnection: scalar command result 1150877
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Accountant'`
-AmbDbConnection: scalar command result 1150878
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Accountant I'`
-AmbDbConnection: scalar command result 1152082
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Accountant II'`
-AmbDbConnection: scalar command result 1152091
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager, Revenue Accounting'`
-AmbDbConnection: scalar command result 1150879
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager, Revenue Accounting'`
-AmbDbConnection: scalar command result 1150880
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Revenue Manager'`
-AmbDbConnection: scalar command result 1150881
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Finance & Accounting Analyst'`
-AmbDbConnection: scalar command result 1150883
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Finance & Accounting Analyst'`
-AmbDbConnection: scalar command result 1150884
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Reporting'`
-AmbDbConnection: scalar command result 1152084
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Reporting'`
-AmbDbConnection: scalar command result 1152085
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Accting/Financial Reporting'`
-AmbDbConnection: scalar command result 1152089
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Accting/Financial Reporting'`
-AmbDbConnection: scalar command result 1152090
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Accting/Financial Rpting'`
-AmbDbConnection: scalar command result 1152114
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Financial Reporting Manager'`
-AmbDbConnection: scalar command result 1229121
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Inventory Control'`
-AmbDbConnection: scalar command result 1152122
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Inventory Control'`
-AmbDbConnection: scalar command result 1152123
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Inventory Control'`
-AmbDbConnection: scalar command result 1152132
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 0`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100729 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Finance Controller'`
-AmbDbConnection: scalar command result 1147083
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Controller'`
-AmbDbConnection: scalar command result 1147085
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Corporate Controller'`
-AmbDbConnection: scalar command result 1150861
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Fin Controller'`
-AmbDbConnection: scalar command result 1147086
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Finance Controller'`
-AmbDbConnection: scalar command result 1147084
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Plant Controller'`
-AmbDbConnection: scalar command result 1147093
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Financial Controller'`
-AmbDbConnection: scalar command result 1229122
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sales Controller'`
-AmbDbConnection: scalar command result 1147094
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Cost Controller'`
-AmbDbConnection: scalar command result 1147087
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'BU Controller'`
-AmbDbConnection: scalar command result 1147089
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'BU Cost Controller'`
-AmbDbConnection: scalar command result 1147091
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Business Unit Controller'`
-AmbDbConnection: scalar command result 1147090
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Business Unit Cost Controller'`
-AmbDbConnection: scalar command result 1147092
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Cost Controller'`
-AmbDbConnection: scalar command result 1147088
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Vice President Finance Controller'`
-AmbDbConnection: scalar command result 1147176
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President Finance Controller'`
-AmbDbConnection: scalar command result 1147177
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP Controller'`
-AmbDbConnection: scalar command result 1152094
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Finance Controls'`
-AmbDbConnection: scalar command result 1147235
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Finance Controls'`
-AmbDbConnection: scalar command result 1147236
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Controller''s Assistant'`
-AmbDbConnection: scalar command result 1229123
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Budget Controller''s Assistant'`
-AmbDbConnection: scalar command result 1229125
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Audit Manager'`
-AmbDbConnection: scalar command result 1150777
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Audit Manager'`
-AmbDbConnection: scalar command result 1150778
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Internal Audit'`
-AmbDbConnection: scalar command result 1152087
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Auditor'`
-AmbDbConnection: scalar command result 1150859
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Auditor'`
-AmbDbConnection: scalar command result 1150860
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Internal Auditor'`
-AmbDbConnection: scalar command result 1152083
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Internal Auditor IT'`
-AmbDbConnection: scalar command result 1152103
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Assistant Controller'`
-AmbDbConnection: scalar command result 1150863
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Assistant Controller'`
-AmbDbConnection: scalar command result 1150864
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'VP Internal Audit'`
-AmbDbConnection: scalar command result 1150905
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP Internal Audit'`
-AmbDbConnection: scalar command result 1150906
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Internal Audit'`
-AmbDbConnection: scalar command result 1152078
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir Internal Audit'`
-AmbDbConnection: scalar command result 1152112
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Internal Audit'`
-AmbDbConnection: scalar command result 1152079
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Sales Audit'`
-AmbDbConnection: scalar command result 1152124
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Sales Audit'`
-AmbDbConnection: scalar command result 1152125
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Sales Audit'`
-AmbDbConnection: scalar command result 1152131
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 0`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100729 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'EDI Coordinator'`
-AmbDbConnection: scalar command result 1150319
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'EDI Coordinator'`
-AmbDbConnection: scalar command result 1150320
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 0`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100729 AND [Index] = 5`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Risk Analyst'`
-AmbDbConnection: scalar command result 1152098
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Risk Analyst'`
-AmbDbConnection: scalar command result 1152099
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Risk Management'`
-AmbDbConnection: scalar command result 1152101
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Risk Management'`
-AmbDbConnection: scalar command result 1152102
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Risk Management'`
-AmbDbConnection: scalar command result 1152116
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Vice President HR Operations'`
-AmbDbConnection: scalar command result 1147207
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President HR Operations'`
-AmbDbConnection: scalar command result 1147208
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP - HR'`
-AmbDbConnection: scalar command result 1147463
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Human Resources (HR)'`
-AmbDbConnection: scalar command result 1147237
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir HR'`
-AmbDbConnection: scalar command result 1147290
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir HR 2'`
-AmbDbConnection: scalar command result 1147249
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Human Resources (HR)'`
-AmbDbConnection: scalar command result 1147238
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director of Human Resources'`
-AmbDbConnection: scalar command result 1150139
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'HR Director'`
-AmbDbConnection: scalar command result 1150902
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Human Resource (HR) Coordinator'`
-AmbDbConnection: scalar command result 1147260
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Human Resource (HR) Coordinator'`
-AmbDbConnection: scalar command result 1147261
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Manager - HR'`
-AmbDbConnection: scalar command result 1147339
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager - HR'`
-AmbDbConnection: scalar command result 1147340
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Manager - HR'`
-AmbDbConnection: scalar command result 1147341
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Assistant Manager - HR'`
-AmbDbConnection: scalar command result 1147346
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Assistant Manager - HR'`
-AmbDbConnection: scalar command result 1147347
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'HR Business Partner'`
-AmbDbConnection: scalar command result 1150315
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'HR Business Partner'`
-AmbDbConnection: scalar command result 1150316
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'HR Analyst'`
-AmbDbConnection: scalar command result 1150885
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'HR Analyst'`
-AmbDbConnection: scalar command result 1150886
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'SVP Human Resources'`
-AmbDbConnection: scalar command result 1152025
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'SVP Human Resources'`
-AmbDbConnection: scalar command result 1152026
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Communication'`
-AmbDbConnection: scalar command result 1152041
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Communication'`
-AmbDbConnection: scalar command result 1152042
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 1`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 1`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 1`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 1`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 2`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 4`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 4`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1164828 AND [Index] = 4`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Vice President IT'`
-AmbDbConnection: scalar command result 1147146
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President IT'`
-AmbDbConnection: scalar command result 1147147
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP IT'`
-AmbDbConnection: scalar command result 1147148
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director, IT'`
-AmbDbConnection: scalar command result 1147231
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director, IT'`
-AmbDbConnection: scalar command result 1147232
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'IT Specialist'`
-AmbDbConnection: scalar command result 1147257
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'IT Specialist'`
-AmbDbConnection: scalar command result 1147258
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Manager IT'`
-AmbDbConnection: scalar command result 1147268
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager IT'`
-AmbDbConnection: scalar command result 1147269
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Mgr IT'`
-AmbDbConnection: scalar command result 1147270
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'IT Project Lead'`
-AmbDbConnection: scalar command result 1147284
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'IT Project Lead'`
-AmbDbConnection: scalar command result 1147285
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Vice President - CIO'`
-AmbDbConnection: scalar command result 1147355
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Vice President - CIO'`
-AmbDbConnection: scalar command result 1147356
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'JD-Researcher'`
-AmbDbConnection: scalar command result 1229126
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'JD-Researcher'`
-AmbDbConnection: scalar command result 1229127
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Waiter2'`
-AmbDbConnection: scalar command result 1229128
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Vice President Technology'`
-AmbDbConnection: scalar command result 1150752
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President Technology'`
-AmbDbConnection: scalar command result 1150753
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 101455 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Applications Developer'`
-AmbDbConnection: scalar command result 1147297
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Applications Developer'`
-AmbDbConnection: scalar command result 1147298
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Applications Developer 2'`
-AmbDbConnection: scalar command result 1147299
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Applications Developer 3'`
-AmbDbConnection: scalar command result 1147300
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Applications Developer 4'`
-AmbDbConnection: scalar command result 1147311
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Software Developer'`
-AmbDbConnection: scalar command result 1150899
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Software Developer'`
-AmbDbConnection: scalar command result 1150280
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Software Developer eCom'`
-AmbDbConnection: scalar command result 1150279
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Software Engineer'`
-AmbDbConnection: scalar command result 1147329
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Software Engineer'`
-AmbDbConnection: scalar command result 1147330
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Software Engineer'`
-AmbDbConnection: scalar command result 1147331
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Software Engineer'`
-AmbDbConnection: scalar command result 1147456
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Software Engineer'`
-AmbDbConnection: scalar command result 1147457
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Software Engineer 1'`
-AmbDbConnection: scalar command result 1147458
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director IT Applications'`
-AmbDbConnection: scalar command result 1147580
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir IT Applications'`
-AmbDbConnection: scalar command result 1147582
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director IT Applications'`
-AmbDbConnection: scalar command result 1147581
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 101455 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Systems Engineer'`
-AmbDbConnection: scalar command result 1150889
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Systems Engineer'`
-AmbDbConnection: scalar command result 1150890
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Desktop Support Analyst'`
-AmbDbConnection: scalar command result 1150891
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Desktop Support Analyst'`
-AmbDbConnection: scalar command result 1150892
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 101455 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director IT Cybersecurity'`
-AmbDbConnection: scalar command result 1147223
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir IT Cybersecurity'`
-AmbDbConnection: scalar command result 1147239
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director IT Cybersecurity'`
-AmbDbConnection: scalar command result 1147224
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Administrative Assistant'`
-AmbDbConnection: scalar command result 1150232
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Administrative Assistant'`
-AmbDbConnection: scalar command result 1150233
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Vice President Administration'`
-AmbDbConnection: scalar command result 1150478
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Vice President Administration'`
-AmbDbConnection: scalar command result 1150479
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Executive Assistant'`
-AmbDbConnection: scalar command result 1150893
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Executive Assistant'`
-AmbDbConnection: scalar command result 1150894
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Legal Representative'`
-AmbDbConnection: scalar command result 1147097
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Legal Representative'`
-AmbDbConnection: scalar command result 1147098
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Paralegal'`
-AmbDbConnection: scalar command result 1147099
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Paralegal'`
-AmbDbConnection: scalar command result 1147100
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Paralegal'`
-AmbDbConnection: scalar command result 1147101
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Paralegal'`
-AmbDbConnection: scalar command result 1147102
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Paralegal'`
-AmbDbConnection: scalar command result 1147103
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Corporate Paralegal'`
-AmbDbConnection: scalar command result 1147104
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Corp Paralegal'`
-AmbDbConnection: scalar command result 1147106
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Corporate Paralegal'`
-AmbDbConnection: scalar command result 1147105
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Associate Paralegal'`
-AmbDbConnection: scalar command result 1147107
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Assistant Paralegal'`
-AmbDbConnection: scalar command result 1147110
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Assoc Paralegal'`
-AmbDbConnection: scalar command result 1147109
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Associate Paralegal'`
-AmbDbConnection: scalar command result 1147108
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Asst Paralegal'`
-AmbDbConnection: scalar command result 1147111
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 102636 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 102636 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 102636 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 102636 AND [Index] = 0`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 5`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Environment, Health and Safety (EHS)'`
-AmbDbConnection: scalar command result 1147174
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Environment, Health and Safety (EHS)'`
-AmbDbConnection: scalar command result 1147175
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager EHS'`
-AmbDbConnection: scalar command result 1147273
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager EHS'`
-AmbDbConnection: scalar command result 1147274
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager, Environmental'`
-AmbDbConnection: scalar command result 1150855
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Director, EHS'`
-AmbDbConnection: scalar command result 1147275
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Director, EHS'`
-AmbDbConnection: scalar command result 1147276
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Health and Safety Representative'`
-AmbDbConnection: scalar command result 1150539
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'EHS Representative I'`
-AmbDbConnection: scalar command result 1150775
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Health and Safety Representative'`
-AmbDbConnection: scalar command result 1150540
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'HSE Advisor'`
-AmbDbConnection: scalar command result 1150589
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'HSE Advisor'`
-AmbDbConnection: scalar command result 1150590
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Air Quality Engineer'`
-AmbDbConnection: scalar command result 1150756
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Air Quality Engineer'`
-AmbDbConnection: scalar command result 1150757
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Environmental Specialist'`
-AmbDbConnection: scalar command result 1150829
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Environmental Specialist'`
-AmbDbConnection: scalar command result 1150830
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Environmental Specialist - Air'`
-AmbDbConnection: scalar command result 1150867
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'EHS Specialist'`
-AmbDbConnection: scalar command result 1150831
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'EHS Specialist'`
-AmbDbConnection: scalar command result 1150832
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Emission Technician'`
-AmbDbConnection: scalar command result 1150833
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Emission Technician'`
-AmbDbConnection: scalar command result 1150834
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Tech, II Emissions Compliance'`
-AmbDbConnection: scalar command result 1150908
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 10`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Chief Executive Officer'`
-AmbDbConnection: scalar command result 1146841
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'CEO'`
-AmbDbConnection: scalar command result 1146843
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Chief Executive Officer'`
-AmbDbConnection: scalar command result 1146842
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Chief Executive Officer/President'`
-AmbDbConnection: scalar command result 1150221
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Chief Finance Officer'`
-AmbDbConnection: scalar command result 1146844
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'CFO'`
-AmbDbConnection: scalar command result 1146846
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Chief Finance Officer'`
-AmbDbConnection: scalar command result 1146845
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Chief Financial Executive'`
-AmbDbConnection: scalar command result 1146848
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Chief Financial Officer'`
-AmbDbConnection: scalar command result 1146847
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Chief Operating Officer'`
-AmbDbConnection: scalar command result 1146849
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Chief Operating Executive'`
-AmbDbConnection: scalar command result 1146860
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Chief Operating Officer'`
-AmbDbConnection: scalar command result 1146850
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'COO'`
-AmbDbConnection: scalar command result 1146851
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'EVP Chief Operating Officer'`
-AmbDbConnection: scalar command result 1146861
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Executive Vice President'`
-AmbDbConnection: scalar command result 1146852
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'EVP'`
-AmbDbConnection: scalar command result 1146854
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Executive Vice President'`
-AmbDbConnection: scalar command result 1146853
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Chief Commercial Officer'`
-AmbDbConnection: scalar command result 1146855
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'CCO'`
-AmbDbConnection: scalar command result 1146857
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Chief Commercial Executive'`
-AmbDbConnection: scalar command result 1146858
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Chief Commercial Officer'`
-AmbDbConnection: scalar command result 1146856
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'EVP Chief Commercial Officer'`
-AmbDbConnection: scalar command result 1146859
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'President BU'`
-AmbDbConnection: scalar command result 1147136
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'President BU'`
-AmbDbConnection: scalar command result 1147137
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'President BU 1'`
-AmbDbConnection: scalar command result 1147149
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'President BU 2'`
-AmbDbConnection: scalar command result 1147138
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'President BU 2'`
-AmbDbConnection: scalar command result 1147139
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'President  and  CEO'`
-AmbDbConnection: scalar command result 1147142
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'CEO/President'`
-AmbDbConnection: scalar command result 1150231
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Interim Pres and CEO'`
-AmbDbConnection: scalar command result 1152121
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'President  and  CEO'`
-AmbDbConnection: scalar command result 1147143
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'President and Chief Executive Officer'`
-AmbDbConnection: scalar command result 1150399
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Chief Admin Officer'`
-AmbDbConnection: scalar command result 1147144
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Chief Admin Officer'`
-AmbDbConnection: scalar command result 1147145
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Chief Information Officer'`
-AmbDbConnection: scalar command result 1147150
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Chief Information Officer'`
-AmbDbConnection: scalar command result 1147151
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'President Sales'`
-AmbDbConnection: scalar command result 1147171
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'President Sales'`
-AmbDbConnection: scalar command result 1147172
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Executive Vice President HR'`
-AmbDbConnection: scalar command result 1147193
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Executive Vice President HR'`
-AmbDbConnection: scalar command result 1147194
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Chairman'`
-AmbDbConnection: scalar command result 1150289
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Chairman'`
-AmbDbConnection: scalar command result 1150290
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Executive Vice President & Chief Operating Officer'`
-AmbDbConnection: scalar command result 1150644
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Executive Vice President & Chief Operating Officer'`
-AmbDbConnection: scalar command result 1150645
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'EVP & CFO'`
-AmbDbConnection: scalar command result 1150783
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'EVP & CFO'`
-AmbDbConnection: scalar command result 1150784
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'SVP & COO'`
-AmbDbConnection: scalar command result 1150785
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'SVP & COO'`
-AmbDbConnection: scalar command result 1150786
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'VP Operations'`
-AmbDbConnection: scalar command result 1147152
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP Operations'`
-AmbDbConnection: scalar command result 1147153
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director, Operations'`
-AmbDbConnection: scalar command result 1147227
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director, Operations'`
-AmbDbConnection: scalar command result 1147228
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Operations'`
-AmbDbConnection: scalar command result 1147446
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Operations'`
-AmbDbConnection: scalar command result 1147447
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Ops Mgr'`
-AmbDbConnection: scalar command result 1147448
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 103674 AND [Index] = 0`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'General Labor'`
-AmbDbConnection: scalar command result 1147186
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Labor'`
-AmbDbConnection: scalar command result 1147187
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Labor 10'`
-AmbDbConnection: scalar command result 1147218
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Labor 11'`
-AmbDbConnection: scalar command result 1147206
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Labor 13'`
-AmbDbConnection: scalar command result 1147245
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Labor 3'`
-AmbDbConnection: scalar command result 1147201
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Labor 4'`
-AmbDbConnection: scalar command result 1147212
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Labor 5'`
-AmbDbConnection: scalar command result 1147213
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Labor 6'`
-AmbDbConnection: scalar command result 1147214
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Labor 7'`
-AmbDbConnection: scalar command result 1147215
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Labor 8'`
-AmbDbConnection: scalar command result 1147216
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Labor 9'`
-AmbDbConnection: scalar command result 1147217
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Laborer'`
-AmbDbConnection: scalar command result 1147192
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Laborer'`
-AmbDbConnection: scalar command result 1147188
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Machine Operator'`
-AmbDbConnection: scalar command result 1147189
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Machine Operator'`
-AmbDbConnection: scalar command result 1147190
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Machine Operator 1'`
-AmbDbConnection: scalar command result 1147202
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Machine Operator 2'`
-AmbDbConnection: scalar command result 1150140
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Machine Operator 3'`
-AmbDbConnection: scalar command result 1147205
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Machine Operator 4'`
-AmbDbConnection: scalar command result 1150151
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Machine Operator A-WAC'`
-AmbDbConnection: scalar command result 1147191
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Plant Manager'`
-AmbDbConnection: scalar command result 1147195
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Plant Manager'`
-AmbDbConnection: scalar command result 1147196
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Production Packer'`
-AmbDbConnection: scalar command result 1147199
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Production Packer'`
-AmbDbConnection: scalar command result 1147200
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Production Packer 1'`
-AmbDbConnection: scalar command result 1147219
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Foreman'`
-AmbDbConnection: scalar command result 1147203
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Foreman'`
-AmbDbConnection: scalar command result 1147204
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Sprayer'`
-AmbDbConnection: scalar command result 1147209
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sprayer'`
-AmbDbConnection: scalar command result 1147210
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sprayer-WAC'`
-AmbDbConnection: scalar command result 1147211
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Production Associate'`
-AmbDbConnection: scalar command result 1147263
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Production Associate'`
-AmbDbConnection: scalar command result 1147264
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Production Associate 1'`
-AmbDbConnection: scalar command result 1147266
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Production Associate 2'`
-AmbDbConnection: scalar command result 1147267
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Production Associate 3'`
-AmbDbConnection: scalar command result 1147265
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Contract Manufacturing'`
-AmbDbConnection: scalar command result 1147437
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Contract Manufacturing'`
-AmbDbConnection: scalar command result 1147438
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Contract Mfg'`
-AmbDbConnection: scalar command result 1147439
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Technician'`
-AmbDbConnection: scalar command result 1150144
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Flavor Technician'`
-AmbDbConnection: scalar command result 1150234
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Phone Repair Technician'`
-AmbDbConnection: scalar command result 1150293
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sanitation Tech 1'`
-AmbDbConnection: scalar command result 1150291
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Technician'`
-AmbDbConnection: scalar command result 1150145
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Service Technician'`
-AmbDbConnection: scalar command result 1150158
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Service Support Technician'`
-AmbDbConnection: scalar command result 1150160
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Service Technician'`
-AmbDbConnection: scalar command result 1150159
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Roaster'`
-AmbDbConnection: scalar command result 1150171
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Roaster'`
-AmbDbConnection: scalar command result 1150172
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Roaster 2'`
-AmbDbConnection: scalar command result 1150175
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Roaster 3'`
-AmbDbConnection: scalar command result 1150173
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Roaster 4'`
-AmbDbConnection: scalar command result 1150174
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Roasting Lead'`
-AmbDbConnection: scalar command result 1150176
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Roasting Lead'`
-AmbDbConnection: scalar command result 1150177
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Maintenance Technician'`
-AmbDbConnection: scalar command result 1150178
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'General Maintenance'`
-AmbDbConnection: scalar command result 1150239
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Maintenance Control Tech'`
-AmbDbConnection: scalar command result 1150253
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Maintenance Tech 1'`
-AmbDbConnection: scalar command result 1150183
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Maintenance Tech 2'`
-AmbDbConnection: scalar command result 1150180
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Maintenance Technician'`
-AmbDbConnection: scalar command result 1150179
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Maintenance Technician Lead'`
-AmbDbConnection: scalar command result 1150200
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Maintenance Tech Lead'`
-AmbDbConnection: scalar command result 1150202
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Maintenance Technician Lead'`
-AmbDbConnection: scalar command result 1150201
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Packaging Lead'`
-AmbDbConnection: scalar command result 1150203
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Packaging Lead'`
-AmbDbConnection: scalar command result 1150204
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Production Manager'`
-AmbDbConnection: scalar command result 1150237
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Production Manager'`
-AmbDbConnection: scalar command result 1150238
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Utility Specialist'`
-AmbDbConnection: scalar command result 1150240
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Utility Specialist'`
-AmbDbConnection: scalar command result 1150241
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Utility Specialist 1'`
-AmbDbConnection: scalar command result 1150242
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Utility Specialist 2'`
-AmbDbConnection: scalar command result 1150243
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Maintenance Manager'`
-AmbDbConnection: scalar command result 1150257
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Maintenance Manager'`
-AmbDbConnection: scalar command result 1150258
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Maintenance Supervisor'`
-AmbDbConnection: scalar command result 1150285
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Maintenance Supervisor'`
-AmbDbConnection: scalar command result 1150286
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Equipment Coordinator'`
-AmbDbConnection: scalar command result 1150309
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Equipment Coordinator'`
-AmbDbConnection: scalar command result 1150310
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Maintenance Technician Trainee'`
-AmbDbConnection: scalar command result 1150311
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Maintenance Technician Trainee'`
-AmbDbConnection: scalar command result 1150312
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Equipment Support Technician'`
-AmbDbConnection: scalar command result 1150313
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Equipment Support Technician'`
-AmbDbConnection: scalar command result 1150314
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 103674 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Quality Assurance Technician'`
-AmbDbConnection: scalar command result 1150216
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'QA Tech 1'`
-AmbDbConnection: scalar command result 1150292
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'QA Tech 2'`
-AmbDbConnection: scalar command result 1150218
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Quality Assurance Technician'`
-AmbDbConnection: scalar command result 1150217
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Inspections'`
-AmbDbConnection: scalar command result 1150287
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Inspections'`
-AmbDbConnection: scalar command result 1150288
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Quality Assurance Manager'`
-AmbDbConnection: scalar command result 1150296
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Quality Assurance Manager'`
-AmbDbConnection: scalar command result 1150297
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 103674 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Manager R&D Engineering'`
-AmbDbConnection: scalar command result 1147242
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager R&D Engineering'`
-AmbDbConnection: scalar command result 1147243
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'R&D Engineer'`
-AmbDbConnection: scalar command result 1147279
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'R&D Engineer'`
-AmbDbConnection: scalar command result 1147280
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Technical R&D'`
-AmbDbConnection: scalar command result 1147282
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Technical R&D'`
-AmbDbConnection: scalar command result 1147283
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 103674 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Supply Chain'`
-AmbDbConnection: scalar command result 1146803
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Supply Chain'`
-AmbDbConnection: scalar command result 1146804
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Sup Chn'`
-AmbDbConnection: scalar command result 1147440
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Supply Chain'`
-AmbDbConnection: scalar command result 1146812
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supply Chain Mgr'`
-AmbDbConnection: scalar command result 1146813
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supply Chain Supervisor'`
-AmbDbConnection: scalar command result 1146814
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Sr Manager Supply Chain'`
-AmbDbConnection: scalar command result 1146805
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Functional Manager Senior Supply Chain'`
-AmbDbConnection: scalar command result 1146815
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager Customer Supply Chain'`
-AmbDbConnection: scalar command result 1147485
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager Global Supply Chain'`
-AmbDbConnection: scalar command result 1146811
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager Supply Chain'`
-AmbDbConnection: scalar command result 1146807
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Manager Supply Chain'`
-AmbDbConnection: scalar command result 1146806
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Mgr Sup Chn'`
-AmbDbConnection: scalar command result 1147486
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'VP Supply Chain'`
-AmbDbConnection: scalar command result 1146808
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President Supply Chain'`
-AmbDbConnection: scalar command result 1146810
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP Supply Chain'`
-AmbDbConnection: scalar command result 1146809
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Director Supply Chain'`
-AmbDbConnection: scalar command result 1147168
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Director Supply Chain'`
-AmbDbConnection: scalar command result 1147169
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Dir Supply Chain'`
-AmbDbConnection: scalar command result 1147170
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Supply Chain'`
-AmbDbConnection: scalar command result 1147197
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir Sup Chn'`
-AmbDbConnection: scalar command result 1147441
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Supply Chain'`
-AmbDbConnection: scalar command result 1147198
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Supply Chain Analyst'`
-AmbDbConnection: scalar command result 1147449
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Anlst Sup Chn'`
-AmbDbConnection: scalar command result 1147477
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Customer Supply Chain Analyst'`
-AmbDbConnection: scalar command result 1147567
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supply Chain Analyst'`
-AmbDbConnection: scalar command result 1147450
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Supply Chain Analyst'`
-AmbDbConnection: scalar command result 1147568
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Customer Supply Chain Analyst'`
-AmbDbConnection: scalar command result 1147570
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Supply Chain Analyst'`
-AmbDbConnection: scalar command result 1147569
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Supply Chain Associate'`
-AmbDbConnection: scalar command result 1147571
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supply Chain Associate'`
-AmbDbConnection: scalar command result 1147572
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Distribution Manager'`
-AmbDbConnection: scalar command result 1150147
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Area Manager'`
-AmbDbConnection: scalar command result 1150149
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Distribution Manager'`
-AmbDbConnection: scalar command result 1150148
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Territory Manager'`
-AmbDbConnection: scalar command result 1150150
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Route Optimization Specialist'`
-AmbDbConnection: scalar command result 1150152
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Route Optimization Spec'`
-AmbDbConnection: scalar command result 1150154
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Route Optimization Specialist'`
-AmbDbConnection: scalar command result 1150153
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Route Operation Associate'`
-AmbDbConnection: scalar command result 1150196
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Route Assistant'`
-AmbDbConnection: scalar command result 1150230
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Route Operation Associate'`
-AmbDbConnection: scalar command result 1150197
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Route Operations Associate'`
-AmbDbConnection: scalar command result 1150198
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 103674 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 104218 AND [Index] = 0`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Supply Chain Planner'`
-AmbDbConnection: scalar command result 1146761
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Demand Planner'`
-AmbDbConnection: scalar command result 1146786
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Global Supply Planner'`
-AmbDbConnection: scalar command result 1146763
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Planner Supply Chain'`
-AmbDbConnection: scalar command result 1146801
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supply Chain Planner'`
-AmbDbConnection: scalar command result 1146762
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supply Chain Planning Associate'`
-AmbDbConnection: scalar command result 1146776
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supply Planner'`
-AmbDbConnection: scalar command result 1146766
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'SVP Planning and Inventory'`
-AmbDbConnection: scalar command result 1146777
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr VP Planning and Inventory'`
-AmbDbConnection: scalar command result 1146781
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'SVP Demand Mgmt'`
-AmbDbConnection: scalar command result 1146784
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'SVP Demand Planning'`
-AmbDbConnection: scalar command result 1146785
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'SVP Inventory Management'`
-AmbDbConnection: scalar command result 1146783
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'SVP Planning and Inventory'`
-AmbDbConnection: scalar command result 1146778
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'SVP Planning and Inventory Management'`
-AmbDbConnection: scalar command result 1146780
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'SVP Planning and Inventory Mgmt'`
-AmbDbConnection: scalar command result 1146779
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'SVP Supply Chain Planning'`
-AmbDbConnection: scalar command result 1146782
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Supply Chain Planning Analyst'`
-AmbDbConnection: scalar command result 1146787
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'SCM Planning Analyst'`
-AmbDbConnection: scalar command result 1146789
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supply Chain Planning Analyst'`
-AmbDbConnection: scalar command result 1146788
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Supply Planning'`
-AmbDbConnection: scalar command result 1146790
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Functional Manager Supply Chain Planning'`
-AmbDbConnection: scalar command result 1146799
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Supply Chain & Planning'`
-AmbDbConnection: scalar command result 1146800
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Supply Planning'`
-AmbDbConnection: scalar command result 1146791
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Sup Plng'`
-AmbDbConnection: scalar command result 1147487
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr Supply Planning'`
-AmbDbConnection: scalar command result 1146795
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'SC Planning Manager'`
-AmbDbConnection: scalar command result 1146793
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'SCM Planning Manager'`
-AmbDbConnection: scalar command result 1146794
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supply Planning Mgr'`
-AmbDbConnection: scalar command result 1146792
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Sr Supply Chain Planner'`
-AmbDbConnection: scalar command result 1146796
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Planner Supply Chain'`
-AmbDbConnection: scalar command result 1146802
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Global Supply Planner'`
-AmbDbConnection: scalar command result 1146798
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Supply Chain Planner'`
-AmbDbConnection: scalar command result 1146797
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 103674 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 104218 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Transportation'`
-AmbDbConnection: scalar command result 1147277
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Transportation'`
-AmbDbConnection: scalar command result 1147278
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Supervisor - Logistic'`
-AmbDbConnection: scalar command result 1147324
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supervisor - Logistic'`
-AmbDbConnection: scalar command result 1147325
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Assistant Manager - Logistics'`
-AmbDbConnection: scalar command result 1147342
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Assistant Manager - Logistics'`
-AmbDbConnection: scalar command result 1147343
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Logistics'`
-AmbDbConnection: scalar command result 1147442
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Logistics'`
-AmbDbConnection: scalar command result 1147443
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr, Logistics 3'`
-AmbDbConnection: scalar command result 1147451
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Analyst Transportation'`
-AmbDbConnection: scalar command result 1147475
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Analyst Transportation'`
-AmbDbConnection: scalar command result 1147476
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Anlst Transp'`
-AmbDbConnection: scalar command result 1147573
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Fleet Operations'`
-AmbDbConnection: scalar command result 1147478
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Fleet Operations'`
-AmbDbConnection: scalar command result 1147479
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Transportation'`
-AmbDbConnection: scalar command result 1147482
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Transportation'`
-AmbDbConnection: scalar command result 1147483
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Logistics Coordinator'`
-AmbDbConnection: scalar command result 1147559
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Logistics Coordinator'`
-AmbDbConnection: scalar command result 1147560
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Logistics Coordinator'`
-AmbDbConnection: scalar command result 1147561
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 103674 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 104218 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Warehouse'`
-AmbDbConnection: scalar command result 1147252
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director of Corp Warehouse'`
-AmbDbConnection: scalar command result 1150184
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Warehouse'`
-AmbDbConnection: scalar command result 1147253
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Shipping/Loading Personnel'`
-AmbDbConnection: scalar command result 1147254
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Shipping/Loading 4'`
-AmbDbConnection: scalar command result 1147259
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Shipping/Loading Personnel'`
-AmbDbConnection: scalar command result 1147255
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Warehouse'`
-AmbDbConnection: scalar command result 1147271
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Depot Manager'`
-AmbDbConnection: scalar command result 1147574
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'DEPOT MANAGER /2/'`
-AmbDbConnection: scalar command result 1147575
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Warehouse'`
-AmbDbConnection: scalar command result 1147272
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Regional Warehouse Manager'`
-AmbDbConnection: scalar command result 1150191
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Warehouse Associate'`
-AmbDbConnection: scalar command result 1147295
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Assoc Whse'`
-AmbDbConnection: scalar command result 1147484
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Warehouse Associate'`
-AmbDbConnection: scalar command result 1147296
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Warehouse Associate G'`
-AmbDbConnection: scalar command result 1147318
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Supervisor - Warehouse'`
-AmbDbConnection: scalar command result 1147319
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supervisor - Warehouse'`
-AmbDbConnection: scalar command result 1147320
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Manager - Distribution Center (DC)'`
-AmbDbConnection: scalar command result 1147333
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager - Distribution Center (DC)'`
-AmbDbConnection: scalar command result 1147334
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Manager - DC'`
-AmbDbConnection: scalar command result 1147335
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Assistant Manager - Distribution Center (DC)'`
-AmbDbConnection: scalar command result 1147552
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Assistant Manager - DC'`
-AmbDbConnection: scalar command result 1147554
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Assistant Manager - Distribution Center (DC)'`
-AmbDbConnection: scalar command result 1147553
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Vice President - Distribution Center (DC) Operations'`
-AmbDbConnection: scalar command result 1147564
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President - Distribution Center (DC) Operations'`
-AmbDbConnection: scalar command result 1147565
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP - DC Operations'`
-AmbDbConnection: scalar command result 1147566
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Warehouse Personnel'`
-AmbDbConnection: scalar command result 1150129
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Warehouse Person'`
-AmbDbConnection: scalar command result 1150131
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Warehouse Personnel'`
-AmbDbConnection: scalar command result 1150130
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Warehouseperson 1'`
-AmbDbConnection: scalar command result 1150134
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Warehouseperson 2'`
-AmbDbConnection: scalar command result 1150133
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Warehouseperson 3'`
-AmbDbConnection: scalar command result 1150132
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Team Lead Warehouse'`
-AmbDbConnection: scalar command result 1150155
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Team Lead Warehouse'`
-AmbDbConnection: scalar command result 1150156
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Warehouse Team Leader'`
-AmbDbConnection: scalar command result 1150157
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Warehouse Driver'`
-AmbDbConnection: scalar command result 1150294
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Warehouse Driver'`
-AmbDbConnection: scalar command result 1150295
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Warehouse Shuttle Driver'`
-AmbDbConnection: scalar command result 1150298
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 103674 AND [Index] = 5`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Vice President Procurement'`
-AmbDbConnection: scalar command result 1147178
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President Procurement'`
-AmbDbConnection: scalar command result 1147179
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Procurement'`
-AmbDbConnection: scalar command result 1147181
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir Procurement 2'`
-AmbDbConnection: scalar command result 1147222
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director of Purchasing'`
-AmbDbConnection: scalar command result 1150219
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Procurement'`
-AmbDbConnection: scalar command result 1147182
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Procurement'`
-AmbDbConnection: scalar command result 1147286
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Procurement'`
-AmbDbConnection: scalar command result 1147287
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Purchasing Dept Manager'`
-AmbDbConnection: scalar command result 1150146
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Manager, Procurement'`
-AmbDbConnection: scalar command result 1147444
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager, Procurement'`
-AmbDbConnection: scalar command result 1147445
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Analyst Procurement'`
-AmbDbConnection: scalar command result 1147480
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Analyst Procurement'`
-AmbDbConnection: scalar command result 1147481
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Purchasing Analyst'`
-AmbDbConnection: scalar command result 1150249
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Buyer'`
-AmbDbConnection: scalar command result 1147550
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Buyer'`
-AmbDbConnection: scalar command result 1147551
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Procurement Buyer'`
-AmbDbConnection: scalar command result 1150281
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 103674 AND [Index] = 6`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Drilling'`
-AmbDbConnection: scalar command result 1150362
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Drilling Operations Manager'`
-AmbDbConnection: scalar command result 1150463
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Drilling'`
-AmbDbConnection: scalar command result 1150363
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr, Drilling'`
-AmbDbConnection: scalar command result 1150793
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Drilling Technician'`
-AmbDbConnection: scalar command result 1150364
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'COM/INT Support Technician'`
-AmbDbConnection: scalar command result 1150650
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Drilling Technician'`
-AmbDbConnection: scalar command result 1150365
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Rotational Engineer'`
-AmbDbConnection: scalar command result 1150366
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Rotational Engineer'`
-AmbDbConnection: scalar command result 1150367
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Rotational WSR'`
-AmbDbConnection: scalar command result 1150372
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Drilling & Completions Engineer'`
-AmbDbConnection: scalar command result 1150591
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Completions Engineer'`
-AmbDbConnection: scalar command result 1150794
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Drilling & Completions Engineer'`
-AmbDbConnection: scalar command result 1150592
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Vice President of Completions'`
-AmbDbConnection: scalar command result 1150640
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President of Completions'`
-AmbDbConnection: scalar command result 1150641
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Drilling Engineer'`
-AmbDbConnection: scalar command result 1150642
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Drilling Engineer'`
-AmbDbConnection: scalar command result 1150643
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Staff Drilling Engineer'`
-AmbDbConnection: scalar command result 1150788
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager Completions'`
-AmbDbConnection: scalar command result 1150646
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager Completions'`
-AmbDbConnection: scalar command result 1150647
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr, Completions'`
-AmbDbConnection: scalar command result 1150787
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Drilling Director'`
-AmbDbConnection: scalar command result 1150648
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir, Drlg & Compl'`
-AmbDbConnection: scalar command result 1150657
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director, Drilling'`
-AmbDbConnection: scalar command result 1150769
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Drilling Director'`
-AmbDbConnection: scalar command result 1150649
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Completion Engineer'`
-AmbDbConnection: scalar command result 1150651
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Completion Engineer'`
-AmbDbConnection: scalar command result 1150652
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Completions Engineer'`
-AmbDbConnection: scalar command result 1150767
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Technical Expert Completions Engineer'`
-AmbDbConnection: scalar command result 1150824
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Drilling Engineer'`
-AmbDbConnection: scalar command result 1150653
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Drilling Engineer'`
-AmbDbConnection: scalar command result 1150654
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Staff Drilling Engineer'`
-AmbDbConnection: scalar command result 1150766
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Drilling Superintendent'`
-AmbDbConnection: scalar command result 1150655
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Drilling Superintendent'`
-AmbDbConnection: scalar command result 1150656
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supt Drilling'`
-AmbDbConnection: scalar command result 1150768
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Rig Operations Superintendent'`
-AmbDbConnection: scalar command result 1150754
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Rig Operations Superintendent'`
-AmbDbConnection: scalar command result 1150755
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Engineering Technician'`
-AmbDbConnection: scalar command result 1150758
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Engineering Tech'`
-AmbDbConnection: scalar command result 1150774
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Engineering Technician'`
-AmbDbConnection: scalar command result 1150759
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Completions Assistant'`
-AmbDbConnection: scalar command result 1150760
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Completions Assistant'`
-AmbDbConnection: scalar command result 1150761
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Completions Superintendent'`
-AmbDbConnection: scalar command result 1150762
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Completions Superintendent'`
-AmbDbConnection: scalar command result 1150763
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Vice President of Drilling'`
-AmbDbConnection: scalar command result 1150764
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President of Drilling'`
-AmbDbConnection: scalar command result 1150765
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Well Operations'`
-AmbDbConnection: scalar command result 1150770
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'DSM'`
-AmbDbConnection: scalar command result 1150791
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Engineering Specialist'`
-AmbDbConnection: scalar command result 1150826
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Technical Specialist'`
-AmbDbConnection: scalar command result 1150817
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Well Operations'`
-AmbDbConnection: scalar command result 1150771
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Well Services Superintendent'`
-AmbDbConnection: scalar command result 1150795
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'WSM'`
-AmbDbConnection: scalar command result 1150792
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Completions Consultant'`
-AmbDbConnection: scalar command result 1150772
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Completions Consultant'`
-AmbDbConnection: scalar command result 1150773
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Completions Technician'`
-AmbDbConnection: scalar command result 1150789
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Completions Technician'`
-AmbDbConnection: scalar command result 1150790
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Director Drilling & Completions'`
-AmbDbConnection: scalar command result 1150796
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Director Drilling & Completions'`
-AmbDbConnection: scalar command result 1150797
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Vice President of Operations and Production'`
-AmbDbConnection: scalar command result 1150798
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President of Operations and Production'`
-AmbDbConnection: scalar command result 1150799
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Operations Engineer'`
-AmbDbConnection: scalar command result 1150800
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Operations Engineer'`
-AmbDbConnection: scalar command result 1150801
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Completions & Production Analyst'`
-AmbDbConnection: scalar command result 1150802
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Completions & Production Analyst'`
-AmbDbConnection: scalar command result 1150803
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Operations Analyst'`
-AmbDbConnection: scalar command result 1150804
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Operations Analyst'`
-AmbDbConnection: scalar command result 1150805
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Engineering Completions Supervisor'`
-AmbDbConnection: scalar command result 1150806
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Engineering Completions Supervisor'`
-AmbDbConnection: scalar command result 1150807
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Engineer Advisor Drilling'`
-AmbDbConnection: scalar command result 1150808
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Engineer Advisor Drilling'`
-AmbDbConnection: scalar command result 1150809
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Completions Foreman'`
-AmbDbConnection: scalar command result 1150810
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Completions Foreman'`
-AmbDbConnection: scalar command result 1150811
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Supervisor, Drilling & Completions'`
-AmbDbConnection: scalar command result 1150812
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supervisor, Completions'`
-AmbDbConnection: scalar command result 1150816
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Supervisor, Drilling & Completions'`
-AmbDbConnection: scalar command result 1150813
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Staff Drilling Analyst'`
-AmbDbConnection: scalar command result 1150814
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Staff Drilling Analyst'`
-AmbDbConnection: scalar command result 1150815
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Analyst, Engineering'`
-AmbDbConnection: scalar command result 1150818
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Analyst, Engineering'`
-AmbDbConnection: scalar command result 1150819
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Drilling Team Lead'`
-AmbDbConnection: scalar command result 1150820
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Drilling Team Lead'`
-AmbDbConnection: scalar command result 1150821
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Utica Drilling Team Lead'`
-AmbDbConnection: scalar command result 1150825
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Engineer Advisor Completions'`
-AmbDbConnection: scalar command result 1150822
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Engineer Advisor Completions'`
-AmbDbConnection: scalar command result 1150823
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Manager, Drilling & Completions'`
-AmbDbConnection: scalar command result 1150835
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager, Drilling & Completions'`
-AmbDbConnection: scalar command result 1150836
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager, Drilling & Completions 2'`
-AmbDbConnection: scalar command result 1150837
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Manager, Land'`
-AmbDbConnection: scalar command result 1150903
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Manager, Land'`
-AmbDbConnection: scalar command result 1150904
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 103674 AND [Index] = 8`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1147351 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Retail Associate'`
-AmbDbConnection: scalar command result 1147454
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Retail Associate'`
-AmbDbConnection: scalar command result 1147455
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 103674 AND [Index] = 8`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1147351 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Stores Manager'`
-AmbDbConnection: scalar command result 1147452
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Stores Manager'`
-AmbDbConnection: scalar command result 1147453
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Stores Manager 1'`
-AmbDbConnection: scalar command result 1147459
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 103674 AND [Index] = 9`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1147435 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Visual Merchandiser'`
-AmbDbConnection: scalar command result 1147562
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Visual Merchandiser'`
-AmbDbConnection: scalar command result 1147563
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 105515 AND [Index] = 0`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Vice President Sales & Marketing'`
-AmbDbConnection: scalar command result 1147121
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President Sales & Marketing'`
-AmbDbConnection: scalar command result 1147122
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President Sales & Mktg'`
-AmbDbConnection: scalar command result 1147125
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP Sales and Marketing'`
-AmbDbConnection: scalar command result 1147123
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP Sales and Mktg'`
-AmbDbConnection: scalar command result 1147124
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Sales and Marketing'`
-AmbDbConnection: scalar command result 1147126
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir of Sales & Marketing'`
-AmbDbConnection: scalar command result 1147129
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir Sales and Marketing'`
-AmbDbConnection: scalar command result 1147128
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Sales and Marketing'`
-AmbDbConnection: scalar command result 1147127
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 105515 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Sales Account Manager'`
-AmbDbConnection: scalar command result 1147112
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sales AC Mgr'`
-AmbDbConnection: scalar command result 1147115
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sales Account Manager'`
-AmbDbConnection: scalar command result 1147113
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sales Account Mgr'`
-AmbDbConnection: scalar command result 1147114
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Sales National Account'`
-AmbDbConnection: scalar command result 1147116
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'APAC National Sales Manager'`
-AmbDbConnection: scalar command result 1147549
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Mgr National Accounts 2'`
-AmbDbConnection: scalar command result 1147246
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Ntl Account Manager'`
-AmbDbConnection: scalar command result 1150187
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sales National Account'`
-AmbDbConnection: scalar command result 1147117
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Sales Account'`
-AmbDbConnection: scalar command result 1147118
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir Sales Account'`
-AmbDbConnection: scalar command result 1147120
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Sales Account'`
-AmbDbConnection: scalar command result 1147119
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director, Sales'`
-AmbDbConnection: scalar command result 1147163
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Vice President Sales'`
-AmbDbConnection: scalar command result 1147154
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President Sales'`
-AmbDbConnection: scalar command result 1147155
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP, Sales'`
-AmbDbConnection: scalar command result 1147157
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP, Sales 2'`
-AmbDbConnection: scalar command result 1147156
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Director Sales'`
-AmbDbConnection: scalar command result 1147160
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Director Sales'`
-AmbDbConnection: scalar command result 1147161
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Dir Sales'`
-AmbDbConnection: scalar command result 1147162
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Sales Account Executive'`
-AmbDbConnection: scalar command result 1147464
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Account Executive'`
-AmbDbConnection: scalar command result 1147466
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sales Account Executive'`
-AmbDbConnection: scalar command result 1147465
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Regional Sales Director'`
-AmbDbConnection: scalar command result 1150181
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Regional Sales Director'`
-AmbDbConnection: scalar command result 1150182
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'National Sales Manager'`
-AmbDbConnection: scalar command result 1150185
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'National Account Manager'`
-AmbDbConnection: scalar command result 1150246
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'National Sales Manager'`
-AmbDbConnection: scalar command result 1150186
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Regional Sales Manager'`
-AmbDbConnection: scalar command result 1150188
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Regional Account Manager'`
-AmbDbConnection: scalar command result 1150190
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Regional Sales Manager'`
-AmbDbConnection: scalar command result 1150189
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Regional Sales Executive'`
-AmbDbConnection: scalar command result 1150192
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Regional Sales Exec'`
-AmbDbConnection: scalar command result 1150194
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Regional Sales Executive'`
-AmbDbConnection: scalar command result 1150193
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director of Sales National Accounts'`
-AmbDbConnection: scalar command result 1150235
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director of Sales National Accounts'`
-AmbDbConnection: scalar command result 1150236
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Sales Manager National Account'`
-AmbDbConnection: scalar command result 1150244
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sales Manager National Account'`
-AmbDbConnection: scalar command result 1150245
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Sales Operations'`
-AmbDbConnection: scalar command result 1150247
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Sales Operations'`
-AmbDbConnection: scalar command result 1150248
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Sales Coordinator National Accounts'`
-AmbDbConnection: scalar command result 1150250
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Ntl Sales Coordinator'`
-AmbDbConnection: scalar command result 1150252
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sales Coordinator National Accounts'`
-AmbDbConnection: scalar command result 1150251
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Customer Care Representative'`
-AmbDbConnection: scalar command result 1150299
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Customer Care Rep'`
-AmbDbConnection: scalar command result 1150301
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Customer Care Representative'`
-AmbDbConnection: scalar command result 1150300
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Sales Operations Manager'`
-AmbDbConnection: scalar command result 1150302
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sales Operations Manager'`
-AmbDbConnection: scalar command result 1150303
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Customer Service Coordinator'`
-AmbDbConnection: scalar command result 1150304
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Customer Service Coordinator'`
-AmbDbConnection: scalar command result 1150305
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Customer Service Coordntr'`
-AmbDbConnection: scalar command result 1150306
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Customer Service Supervisor'`
-AmbDbConnection: scalar command result 1150307
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Customer Service Supervisor'`
-AmbDbConnection: scalar command result 1150308
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 105515 AND [Index] = 1`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 105595 AND [Index] = 0`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Order Entry Personnel'`
-AmbDbConnection: scalar command result 1147247
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Order Entry II'`
-AmbDbConnection: scalar command result 1147262
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Order Entry Personnel'`
-AmbDbConnection: scalar command result 1147248
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Inside Sales Representative'`
-AmbDbConnection: scalar command result 1150254
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Inside Sales Rep'`
-AmbDbConnection: scalar command result 1150256
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Inside Sales Representative'`
-AmbDbConnection: scalar command result 1150255
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 105515 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Director Marketing'`
-AmbDbConnection: scalar command result 1147164
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir Marketing 1'`
-AmbDbConnection: scalar command result 1147167
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Dir Marketing 2'`
-AmbDbConnection: scalar command result 1147166
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Director Marketing'`
-AmbDbConnection: scalar command result 1147165
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Vice President - Marketing'`
-AmbDbConnection: scalar command result 1147326
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President - Marketing'`
-AmbDbConnection: scalar command result 1147327
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP - Marketing'`
-AmbDbConnection: scalar command result 1147460
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Manager - Marketing'`
-AmbDbConnection: scalar command result 1147546
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Manager - Marketing'`
-AmbDbConnection: scalar command result 1147547
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sr Manager - Marketing'`
-AmbDbConnection: scalar command result 1147548
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 105515 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 105847 AND [Index] = 0`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'VP Brand Marketing'`
-AmbDbConnection: scalar command result 1147158
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'VP Brand Marketing'`
-AmbDbConnection: scalar command result 1147159
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Brand Manager'`
-AmbDbConnection: scalar command result 1147291
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Brand Manager'`
-AmbDbConnection: scalar command result 1147292
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Assistant Brand Manager'`
-AmbDbConnection: scalar command result 1147301
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Assistant Brand Manager'`
-AmbDbConnection: scalar command result 1147302
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Brand Coordinator'`
-AmbDbConnection: scalar command result 1147307
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Brand Coordinator'`
-AmbDbConnection: scalar command result 1147308
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Brand Specialist'`
-AmbDbConnection: scalar command result 1147309
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Brand Specialist'`
-AmbDbConnection: scalar command result 1147310
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Brand Manager'`
-AmbDbConnection: scalar command result 1147312
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Brand Manager'`
-AmbDbConnection: scalar command result 1147313
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Senior Vice President - Brand'`
-AmbDbConnection: scalar command result 1147321
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Senior Vice President - Brand'`
-AmbDbConnection: scalar command result 1147322
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'SVP - Brand'`
-AmbDbConnection: scalar command result 1147323
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 4`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 105515 AND [Index] = 2`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 105847 AND [Index] = 3`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Vice President Marketing eCommerce'`
-AmbDbConnection: scalar command result 1147220
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Vice President Marketing eCommerce'`
-AmbDbConnection: scalar command result 1147221
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'E-Catalog Specialist'`
-AmbDbConnection: scalar command result 1147250
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'E-Catalog Specialist'`
-AmbDbConnection: scalar command result 1147251
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Assistant Manager - eCommerce'`
-AmbDbConnection: scalar command result 1147303
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Assistant Manager - eCommerce'`
-AmbDbConnection: scalar command result 1147304
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Assistant Manager - eCommerce Operations'`
-AmbDbConnection: scalar command result 1147555
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 5`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 106550 AND [Index] = 12`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'JD - Sales Clerk'`
-AmbDbConnection: scalar command result 1137872
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Cashier'`
-AmbDbConnection: scalar command result 1137880
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'JD - Sales Clerk'`
-AmbDbConnection: scalar command result 1137873
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Retail Worker'`
-AmbDbConnection: scalar command result 1137877
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sales Associate'`
-AmbDbConnection: scalar command result 1137874
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sales Manager'`
-AmbDbConnection: scalar command result 1137876
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Sales Representative'`
-AmbDbConnection: scalar command result 1137875
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Store Manager'`
-AmbDbConnection: scalar command result 1137878
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 7`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'JD-Business Owner'`
-AmbDbConnection: scalar command result 1229129
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Founder'`
-AmbDbConnection: scalar command result 1147513
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'JD-Business Owner'`
-AmbDbConnection: scalar command result 1229130
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Owner'`
-AmbDbConnection: scalar command result 1147512
-AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'Proprietor'`
-AmbDbConnection: scalar command result 1147511
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 7`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1040983 AND [Index] = 1`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 7`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1040983 AND [Index] = 1`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 7`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1040983 AND [Index] = 1`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 7`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1040983 AND [Index] = 1`
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 7`
-AmbDbConnection: reader succeeded
-AmbDbConnection: reader finished
-AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 1040983 AND [Index] = 1`
-AmbDbConnection: reader finished
-AmbDbConnection: executing non-query `DROP VIEW [dbo].[vw_TaxonomyNode]`
+AmbDbConnection: scalar command result null
+AmbDbConnection: creating command `[dbo].sp_internalGetNextOID`
 AmbDbConnection: nonquery command result -1
+AmbDbConnection: new oid 1228963
+AmbDbConnection: executing non-query `    INSERT INTO [dbo].[t_JobTitle]
+    ([OID], [IsSystemOwned], [Name], [Description], [CreationDate], [CreatorID], [PracticeAreaID], [TaxonomyID], [CreationSession])
+    VALUES
+    (1228963, 0, 'Accounts Receivable Manager', 'Accounts Receivable Manager', GETDATE(), 100, 2501, 100931, '53ca8811-202f-4b6c-9775-e82563e666e1')`
+AmbDbConnection: nonquery command result 1
+AmbDbConnection: creating command `[dbo].sp_internalGetNextOID`
+AmbDbConnection: nonquery command result -1
+AmbDbConnection: new oid 1228964
+AmbDbConnection: executing non-query `    INSERT INTO [dbo].[t_JobTitleAlias]
+    ([OID], [Alias], [Description], [IsSystemOwned], [IsPrimary], [CreationDate], [CreatorID], [PracticeAreaID], [JobTitleID], [LID], [CreationSession])
+    VALUES
+    (1228964, 'Accounts Receivable Manager', 'Accounts Receivable Manager', 0, 1, GETDATE(), 100, 2501, 1228963, 500, '53ca8811-202f-4b6c-9775-e82563e666e1')`
+AmbDbConnection: nonquery command result 1
+AmbDbConnection: executing non-query `INSERT INTO [dbo].[t_JobTitleAliasKeys] ([JobTitleAliasID],[Key]) VALUES (1228964, 'Accounts'), (1228964, 'Receivable'), (1228964, 'Receivable')`
+AmbDbConnection: nonquery command result 3
+AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'AR Mananger'`
+AmbDbConnection: scalar command result null
+AmbDbConnection: creating command `[dbo].sp_internalGetNextOID`
+AmbDbConnection: nonquery command result -1
+AmbDbConnection: new oid 1228965
+AmbDbConnection: executing non-query `    INSERT INTO [dbo].[t_JobTitleAlias]
+    ([OID], [Alias], [Description], [IsSystemOwned], [IsPrimary], [CreationDate], [CreatorID], [PracticeAreaID], [JobTitleID], [LID], [CreationSession])
+    VALUES
+    (1228965, 'AR Mananger', 'AR Mananger', 0, 0, GETDATE(), 100, 2501, 1228963, 500, '53ca8811-202f-4b6c-9775-e82563e666e1')`
+AmbDbConnection: nonquery command result 1
+AmbDbConnection: executing non-query `INSERT INTO [dbo].[t_JobTitleAliasKeys] ([JobTitleAliasID],[Key]) VALUES (1228965, 'AR'), (1228965, 'Mananger')`
+AmbDbConnection: nonquery command result 2
+AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'AR Mgr'`
+AmbDbConnection: scalar command result null
+AmbDbConnection: creating command `[dbo].sp_internalGetNextOID`
+AmbDbConnection: nonquery command result -1
+AmbDbConnection: new oid 1228966
+AmbDbConnection: executing non-query `    INSERT INTO [dbo].[t_JobTitleAlias]
+    ([OID], [Alias], [Description], [IsSystemOwned], [IsPrimary], [CreationDate], [CreatorID], [PracticeAreaID], [JobTitleID], [LID], [CreationSession])
+    VALUES
+    (1228966, 'AR Mgr', 'AR Mgr', 0, 0, GETDATE(), 100, 2501, 1228963, 500, '53ca8811-202f-4b6c-9775-e82563e666e1')`
+AmbDbConnection: nonquery command result 1
+AmbDbConnection: executing non-query `INSERT INTO [dbo].[t_JobTitleAliasKeys] ([JobTitleAliasID],[Key]) VALUES (1228966, 'AR'), (1228966, 'Mgr')`
+AmbDbConnection: nonquery command result 2
+AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = 'Accounts Receivable Specialist'`
+AmbDbConnection: scalar command result null
+AmbDbConnection: creating command `[dbo].sp_internalGetNextOID`
+AmbDbConnection: nonquery command result -1
+AmbDbConnection: new oid 1228967
+AmbDbConnection: executing non-query `    INSERT INTO [dbo].[t_JobTitle]
+    ([OID], [IsSystemOwned], [Name], [Description], [CreationDate], [CreatorID], [PracticeAreaID], [TaxonomyID], [CreationSession])
+    VALUES
+    (1228967, 0, 'Accounts Receivable Specialist', 'Accounts Receivable Specialist', GETDATE(), 100, 2501, 100931, '53ca8811-202f-4b6c-9775-e82563e666e1')`
+AmbDbConnection: nonquery command result 1
+AmbDbConnection: creating command `[dbo].sp_internalGetNextOID`
+AmbDbConnection: nonquery command result -1
+AmbDbConnection: new oid 1228968
+AmbDbConnection: executing non-query `    INSERT INTO [dbo].[t_JobTitleAlias]
+    ([OID], [Alias], [Description], [IsSystemOwned], [IsPrimary], [CreationDate], [CreatorID], [PracticeAreaID], [JobTitleID], [LID], [CreationSession])
+    VALUES
+    (1228968, 'Accounts Receivable Specialist', 'Accounts Receivable Specialist', 0, 1, GETDATE(), 100, 2501, 1228967, 500, '53ca8811-202f-4b6c-9775-e82563e666e1')`
+AmbDbConnection: nonquery command result 1
+AmbDbConnection: executing non-query `INSERT INTO [dbo].[t_JobTitleAliasKeys] ([JobTitleAliasID],[Key]) VALUES (1228968, 'Accounts'), (1228968, 'Receivable'), (1228968, 'Receivable')`
+AmbDbConnection: nonquery command result 3
+AmbDbConnection: executing scalar `SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = 'AR Specialist'`
+AmbDbConnection: scalar command result null
+AmbDbConnection: creating command `[dbo].sp_internalGetNextOID`
+AmbDbConnection: nonquery command result -1
+AmbDbConnection: new oid 1228969
+AmbDbConnection: executing non-query `    INSERT INTO [dbo].[t_JobTitleAlias]
+    ([OID], [Alias], [Description], [IsSystemOwned], [IsPrimary], [CreationDate], [CreatorID], [PracticeAreaID], [JobTitleID], [LID], [CreationSession])
+    VALUES
+    (1228969, 'AR Specialist', 'AR Specialist', 0, 0, GETDATE(), 100, 2501, 1228967, 500, '53ca8811-202f-4b6c-9775-e82563e666e1')`
+AmbDbConnection: nonquery command result 1
+AmbDbConnection: executing non-query `INSERT INTO [dbo].[t_JobTitleAliasKeys] ([JobTitleAliasID],[Key]) VALUES (1228969, 'AR'), (1228969, 'Specialist')`
+AmbDbConnection: nonquery command result 2
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100000 AND [Index] = 2`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100727 AND [Index] = 0`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100729 AND [Index] = 0`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = 100820 AND [Index] = 5`
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Type] FROM [dbo].[vw_TaxonomyNode] WHERE [PID] = 100000 AND [Index] = 2`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Type] FROM [dbo].[vw_TaxonomyNode] WHERE [PID] = 100727 AND [Index] = 0`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished
+AmbDbConnection: executing reader `SELECT [OID], [Type] FROM [dbo].[vw_TaxonomyNode] WHERE [PID] = 100729 AND [Index] = 0`
+AmbDbConnection: reader succeeded
+AmbDbConnection: reader finished

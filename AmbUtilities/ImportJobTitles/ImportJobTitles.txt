@@ -1,717 +1,254 @@
-Processing ..\..\JobTitles_Map_05292024.xlsx
-Job Title Alias Barback already exists for JD-Food Service Worker
-Job Title Alias Barista already exists for JD-Food Service Worker
-Job Title Alias Bartender already exists for JD-Food Service Worker
-Job Title Alias Bus Person already exists for JD-Food Service Worker
-Job Title Alias Busser already exists for JD-Food Service Worker
-Job Title Alias Cafeteria Worker already exists for JD-Food Service Worker
-Job Title Alias Chef already exists for JD-Food Service Worker
-Job Title Alias Cook I already exists for JD-Food Service Worker
-Job Title Alias Cook II already exists for JD-Food Service Worker
-Job Title Alias Fast Food Worker already exists for JD-Food Service Worker
-Job Title Alias JD-Food Service Worker already exists for JD-Food Service Worker
-Job Title Alias Line Cook already exists for JD-Food Service Worker
-Job Title Alias Restaurant Manager already exists for JD-Food Service Worker
-Job Title Alias Server already exists for JD-Food Service Worker
-Job Title Alias Wait Staff Manager already exists for JD-Food Service Worker
-Job Title Alias Waiter already exists for JD-Food Service Worker
-Job Title Alias Waitress already exists for JD-Food Service Worker
-Job Title Alias Manager Finance already exists for Manager Finance
-Job Title Alias Manager, Finance already exists for Manager Finance
-Job Title Alias Mgr Finance already exists for Manager Finance
-Job Title Alias MGR FINANCE PLANNING & ANALYSIS already exists for Manager Finance
-Job Title Alias Supervisor Finance already exists for Manager Finance
-Job Title Alias Supvr Finance already exists for Manager Finance
-Job Title Alias Vice President Finance already exists for Vice President Finance
-Job Title Alias VP Finance already exists for Vice President Finance
-Job Title Alias VP Finance & FP&A already exists for Vice President Finance
-Job Title Alias Senior Manager Finance already exists for Senior Manager Finance
-Job Title Alias Sr Manager Finance already exists for Senior Manager Finance
-Job Title Alias Sr Mgr Finance already exists for Senior Manager Finance
-Job Title Alias Dir Finance already exists for Director Finance
-Job Title Alias Dir Finance 1 already exists for Director Finance
-Job Title Alias Dir Finance 2 already exists for Director Finance
-Job Title Alias Dir Finance WAC already exists for Director Finance
-Job Title Alias Director Finance already exists for Director Finance
-Job Title Alias Director Finance Operations already exists for Director Finance
-Job Title Alias Director Of FP & A already exists for Director Finance
-Job Title Alias Director, Finance already exists for Director Finance
-Job Title Alias Accounting already exists for Analyst Finance
-Job Title Alias Analyst Finance already exists for Analyst Finance
-Job Title Alias Finance & Accounting Analyst III already exists for Analyst Finance
-Job Title Alias Financial Analyst already exists for Analyst Finance
-Job Title Alias Financial Analyst I already exists for Analyst Finance
-Job Title Alias Financial Analyst II already exists for Analyst Finance
-Job Title Alias Plant Finance Analyst already exists for Analyst Finance
-Job Title Alias Trade Finance and Pricing Anal already exists for Analyst Finance
-Job Title Alias Senior Director Finance already exists for Senior Director Finance
-Job Title Alias Sr Director Finance already exists for Senior Director Finance
-Job Title Alias Officer BU Finance already exists for Officer BU Finance
-Job Title Alias Officer BU Finance 2 already exists for Officer BU Finance
-Job Title Alias Assistant Manager - Finance already exists for Assistant Manager - Finance
-Job Title Alias Executive - Accounting already exists for Executive - Accounting
-Job Title Alias Executive I - Accounting Process already exists for Executive - Accounting
-Job Title Alias Executive II - Accounting Process already exists for Executive - Accounting
-Job Title Alias SVP and CFO already exists for SVP, Chief Financial Officer
-Job Title Alias SVP Chief Financial Officer already exists for SVP, Chief Financial Officer
-Job Title Alias SVP, Chief Financial Officer already exists for SVP, Chief Financial Officer
-Job Title Alias Senior Financial Analyst already exists for Senior Financial Analyst
-Job Title Alias Sr Financial Analyst I already exists for Senior Financial Analyst
-Job Title Alias Financial Advisor already exists for Financial Advisor
-Job Title Alias VP Investor Relations already exists for VP Investor Relations
-Job Title Alias EA Finance Department already exists for Administrative Assistant Finance Department
-Job Title Alias Credit Department AR Manager already exists for Credit Department AR Manager
-Job Title Alias Credit Dept/AR Manager already exists for Credit Department AR Manager
-Job Title Alias Credit Dept-A/R already exists for Credit Department AR Manager
-Job Title Alias SVP GMM already exists for SVP GMM
-Job Title Alias Accounts Payable Associate already exists for Accounts Payable Associate
-Job Title Alias Accounts Payable Clerk already exists for Accounts Payable Associate
-Job Title Alias Accounts Payable Jr. Clerk already exists for Accounts Payable Associate
-Job Title Alias Accounts Payable Specialist already exists for Accounts Payable Associate
-Job Title Alias Clerk, Accounts Payable already exists for Accounts Payable Associate
-Job Title Alias General & Accounts Payable already exists for Accounts Payable Associate
-Job Title Alias Accounts Payable Manager already exists for Accounts Payable Manager
-Job Title Alias Accounts Payable Supervisor already exists for Accounts Payable Manager
-Job Title Alias Manager, Accounts Payable already exists for Accounts Payable Manager
-Job Title Alias Mgr Accounts Payable already exists for Accounts Payable Manager
-Job Title Alias Mgr, Accounts Payable already exists for Accounts Payable Manager
-Job Title Alias Mgr. Accounts Payable already exists for Accounts Payable Manager
-Job Title Alias MR - AP already exists for Accounts Payable Manager
-Job Title Alias Suprv., Accounts Payable already exists for Accounts Payable Manager
-Job Title Alias Supv, Accounts Payable already exists for Accounts Payable Manager
-Job Title Alias AP Manager already exists for Accounts Payable Manager
-Job Title Alias Accounts Payable Specialist 2 already exists for AP Specialist
-Job Title Alias Accounts Payable Specialist already exists for AP Specialist
-Job Title Alias AP Specialist already exists for AP Specialist
-Job Title Alias Accounts Payable Team Leader already exists for Accounts Payable Team Leader
-Job Title Alias Accounts Payable Analyst already exists for Accounts Payable Analyst
-Job Title Alias AP Analyst already exists for Accounts Payable Analyst
-Job Title Alias Acconts Payable Workflow Coordinator already exists for Acconts Payable Workflow Coordinator
-Job Title Alias Accounts Payable Processor already exists for Accounts Payable Processor
-Job Title Alias AP Processor already exists for Accounts Payable Processor
-Job Title Alias AR Mananger already exists for Accounts Receivable Manager
-Job Title Alias AR Mgr already exists for Accounts Receivable Manager
-Job Title Alias AR Specialist already exists for Accounts Receivable Specialist
-Job Title Alias Senior Director Tax Accounting already exists for Senior Director Tax Accounting
-Job Title Alias Sr Director Tax Accounting already exists for Senior Director Tax Accounting
-Job Title Alias Vice President Finance Tax already exists for Vice President Finance Tax
-Job Title Alias Vice President Tax already exists for Vice President Finance Tax
-Job Title Alias VP Finance Tax already exists for Vice President Finance Tax
-Job Title Alias VP Tax already exists for Vice President Finance Tax
-Job Title Alias Manager Corporate Tax already exists for Manager Tax
-Job Title Alias Manager Tax already exists for Manager Tax
-Job Title Alias Mgr Corporate Tax already exists for Manager Tax
-Job Title Alias Mgr Tax already exists for Manager Tax
-Job Title Alias Tax Accountant already exists for Tax Accountant
-Job Title Alias Analyst Tax already exists for Analyst Tax
-Job Title Alias Analyst Tax 3 already exists for Analyst Tax
-Job Title Alias Property Tax Analyst already exists for Analyst Tax
-Job Title Alias Sales & Use Tax Analyst already exists for Analyst Tax
-Job Title Alias Sr Tax Analyst I already exists for Analyst Tax
-Job Title Alias Tax Analyst I already exists for Analyst Tax
-Job Title Alias Senior Tax Analyst already exists for Senior Tax Analyst
-Job Title Alias Senior Tax Specialist already exists for Senior Tax Specialist
-Job Title Alias Sr Tax Specialist already exists for Senior Tax Specialist
-Job Title Alias Tax Spec already exists for Tax Specialist
-Job Title Alias Tax Specialist already exists for Tax Specialist
-Job Title Alias Senior Manager Corporate Tax already exists for Senior Manager Corporate Tax
-Job Title Alias Senior Manager Tax already exists for Senior Manager Corporate Tax
-Job Title Alias Sr Manager Corporate Tax already exists for Senior Manager Corporate Tax
-Job Title Alias Sr Manager Tax already exists for Senior Manager Corporate Tax
-Job Title Alias Sr Treasury Analyst already exists for Treasury Analyst
-Job Title Alias Treasury Analyst already exists for Treasury Analyst
-Job Title Alias VP & Treasurer already exists for VP & Treasurer
-Job Title Alias Director of Treasury already exists for Director of Treasury
-Job Title Alias Dir Tax already exists for Director Tax
-Job Title Alias Director Tax already exists for Director Tax
-Job Title Alias Senior reasury Analyst already exists for Senior reasury Analyst
-Job Title Alias Corporate Accounting Manager already exists for Manager Accounting
-Job Title Alias Cost Accounting Manager already exists for Manager Accounting
-Job Title Alias General Accounting Manager already exists for Manager Accounting
-Job Title Alias General Accounting Mgr already exists for Manager Accounting
-Job Title Alias Manager Accounting already exists for Manager Accounting
-Job Title Alias Manager, Corporate Accounting already exists for Manager Accounting
-Job Title Alias Mgr Accounting already exists for Manager Accounting
-Job Title Alias Mgr Accounting 1 already exists for Manager Accounting
-Job Title Alias Mgr Cost Accounting already exists for Manager Accounting
-Job Title Alias Mgr, Accounting already exists for Manager Accounting
-Job Title Alias Supervisor Accounting already exists for Manager Accounting
-Job Title Alias Supervisor Accounting Finance already exists for Manager Accounting
-Job Title Alias Supv Accounting already exists for Manager Accounting
-Job Title Alias Supvr Accounting already exists for Manager Accounting
-Job Title Alias Supvr Accounting Finance already exists for Manager Accounting
-Job Title Alias Accounting Assistant already exists for Accounting Assistant
-Job Title Alias Accounting Associate already exists for Accounting Assistant
-Job Title Alias Accounting Processor already exists for Accounting Assistant
-Job Title Alias Senior Manager Accounting already exists for Senior Manager Accounting
-Job Title Alias Senior Manager Accounting and Reporting already exists for Senior Manager Accounting
-Job Title Alias Senior Manager Cost Accounting already exists for Senior Manager Accounting
-Job Title Alias Sr Mgr Accounting already exists for Senior Manager Accounting
-Job Title Alias Sr Mgr Accounting & Reporting already exists for Senior Manager Accounting
-Job Title Alias Sr Mgr Cost Accounting already exists for Senior Manager Accounting
-Job Title Alias Dir Accounting already exists for Director Accounting
-Job Title Alias Dir Accounting Operations already exists for Director Accounting
-Job Title Alias Dir Cost Accounting already exists for Director Accounting
-Job Title Alias Dir Financial Accounting already exists for Director Accounting
-Job Title Alias Director Accounting already exists for Director Accounting
-Job Title Alias Director Cost Accounting already exists for Director Accounting
-Job Title Alias Director Finance & Accounting M&A already exists for Director Accounting
-Job Title Alias Senior Accounting Associate already exists for Senior Accounting Associate
-Job Title Alias Sr Accounting Associate already exists for Senior Accounting Associate
-Job Title Alias Sr Accounting Processor already exists for Senior Accounting Associate
-Job Title Alias Senior Accountant already exists for Senior Accounting Associate
-Job Title Alias Finance Reporting Analyst already exists for Financial Reporting Analyst
-Job Title Alias Senior Accountant Sales Tax already exists for Senior Accountant Sales Tax
-Job Title Alias Sr Accountant Sales Tax already exists for Senior Accountant Sales Tax
-Job Title Alias Accountant already exists for Accountant
-Job Title Alias Accountant I already exists for Accountant
-Job Title Alias Accountant II already exists for Accountant
-Job Title Alias Accountant-Staff already exists for Accountant
-Job Title Alias Corporate GL Accountant already exists for Accountant
-Job Title Alias Finance & Accounting Accountant III already exists for Accountant
-Job Title Alias Revenue Accountant already exists for Accountant
-Job Title Alias Cost Accountant already exists for Accountant
-Job Title Alias Staff Accountant already exists for Accountant
-Job Title Alias Senior Executive - Accounting already exists for Senior Executive - Accounting
-Job Title Alias Team Lead - Accounting already exists for Team Lead - Accounting
-Job Title Alias Team Lead - Accounting Process already exists for Team Lead - Accounting
-Job Title Alias Accounting Clerk already exists for Accounting Clerk
-Job Title Alias Clerk - Finance and Accounting already exists for Accounting Clerk
-Job Title Alias Inventory Control Clerk already exists for Accounting Clerk
-Job Title Alias Chief Accounting Officer already exists for Chief Accounting Officer
-Job Title Alias Senior Manager - Financial Reporting already exists for Senior Manager - Financial Reporting
-Job Title Alias Revenue already exists for Revenue Accounting
-Job Title Alias Revenue Accounting already exists for Revenue Accounting
-Job Title Alias Production Accounting already exists for Production Accounting
-Job Title Alias Manager FP&A already exists for Manager FP&A
-Job Title Alias Mgr FP&A already exists for Manager FP&A
-Job Title Alias Senior Accountant already exists for Senior Accountant
-Job Title Alias Sr Accountant I already exists for Senior Accountant
-Job Title Alias Sr Accountant II already exists for Senior Accountant
-Job Title Alias Manager, Revenue Accounting already exists for Manager, Revenue Accounting
-Job Title Alias Revenue Manager already exists for Manager, Revenue Accounting
-Job Title Alias Senior Finance & Accounting Analyst already exists for Senior Finance & Accounting Analyst
-Job Title Alias Director Reporting already exists for Director Reporting
-Job Title Alias Manager Accting/Financial Reporting already exists for Manager Accting/Financial Reporting
-Job Title Alias Mgr Accting/Financial Rpting already exists for Manager Accting/Financial Reporting
-Job Title Alias Financial Reporting Manager already exists for Manager Accting/Financial Reporting
-Job Title Alias Manager Inventory Control already exists for Manager Inventory Control
-Job Title Alias Mgr Inventory Control already exists for Manager Inventory Control
-Job Title Alias Controller already exists for Finance Controller
-Job Title Alias Corporate Controller already exists for Finance Controller
-Job Title Alias Fin Controller already exists for Finance Controller
-Job Title Alias Finance Controller already exists for Finance Controller
-Job Title Alias Plant Controller already exists for Finance Controller
-Job Title Alias Financial Controller already exists for Finance Controller
-Job Title Alias Sales Controller already exists for Finance Controller
-Job Title Alias BU Controller already exists for Cost Controller
-Job Title Alias BU Cost Controller already exists for Cost Controller
-Job Title Alias Business Unit Controller already exists for Cost Controller
-Job Title Alias Business Unit Cost Controller already exists for Cost Controller
-Job Title Alias Cost Controller already exists for Cost Controller
-Job Title Alias Vice President Finance Controller already exists for Vice President Finance Controller
-Job Title Alias VP Controller already exists for Vice President Finance Controller
-Job Title Alias Director Finance Controls already exists for Director Finance Controls
-Job Title Alias Budget Controller's Assistant already exists for Controller's Assistant
-Job Title Alias Audit Manager already exists for Audit Manager
-Job Title Alias Mgr Internal Audit already exists for Audit Manager
-Job Title Alias Auditor already exists for Auditor
-Job Title Alias Internal Auditor already exists for Auditor
-Job Title Alias Sr Internal Auditor IT already exists for Auditor
-Job Title Alias Assistant Controller already exists for Assistant Controller
-Job Title Alias VP Internal Audit already exists for VP Internal Audit
-Job Title Alias Dir Internal Audit already exists for Director Internal Audit
-Job Title Alias Director Internal Audit already exists for Director Internal Audit
-Job Title Alias Manager Sales Audit already exists for Manager Sales Audit
-Job Title Alias Mgr Sales Audit already exists for Manager Sales Audit
-Job Title Alias EDI Coordinator already exists for EDI Coordinator
-Job Title Alias Senior Risk Analyst already exists for Senior Risk Analyst
-Job Title Alias Manager Risk Management already exists for Manager Risk Management
-Job Title Alias Mgr Risk Management already exists for Manager Risk Management
-Job Title Alias Vice President HR Operations already exists for Vice President HR Operations
-Job Title Alias VP - HR already exists for Vice President HR Operations
-Job Title Alias Dir HR already exists for Director Human Resources (HR)
-Job Title Alias Dir HR 2 already exists for Director Human Resources (HR)
-Job Title Alias Director Human Resources (HR) already exists for Director Human Resources (HR)
-Job Title Alias Director of Human Resources already exists for Director Human Resources (HR)
-Job Title Alias HR Director already exists for Director Human Resources (HR)
-Job Title Alias Human Resource (HR) Coordinator already exists for Human Resource (HR) Coordinator
-Job Title Alias Senior Manager - HR already exists for Senior Manager - HR
-Job Title Alias Sr Manager - HR already exists for Senior Manager - HR
-Job Title Alias Assistant Manager - HR already exists for Assistant Manager - HR
-Job Title Alias HR Business Partner already exists for HR Business Partner
-Job Title Alias HR Analyst already exists for HR Analyst
-Job Title Alias SVP Human Resources already exists for SVP Human Resources
-Job Title Alias Director Communication already exists for Director Communication
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 366: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 368: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 369: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 370: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 371: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 373: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 375: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 377: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 378: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 380: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 381: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 383: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 384: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 386: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 387: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 388: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 390: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 391: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:0
-Error on row 393: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:1
-Error on row 396: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:1
-Error on row 398: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:1
-Error on row 400: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:1
-Error on row 402: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:2
-Error on row 405: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:4
-Error on row 409: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:4
-Error on row 411: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:1:'G&A - Payroll' 1164828:4
-Error on row 412: Taxonomy node not found
-Job Title Alias Vice President IT already exists for Vice President IT
-Job Title Alias VP IT already exists for Vice President IT
-Job Title Alias Director, IT already exists for Director, IT
-Job Title Alias IT Specialist already exists for IT Specialist
-Job Title Alias Senior Manager IT already exists for Senior Manager IT
-Job Title Alias Sr Mgr IT already exists for Senior Manager IT
-Job Title Alias IT Project Lead already exists for IT Project Lead
-Job Title Alias Senior Vice President - CIO already exists for Senior Vice President - CIO
-Job Title Alias JD-Researcher already exists for JD-Researcher
-Job Title Alias Waiter2 already exists for JD-Researcher
-Job Title Alias Vice President Technology already exists for Vice President Technology
-Job Title Alias Applications Developer already exists for Applications Developer
-Job Title Alias Applications Developer 2 already exists for Applications Developer
-Job Title Alias Applications Developer 3 already exists for Applications Developer
-Job Title Alias Applications Developer 4 already exists for Applications Developer
-Job Title Alias Software Developer already exists for Applications Developer
-Job Title Alias Sr Software Developer already exists for Applications Developer
-Job Title Alias Sr Software Developer eCom already exists for Applications Developer
-Job Title Alias Senior Software Engineer already exists for Senior Software Engineer
-Job Title Alias Sr Software Engineer already exists for Senior Software Engineer
-Job Title Alias Software Engineer already exists for Software Engineer
-Job Title Alias Software Engineer 1 already exists for Software Engineer
-Job Title Alias Dir IT Applications already exists for Director IT Applications
-Job Title Alias Director IT Applications already exists for Director IT Applications
-Job Title Alias Systems Engineer already exists for Systems Engineer
-Job Title Alias Desktop Support Analyst already exists for Desktop Support Analyst
-Job Title Alias Dir IT Cybersecurity already exists for Director IT Cybersecurity
-Job Title Alias Director IT Cybersecurity already exists for Director IT Cybersecurity
-Job Title Alias Administrative Assistant already exists for Administrative Assistant
-Job Title Alias Senior Vice President Administration already exists for Senior Vice President Administration
-Job Title Alias Executive Assistant already exists for Executive Assistant
-Job Title Alias Legal Representative already exists for Legal Representative
-Job Title Alias Paralegal already exists for Paralegal
-Job Title Alias Senior Paralegal already exists for Senior Paralegal
-Job Title Alias Sr Paralegal already exists for Senior Paralegal
-Job Title Alias Corp Paralegal already exists for Corporate Paralegal
-Job Title Alias Corporate Paralegal already exists for Corporate Paralegal
-Job Title Alias Assistant Paralegal already exists for Associate Paralegal
-Job Title Alias Assoc Paralegal already exists for Associate Paralegal
-Job Title Alias Associate Paralegal already exists for Associate Paralegal
-Job Title Alias Asst Paralegal already exists for Associate Paralegal
-Taxonomy node not found: 100000:2:'G&A' 100727:4:'G&A - Corporate' 102636:0
-Error on row 492: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:4:'G&A - Corporate' 102636:0
-Error on row 494: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:4:'G&A - Corporate' 102636:0
-Error on row 496: Taxonomy node not found
-Taxonomy node not found: 100000:2:'G&A' 100727:4:'G&A - Corporate' 102636:0
-Error on row 498: Taxonomy node not found
-Job Title Alias Director Environment, Health and Safety (EHS) already exists for Director Environment, Health and Safety (EHS)
-Job Title Alias Manager EHS already exists for Manager EHS
-Job Title Alias Manager, Environmental already exists for Manager EHS
-Job Title Alias Senior Director, EHS already exists for Senior Director, EHS
-Job Title Alias EHS Representative I already exists for Senior Health and Safety Representative
-Job Title Alias Senior Health and Safety Representative already exists for Senior Health and Safety Representative
-Job Title Alias HSE Advisor already exists for HSE Advisor
-Job Title Alias Air Quality Engineer already exists for Air Quality Engineer
-Job Title Alias Environmental Specialist already exists for Environmental Specialist
-Job Title Alias Environmental Specialist - Air already exists for Environmental Specialist
-Job Title Alias EHS Specialist already exists for EHS Specialist
-Job Title Alias Emission Technician already exists for Emission Technician
-Job Title Alias Tech, II Emissions Compliance already exists for Emission Technician
-Job Title Alias CEO already exists for Chief Executive Officer
-Job Title Alias Chief Executive Officer already exists for Chief Executive Officer
-Job Title Alias Chief Executive Officer/President already exists for Chief Executive Officer
-Job Title Alias CFO already exists for Chief Finance Officer
-Job Title Alias Chief Finance Officer already exists for Chief Finance Officer
-Job Title Alias Chief Financial Executive already exists for Chief Finance Officer
-Job Title Alias Chief Financial Officer already exists for Chief Finance Officer
-Job Title Alias Chief Operating Executive already exists for Chief Operating Officer
-Job Title Alias Chief Operating Officer already exists for Chief Operating Officer
-Job Title Alias COO already exists for Chief Operating Officer
-Job Title Alias EVP Chief Operating Officer already exists for Chief Operating Officer
-Job Title Alias EVP already exists for Executive Vice President
-Job Title Alias Executive Vice President already exists for Executive Vice President
-Job Title Alias CCO already exists for Chief Commercial Officer
-Job Title Alias Chief Commercial Executive already exists for Chief Commercial Officer
-Job Title Alias Chief Commercial Officer already exists for Chief Commercial Officer
-Job Title Alias EVP Chief Commercial Officer already exists for Chief Commercial Officer
-Job Title Alias President BU already exists for President BU
-Job Title Alias President BU 1 already exists for President BU
-Job Title Alias President BU 2 already exists for President BU 2
-Job Title Alias CEO/President already exists for President  and  CEO
-Job Title Alias Interim Pres and CEO already exists for President  and  CEO
-Job Title Alias President  and  CEO already exists for President  and  CEO
-Job Title Alias President and Chief Executive Officer already exists for President  and  CEO
-Job Title Alias Chief Admin Officer already exists for Chief Admin Officer
-Job Title Alias Chief Information Officer already exists for Chief Information Officer
-Job Title Alias President Sales already exists for President Sales
-Job Title Alias Executive Vice President HR already exists for Executive Vice President HR
-Job Title Alias Chairman already exists for Chairman
-Job Title Alias Executive Vice President & Chief Operating Officer already exists for Executive Vice President & Chief Operating Officer
-Job Title Alias EVP & CFO already exists for EVP & CFO
-Job Title Alias SVP & COO already exists for SVP & COO
-Job Title Alias VP Operations already exists for VP Operations
-Job Title Alias Director, Operations already exists for Director, Operations
-Job Title Alias Manager Operations already exists for Manager Operations
-Job Title Alias Ops Mgr already exists for Manager Operations
-Job Title Alias General Labor already exists for General Labor
-Job Title Alias General Labor 10 already exists for General Labor
-Job Title Alias General Labor 11 already exists for General Labor
-Job Title Alias General Labor 13 already exists for General Labor
-Job Title Alias General Labor 3 already exists for General Labor
-Job Title Alias General Labor 4 already exists for General Labor
-Job Title Alias General Labor 5 already exists for General Labor
-Job Title Alias General Labor 6 already exists for General Labor
-Job Title Alias General Labor 7 already exists for General Labor
-Job Title Alias General Labor 8 already exists for General Labor
-Job Title Alias General Labor 9 already exists for General Labor
-Job Title Alias General Laborer already exists for General Labor
-Job Title Alias Laborer already exists for General Labor
-Job Title Alias Machine Operator already exists for Machine Operator
-Job Title Alias Machine Operator 1 already exists for Machine Operator
-Job Title Alias Machine Operator 2 already exists for Machine Operator
-Job Title Alias Machine Operator 3 already exists for Machine Operator
-Job Title Alias Machine Operator 4 already exists for Machine Operator
-Job Title Alias Machine Operator A-WAC already exists for Machine Operator
-Job Title Alias Plant Manager already exists for Plant Manager
-Job Title Alias Production Packer already exists for Production Packer
-Job Title Alias Production Packer 1 already exists for Production Packer
-Job Title Alias Foreman already exists for Foreman
-Job Title Alias Sprayer already exists for Sprayer
-Job Title Alias Sprayer-WAC already exists for Sprayer
-Job Title Alias Production Associate already exists for Production Associate
-Job Title Alias Production Associate 1 already exists for Production Associate
-Job Title Alias Production Associate 2 already exists for Production Associate
-Job Title Alias Production Associate 3 already exists for Production Associate
-Job Title Alias Manager Contract Manufacturing already exists for Manager Contract Manufacturing
-Job Title Alias Mgr Contract Mfg already exists for Manager Contract Manufacturing
-Job Title Alias Flavor Technician already exists for Technician
-Job Title Alias Phone Repair Technician already exists for Technician
-Job Title Alias Sanitation Tech 1 already exists for Technician
-Job Title Alias Technician already exists for Technician
-Job Title Alias Service Support Technician already exists for Service Technician
-Job Title Alias Service Technician already exists for Service Technician
-Job Title Alias Roaster already exists for Roaster
-Job Title Alias Roaster 2 already exists for Roaster
-Job Title Alias Roaster 3 already exists for Roaster
-Job Title Alias Roaster 4 already exists for Roaster
-Job Title Alias Roasting Lead already exists for Roasting Lead
-Job Title Alias General Maintenance already exists for Maintenance Technician
-Job Title Alias Maintenance Control Tech already exists for Maintenance Technician
-Job Title Alias Maintenance Tech 1 already exists for Maintenance Technician
-Job Title Alias Maintenance Tech 2 already exists for Maintenance Technician
-Job Title Alias Maintenance Technician already exists for Maintenance Technician
-Job Title Alias Maintenance Tech Lead already exists for Maintenance Technician Lead
-Job Title Alias Maintenance Technician Lead already exists for Maintenance Technician Lead
-Job Title Alias Packaging Lead already exists for Packaging Lead
-Job Title Alias Production Manager already exists for Production Manager
-Job Title Alias Utility Specialist already exists for Utility Specialist
-Job Title Alias Utility Specialist 1 already exists for Utility Specialist
-Job Title Alias Utility Specialist 2 already exists for Utility Specialist
-Job Title Alias Maintenance Manager already exists for Maintenance Manager
-Job Title Alias Maintenance Supervisor already exists for Maintenance Supervisor
-Job Title Alias Equipment Coordinator already exists for Equipment Coordinator
-Job Title Alias Maintenance Technician Trainee already exists for Maintenance Technician Trainee
-Job Title Alias Equipment Support Technician already exists for Equipment Support Technician
-Job Title Alias QA Tech 1 already exists for Quality Assurance Technician
-Job Title Alias QA Tech 2 already exists for Quality Assurance Technician
-Job Title Alias Quality Assurance Technician already exists for Quality Assurance Technician
-Job Title Alias Inspections already exists for Inspections
-Job Title Alias Quality Assurance Manager already exists for Quality Assurance Manager
-Job Title Alias Senior Manager R&D Engineering already exists for Senior Manager R&D Engineering
-Job Title Alias R&D Engineer already exists for R&D Engineer
-Job Title Alias Director Technical R&D already exists for Director Technical R&D
-Job Title Alias Manager Supply Chain already exists for Manager Supply Chain
-Job Title Alias Mgr Sup Chn already exists for Manager Supply Chain
-Job Title Alias Mgr Supply Chain already exists for Manager Supply Chain
-Job Title Alias Supply Chain Mgr already exists for Manager Supply Chain
-Job Title Alias Supply Chain Supervisor already exists for Manager Supply Chain
-Job Title Alias Functional Manager Senior Supply Chain already exists for Sr Manager Supply Chain
-Job Title Alias Senior Manager Customer Supply Chain already exists for Sr Manager Supply Chain
-Job Title Alias Senior Manager Global Supply Chain already exists for Sr Manager Supply Chain
-Job Title Alias Senior Manager Supply Chain already exists for Sr Manager Supply Chain
-Job Title Alias Sr Manager Supply Chain already exists for Sr Manager Supply Chain
-Job Title Alias Sr Mgr Sup Chn already exists for Sr Manager Supply Chain
-Job Title Alias Vice President Supply Chain already exists for VP Supply Chain
-Job Title Alias VP Supply Chain already exists for VP Supply Chain
-Job Title Alias Senior Director Supply Chain already exists for Senior Director Supply Chain
-Job Title Alias Sr Dir Supply Chain already exists for Senior Director Supply Chain
-Job Title Alias Dir Sup Chn already exists for Director Supply Chain
-Job Title Alias Director Supply Chain already exists for Director Supply Chain
-Job Title Alias Anlst Sup Chn already exists for Supply Chain Analyst
-Job Title Alias Customer Supply Chain Analyst already exists for Supply Chain Analyst
-Job Title Alias Supply Chain Analyst already exists for Supply Chain Analyst
-Job Title Alias Senior Customer Supply Chain Analyst already exists for Senior Supply Chain Analyst
-Job Title Alias Senior Supply Chain Analyst already exists for Senior Supply Chain Analyst
-Job Title Alias Supply Chain Associate already exists for Supply Chain Associate
-Job Title Alias Area Manager already exists for Distribution Manager
-Job Title Alias Distribution Manager already exists for Distribution Manager
-Job Title Alias Territory Manager already exists for Distribution Manager
-Job Title Alias Route Optimization Spec already exists for Route Optimization Specialist
-Job Title Alias Route Optimization Specialist already exists for Route Optimization Specialist
-Job Title Alias Route Assistant already exists for Route Operation Associate
-Job Title Alias Route Operation Associate already exists for Route Operation Associate
-Job Title Alias Route Operations Associate already exists for Route Operation Associate
-Job Title Alias Demand Planner already exists for Supply Chain Planner
-Job Title Alias Global Supply Planner already exists for Supply Chain Planner
-Job Title Alias Planner Supply Chain already exists for Supply Chain Planner
-Job Title Alias Supply Chain Planner already exists for Supply Chain Planner
-Job Title Alias Supply Chain Planning Associate already exists for Supply Chain Planner
-Job Title Alias Supply Planner already exists for Supply Chain Planner
-Job Title Alias Sr VP Planning and Inventory already exists for SVP Planning and Inventory
-Job Title Alias SVP Demand Mgmt already exists for SVP Planning and Inventory
-Job Title Alias SVP Demand Planning already exists for SVP Planning and Inventory
-Job Title Alias SVP Inventory Management already exists for SVP Planning and Inventory
-Job Title Alias SVP Planning and Inventory already exists for SVP Planning and Inventory
-Job Title Alias SVP Planning and Inventory Management already exists for SVP Planning and Inventory
-Job Title Alias SVP Planning and Inventory Mgmt already exists for SVP Planning and Inventory
-Job Title Alias SVP Supply Chain Planning already exists for SVP Planning and Inventory
-Job Title Alias SCM Planning Analyst already exists for Supply Chain Planning Analyst
-Job Title Alias Supply Chain Planning Analyst already exists for Supply Chain Planning Analyst
-Job Title Alias Functional Manager Supply Chain Planning already exists for Manager Supply Planning
-Job Title Alias Manager Supply Chain & Planning already exists for Manager Supply Planning
-Job Title Alias Manager Supply Planning already exists for Manager Supply Planning
-Job Title Alias Mgr Sup Plng already exists for Manager Supply Planning
-Job Title Alias Mgr Supply Planning already exists for Manager Supply Planning
-Job Title Alias SC Planning Manager already exists for Manager Supply Planning
-Job Title Alias SCM Planning Manager already exists for Manager Supply Planning
-Job Title Alias Supply Planning Mgr already exists for Manager Supply Planning
-Job Title Alias Senior Planner Supply Chain already exists for Sr Supply Chain Planner
-Job Title Alias Sr Global Supply Planner already exists for Sr Supply Chain Planner
-Job Title Alias Sr Supply Chain Planner already exists for Sr Supply Chain Planner
-Job Title Alias Director Transportation already exists for Director Transportation
-Job Title Alias Supervisor - Logistic already exists for Supervisor - Logistic
-Job Title Alias Assistant Manager - Logistics already exists for Assistant Manager - Logistics
-Job Title Alias Manager Logistics already exists for Manager Logistics
-Job Title Alias Mgr, Logistics 3 already exists for Manager Logistics
-Job Title Alias Analyst Transportation already exists for Analyst Transportation
-Job Title Alias Anlst Transp already exists for Analyst Transportation
-Job Title Alias Director Fleet Operations already exists for Director Fleet Operations
-Job Title Alias Manager Transportation already exists for Manager Transportation
-Job Title Alias Senior Logistics Coordinator already exists for Senior Logistics Coordinator
-Job Title Alias Sr Logistics Coordinator already exists for Senior Logistics Coordinator
-Job Title Alias Director of Corp Warehouse already exists for Director Warehouse
-Job Title Alias Director Warehouse already exists for Director Warehouse
-Job Title Alias Shipping/Loading 4 already exists for Shipping/Loading Personnel
-Job Title Alias Shipping/Loading Personnel already exists for Shipping/Loading Personnel
-Job Title Alias Depot Manager already exists for Manager Warehouse
-Job Title Alias DEPOT MANAGER /2/ already exists for Manager Warehouse
-Job Title Alias Manager Warehouse already exists for Manager Warehouse
-Job Title Alias Regional Warehouse Manager already exists for Manager Warehouse
-Job Title Alias Assoc Whse already exists for Warehouse Associate
-Job Title Alias Warehouse Associate already exists for Warehouse Associate
-Job Title Alias Warehouse Associate G already exists for Warehouse Associate
-Job Title Alias Supervisor - Warehouse already exists for Supervisor - Warehouse
-Job Title Alias Senior Manager - Distribution Center (DC) already exists for Senior Manager - Distribution Center (DC)
-Job Title Alias Sr Manager - DC already exists for Senior Manager - Distribution Center (DC)
-Job Title Alias Assistant Manager - DC already exists for Assistant Manager - Distribution Center (DC)
-Job Title Alias Assistant Manager - Distribution Center (DC) already exists for Assistant Manager - Distribution Center (DC)
-Job Title Alias Vice President - Distribution Center (DC) Operations already exists for Vice President - Distribution Center (DC) Operations
-Job Title Alias VP - DC Operations already exists for Vice President - Distribution Center (DC) Operations
-Job Title Alias Warehouse Person already exists for Warehouse Personnel
-Job Title Alias Warehouse Personnel already exists for Warehouse Personnel
-Job Title Alias Warehouseperson 1 already exists for Warehouse Personnel
-Job Title Alias Warehouseperson 2 already exists for Warehouse Personnel
-Job Title Alias Warehouseperson 3 already exists for Warehouse Personnel
-Job Title Alias Team Lead Warehouse already exists for Team Lead Warehouse
-Job Title Alias Warehouse Team Leader already exists for Team Lead Warehouse
-Job Title Alias Warehouse Driver already exists for Warehouse Driver
-Job Title Alias Warehouse Shuttle Driver already exists for Warehouse Driver
-Job Title Alias Vice President Procurement already exists for Vice President Procurement
-Job Title Alias Dir Procurement 2 already exists for Director Procurement
-Job Title Alias Director of Purchasing already exists for Director Procurement
-Job Title Alias Director Procurement already exists for Director Procurement
-Job Title Alias Manager Procurement already exists for Manager Procurement
-Job Title Alias Purchasing Dept Manager already exists for Manager Procurement
-Job Title Alias Senior Manager, Procurement already exists for Senior Manager, Procurement
-Job Title Alias Analyst Procurement already exists for Analyst Procurement
-Job Title Alias Purchasing Analyst already exists for Analyst Procurement
-Job Title Alias Buyer already exists for Buyer
-Job Title Alias Procurement Buyer already exists for Buyer
-Job Title Alias Drilling Operations Manager already exists for Manager Drilling
-Job Title Alias Manager Drilling already exists for Manager Drilling
-Job Title Alias Mgr, Drilling already exists for Manager Drilling
-Job Title Alias COM/INT Support Technician already exists for Drilling Technician
-Job Title Alias Drilling Technician already exists for Drilling Technician
-Job Title Alias Rotational Engineer already exists for Rotational Engineer
-Job Title Alias Rotational WSR already exists for Rotational Engineer
-Job Title Alias Senior Completions Engineer already exists for Senior Drilling & Completions Engineer
-Job Title Alias Senior Drilling & Completions Engineer already exists for Senior Drilling & Completions Engineer
-Job Title Alias Vice President of Completions already exists for Vice President of Completions
-Job Title Alias Senior Drilling Engineer already exists for Senior Drilling Engineer
-Job Title Alias Senior Staff Drilling Engineer already exists for Senior Drilling Engineer
-Job Title Alias Manager Completions already exists for Manager Completions
-Job Title Alias Mgr, Completions already exists for Manager Completions
-Job Title Alias Dir, Drlg & Compl already exists for Drilling Director
-Job Title Alias Director, Drilling already exists for Drilling Director
-Job Title Alias Drilling Director already exists for Drilling Director
-Job Title Alias Completion Engineer already exists for Completion Engineer
-Job Title Alias Completions Engineer already exists for Completion Engineer
-Job Title Alias Technical Expert Completions Engineer already exists for Completion Engineer
-Job Title Alias Drilling Engineer already exists for Drilling Engineer
-Job Title Alias Staff Drilling Engineer already exists for Drilling Engineer
-Job Title Alias Drilling Superintendent already exists for Drilling Superintendent
-Job Title Alias Supt Drilling already exists for Drilling Superintendent
-Job Title Alias Rig Operations Superintendent already exists for Rig Operations Superintendent
-Job Title Alias Engineering Tech already exists for Engineering Technician
-Job Title Alias Engineering Technician already exists for Engineering Technician
-Job Title Alias Completions Assistant already exists for Completions Assistant
-Job Title Alias Completions Superintendent already exists for Completions Superintendent
-Job Title Alias Vice President of Drilling already exists for Vice President of Drilling
-Job Title Alias DSM already exists for Well Operations
-Job Title Alias Engineering Specialist already exists for Well Operations
-Job Title Alias Technical Specialist already exists for Well Operations
-Job Title Alias Well Operations already exists for Well Operations
-Job Title Alias Well Services Superintendent already exists for Well Operations
-Job Title Alias WSM already exists for Well Operations
-Job Title Alias Completions Consultant already exists for Completions Consultant
-Job Title Alias Completions Technician already exists for Completions Technician
-Job Title Alias Senior Director Drilling & Completions already exists for Senior Director Drilling & Completions
-Job Title Alias Vice President of Operations and Production already exists for Vice President of Operations and Production
-Job Title Alias Operations Engineer already exists for Operations Engineer
-Job Title Alias Senior Completions & Production Analyst already exists for Senior Completions & Production Analyst
-Job Title Alias Senior Operations Analyst already exists for Senior Operations Analyst
-Job Title Alias Engineering Completions Supervisor already exists for Engineering Completions Supervisor
-Job Title Alias Engineer Advisor Drilling already exists for Engineer Advisor Drilling
-Job Title Alias Completions Foreman already exists for Completions Foreman
-Job Title Alias Supervisor, Completions already exists for Supervisor, Drilling & Completions
-Job Title Alias Supervisor, Drilling & Completions already exists for Supervisor, Drilling & Completions
-Job Title Alias Staff Drilling Analyst already exists for Staff Drilling Analyst
-Job Title Alias Analyst, Engineering already exists for Analyst, Engineering
-Job Title Alias Drilling Team Lead already exists for Drilling Team Lead
-Job Title Alias Utica Drilling Team Lead already exists for Drilling Team Lead
-Job Title Alias Engineer Advisor Completions already exists for Engineer Advisor Completions
-Job Title Alias Senior Manager, Drilling & Completions already exists for Senior Manager, Drilling & Completions
-Job Title Alias Senior Manager, Drilling & Completions 2 already exists for Senior Manager, Drilling & Completions
-Job Title Alias Manager, Land already exists for Manager, Land
-Job Title Alias Retail Associate already exists for Retail Associate
-Job Title Alias Stores Manager already exists for Stores Manager
-Job Title Alias Stores Manager 1 already exists for Stores Manager
-Job Title Alias Visual Merchandiser already exists for Visual Merchandiser
-Job Title Alias Vice President Sales & Marketing already exists for Vice President Sales & Marketing
-Job Title Alias Vice President Sales & Mktg already exists for Vice President Sales & Marketing
-Job Title Alias VP Sales and Marketing already exists for Vice President Sales & Marketing
-Job Title Alias VP Sales and Mktg already exists for Vice President Sales & Marketing
-Job Title Alias Dir of Sales & Marketing already exists for Director Sales and Marketing
-Job Title Alias Dir Sales and Marketing already exists for Director Sales and Marketing
-Job Title Alias Director Sales and Marketing already exists for Director Sales and Marketing
-Job Title Alias Sales AC Mgr already exists for Sales Account Manager
-Job Title Alias Sales Account Manager already exists for Sales Account Manager
-Job Title Alias Sales Account Mgr already exists for Sales Account Manager
-Job Title Alias APAC National Sales Manager already exists for Sales National Account
-Job Title Alias Mgr National Accounts 2 already exists for Sales National Account
-Job Title Alias Ntl Account Manager already exists for Sales National Account
-Job Title Alias Sales National Account already exists for Sales National Account
-Job Title Alias Dir Sales Account already exists for Director Sales Account
-Job Title Alias Director Sales Account already exists for Director Sales Account
-Job Title Alias Director, Sales already exists for Director Sales Account
-Job Title Alias Vice President Sales already exists for Vice President Sales
-Job Title Alias VP, Sales already exists for Vice President Sales
-Job Title Alias VP, Sales 2 already exists for Vice President Sales
-Job Title Alias Senior Director Sales already exists for Senior Director Sales
-Job Title Alias Sr Dir Sales already exists for Senior Director Sales
-Job Title Alias Account Executive already exists for Sales Account Executive
-Job Title Alias Sales Account Executive already exists for Sales Account Executive
-Job Title Alias Regional Sales Director already exists for Regional Sales Director
-Job Title Alias National Account Manager already exists for National Sales Manager
-Job Title Alias National Sales Manager already exists for National Sales Manager
-Job Title Alias Regional Account Manager already exists for Regional Sales Manager
-Job Title Alias Regional Sales Manager already exists for Regional Sales Manager
-Job Title Alias Regional Sales Exec already exists for Regional Sales Executive
-Job Title Alias Regional Sales Executive already exists for Regional Sales Executive
-Job Title Alias Director of Sales National Accounts already exists for Director of Sales National Accounts
-Job Title Alias Sales Manager National Account already exists for Sales Manager National Account
-Job Title Alias Director Sales Operations already exists for Director Sales Operations
-Job Title Alias Ntl Sales Coordinator already exists for Sales Coordinator National Accounts
-Job Title Alias Sales Coordinator National Accounts already exists for Sales Coordinator National Accounts
-Job Title Alias Customer Care Rep already exists for Customer Care Representative
-Job Title Alias Customer Care Representative already exists for Customer Care Representative
-Job Title Alias Sales Operations Manager already exists for Sales Operations Manager
-Job Title Alias Customer Service Coordinator already exists for Customer Service Coordinator
-Job Title Alias Customer Service Coordntr already exists for Customer Service Coordinator
-Job Title Alias Customer Service Supervisor already exists for Customer Service Supervisor
-Job Title Alias Order Entry II already exists for Order Entry Personnel
-Job Title Alias Order Entry Personnel already exists for Order Entry Personnel
-Job Title Alias Inside Sales Rep already exists for Inside Sales Representative
-Job Title Alias Inside Sales Representative already exists for Inside Sales Representative
-Job Title Alias Dir Marketing 1 already exists for Director Marketing
-Job Title Alias Dir Marketing 2 already exists for Director Marketing
-Job Title Alias Director Marketing already exists for Director Marketing
-Job Title Alias Vice President - Marketing already exists for Vice President - Marketing
-Job Title Alias VP - Marketing already exists for Vice President - Marketing
-Job Title Alias Senior Manager - Marketing already exists for Senior Manager - Marketing
-Job Title Alias Sr Manager - Marketing already exists for Senior Manager - Marketing
-Job Title Alias VP Brand Marketing already exists for VP Brand Marketing
-Job Title Alias Senior Brand Manager already exists for Senior Brand Manager
-Job Title Alias Assistant Brand Manager already exists for Assistant Brand Manager
-Job Title Alias Brand Coordinator already exists for Brand Coordinator
-Job Title Alias Brand Specialist already exists for Brand Specialist
-Job Title Alias Brand Manager already exists for Brand Manager
-Job Title Alias Senior Vice President - Brand already exists for Senior Vice President - Brand
-Job Title Alias SVP - Brand already exists for Senior Vice President - Brand
-Job Title Alias Vice President Marketing eCommerce already exists for Vice President Marketing eCommerce
-Job Title Alias E-Catalog Specialist already exists for E-Catalog Specialist
-Job Title Alias Assistant Manager - eCommerce already exists for Assistant Manager - eCommerce
-Job Title Alias Assistant Manager - eCommerce Operations already exists for Assistant Manager - eCommerce
-Job Title Alias Cashier already exists for JD - Sales Clerk
-Job Title Alias JD - Sales Clerk already exists for JD - Sales Clerk
-Job Title Alias Retail Worker already exists for JD - Sales Clerk
-Job Title Alias Sales Associate already exists for JD - Sales Clerk
-Job Title Alias Sales Manager already exists for JD - Sales Clerk
-Job Title Alias Sales Representative already exists for JD - Sales Clerk
-Job Title Alias Store Manager already exists for JD - Sales Clerk
-Job Title Alias Founder already exists for JD-Business Owner
-Job Title Alias JD-Business Owner already exists for JD-Business Owner
-Job Title Alias Owner already exists for JD-Business Owner
-Job Title Alias Proprietor already exists for JD-Business Owner
-Taxonomy node not found: 100000:7:'Jack Test 2' 1040983:1
-Error on row 1120: Taxonomy node not found
-Taxonomy node not found: 100000:7:'Jack Test 2' 1040983:1
-Error on row 1121: Taxonomy node not found
-Taxonomy node not found: 100000:7:'Jack Test 2' 1040983:1
-Error on row 1122: Taxonomy node not found
-Taxonomy node not found: 100000:7:'Jack Test 2' 1040983:1
-Error on row 1123: Taxonomy node not found
-Taxonomy node not found: 100000:7:'Jack Test 2' 1040983:1
-Error on row 1124: Taxonomy node not found
+Processing ..\..\JobTitles_Map_06042024-Rick.xlsx
+Processing row 3
+Processing row 4
+Processing row 5
+Processing row 6
+Processing row 7
+    Created job title 'JD-Food Service Worker'
+Processing row 8
+    Job title alias 'Barback' already exists
+Processing row 9
+    Job title alias 'Barista' already exists
+Processing row 10
+    Job title alias 'Bartender' already exists
+Processing row 11
+    Job title alias 'Bus Person' already exists
+Processing row 12
+    Job title alias 'Busser' already exists
+Processing row 13
+    Job title alias 'Cafeteria Worker' already exists
+Processing row 14
+    Job title alias 'Chef' already exists
+Processing row 15
+    Job title alias 'Cook I' already exists
+Processing row 16
+    Job title alias 'Cook II' already exists
+Processing row 17
+    Job title alias 'Fast Food Worker' already exists
+Processing row 18
+    Job title alias 'JD-Food Service Worker' already exists
+Processing row 19
+    Created job title alias 'Line Cook'
+Processing row 20
+    Job title alias 'Restaurant Manager' already exists
+Processing row 21
+    Job title alias 'Server' already exists
+Processing row 22
+    Job title alias 'Wait Staff Manager' already exists
+Processing row 23
+    Job title alias 'Waiter' already exists
+Processing row 24
+    Job title alias 'Waitress' already exists
+Processing row 25
+Processing row 26
+Processing row 27
+Processing row 28
+Processing row 29
+Processing row 30
+Processing row 31
+Processing row 32
+    Job title 'Manager Finance' already exists
+Processing row 33
+    Job title alias 'Manager Finance' already exists
+Processing row 34
+    Job title alias 'Manager, Finance' already exists
+Processing row 35
+    Job title alias 'Mgr Finance' already exists
+Processing row 36
+    Job title alias 'MGR FINANCE PLANNING & ANALYSIS' already exists
+Processing row 37
+    Job title alias 'Supervisor Finance' already exists
+Processing row 38
+    Job title alias 'Supvr Finance' already exists
+Processing row 39
+    Job title 'Vice President Finance' already exists
+Processing row 40
+    Job title alias 'Vice President Finance' already exists
+Processing row 41
+    Job title alias 'VP Finance' already exists
+Processing row 42
+    Job title alias 'VP Finance & FP&A' already exists
+Processing row 43
+    Job title 'Senior Manager Finance' already exists
+Processing row 44
+    Job title alias 'Senior Manager Finance' already exists
+Processing row 45
+    Job title alias 'Sr Manager Finance' already exists
+Processing row 46
+    Job title alias 'Sr Mgr Finance' already exists
+Processing row 47
+    Job title 'Director Finance' already exists
+Processing row 48
+    Job title alias 'Dir Finance' already exists
+Processing row 49
+    Job title alias 'Dir Finance 1' already exists
+Processing row 50
+    Job title alias 'Dir Finance 2' already exists
+Processing row 51
+    Job title alias 'Dir Finance WAC' already exists
+Processing row 52
+    Job title alias 'Director Finance' already exists
+Processing row 53
+    Job title alias 'Director Finance Operations' already exists
+Processing row 54
+    Job title alias 'Director Of FP & A' already exists
+Processing row 55
+    Job title alias 'Director, Finance' already exists
+Processing row 56
+    Job title 'Analyst Finance' already exists
+Processing row 57
+    Job title alias 'Accounting' already exists
+Processing row 58
+    Job title alias 'Analyst Finance' already exists
+Processing row 59
+    Job title alias 'Finance & Accounting Analyst III' already exists
+Processing row 60
+    Job title alias 'Financial Analyst' already exists
+Processing row 61
+    Job title alias 'Financial Analyst I' already exists
+Processing row 62
+    Job title alias 'Financial Analyst II' already exists
+Processing row 63
+    Job title alias 'Plant Finance Analyst' already exists
+Processing row 64
+    Job title alias 'Trade Finance and Pricing Anal' already exists
+Processing row 65
+    Job title 'Senior Director Finance' already exists
+Processing row 66
+    Job title alias 'Senior Director Finance' already exists
+Processing row 67
+    Job title alias 'Sr Director Finance' already exists
+Processing row 68
+    Job title 'Officer BU Finance' already exists
+Processing row 69
+    Job title alias 'Officer BU Finance' already exists
+Processing row 70
+    Job title alias 'Officer BU Finance 2' already exists
+Processing row 71
+    Job title 'Assistant Manager - Finance' already exists
+Processing row 72
+    Job title alias 'Assistant Manager - Finance' already exists
+Processing row 73
+    Job title 'Executive - Accounting' already exists
+Processing row 74
+    Job title alias 'Executive - Accounting' already exists
+Processing row 75
+    Job title alias 'Executive I - Accounting Process' already exists
+Processing row 76
+    Job title alias 'Executive II - Accounting Process' already exists
+Processing row 77
+    Job title 'SVP, Chief Financial Officer' already exists
+Processing row 78
+    Job title alias 'SVP and CFO' already exists
+Processing row 79
+    Job title alias 'SVP Chief Financial Officer' already exists
+Processing row 80
+    Job title alias 'SVP, Chief Financial Officer' already exists
+Processing row 81
+    Job title 'Senior Financial Analyst' already exists
+Processing row 82
+    Job title alias 'Senior Financial Analyst' already exists
+Processing row 83
+    Job title alias 'Sr Financial Analyst I' already exists
+Processing row 84
+    Job title 'Financial Advisor' already exists
+Processing row 85
+    Job title alias 'Financial Advisor' already exists
+Processing row 86
+    Job title 'VP Investor Relations' already exists
+Processing row 87
+    Job title alias 'VP Investor Relations' already exists
+Processing row 88
+    Created job title 'Administrative Assistant Finance Department'
+Processing row 89
+    Created job title alias 'EA Finance Department'
+Processing row 90
+Processing row 91
+    Job title 'Credit Department AR Manager' already exists
+Processing row 92
+    Job title alias 'Credit Department AR Manager' already exists
+Processing row 93
+    Job title alias 'Credit Dept/AR Manager' already exists
+Processing row 94
+    Job title alias 'Credit Dept-A/R' already exists
+Processing row 95
+    Job title 'SVP GMM' already exists
+Processing row 96
+    Job title alias 'SVP GMM' already exists
+Processing row 97
+Processing row 98
+    Job title 'Accounts Payable Associate' already exists
+Processing row 99
+    Job title alias 'Accounts Payable Associate' already exists
+Processing row 100
+    Job title alias 'Accounts Payable Clerk' already exists
+Processing row 101
+    Job title alias 'Accounts Payable Jr. Clerk' already exists
+Processing row 102
+    Job title alias 'Accounts Payable Specialist' already exists
+Processing row 103
+    Job title alias 'Clerk, Accounts Payable' already exists
+Processing row 104
+    Job title alias 'General & Accounts Payable' already exists
+Processing row 105
+    Job title 'Accounts Payable Manager' already exists
+Processing row 106
+    Job title alias 'Accounts Payable Manager' already exists
+Processing row 107
+    Job title alias 'Accounts Payable Supervisor' already exists
+Processing row 108
+    Job title alias 'Manager, Accounts Payable' already exists
+Processing row 109
+    Job title alias 'Mgr Accounts Payable' already exists
+Processing row 110
+    Job title alias 'Mgr, Accounts Payable' already exists
+Processing row 111
+    Job title alias 'Mgr. Accounts Payable' already exists
+Processing row 112
+    Job title alias 'MR - AP' already exists
+Processing row 113
+    Job title alias 'Suprv., Accounts Payable' already exists
+Processing row 114
+    Job title alias 'Supv, Accounts Payable' already exists
+Processing row 115
+    Created job title alias 'AP Manager'
+Processing row 116
+    Job title 'AP Specialist' already exists
+Processing row 117
+    Job title alias 'Accounts Payable Specialist 2' already exists
+Processing row 118
+    Job title alias 'Accounts Payable Specialist' already exists
+Processing row 119
+    Job title alias 'AP Specialist' already exists
+Processing row 120
+    Job title 'Accounts Payable Team Leader' already exists
+Processing row 121
+    Job title alias 'Accounts Payable Team Leader' already exists
+Processing row 122
+    Job title 'Accounts Payable Analyst' already exists
+Processing row 123
+    Job title alias 'Accounts Payable Analyst' already exists
+Processing row 124
+    Job title alias 'AP Analyst' already exists
+Processing row 125
+    Job title 'Acconts Payable Workflow Coordinator' already exists
+Processing row 126
+    Job title alias 'Acconts Payable Workflow Coordinator' already exists
+Processing row 127
+    Job title 'Accounts Payable Processor' already exists
+Processing row 128
+    Job title alias 'Accounts Payable Processor' already exists
+Processing row 129
+    Job title alias 'AP Processor' already exists
+Processing row 130
+Processing row 131
+    Created job title 'Accounts Receivable Manager'
+Processing row 132
+    Created job title alias 'AR Mananger'
+Processing row 133
+    Created job title alias 'AR Mgr'
+Processing row 134
+Processing row 135
+    Created job title 'Accounts Receivable Specialist'
+Processing row 136
+    Created job title alias 'AR Specialist'

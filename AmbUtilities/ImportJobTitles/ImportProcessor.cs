@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Windows.Input;
 using AmbHelper;
 using OfficeOpenXml;
 using static AmbHelper.Settings;
@@ -30,25 +29,116 @@ namespace ImportJobTitles
 
         public void Run()
         {
-            var row = (Import.FirstRow < 0) ? FindFirstRow() : Import.FirstRow;
+            var row = Import.FirstRow;
             var end = (Import.LastRow < 0) ? Sheet.Dimension.Rows : Import.LastRow;
 
-            while (row <= end)
+            var taxonomyColumn = ColumnDefinitions["Taxonomy"];
+            var jobTitleNameColumn = ColumnDefinitions["JobTitleName"];
+            var jobTitleDescriptionColumn = ColumnDefinitions["JobTitleDescription"];
+            var aliasColumn = ColumnDefinitions["Alias"];
+            var aliasDescriptionColumn = ColumnDefinitions["AliasDescription"];
+            var taxonomyId = 0L;
+            var jobTitleId = 0L;
+
+            for (/**/; row <= end; ++row)
             {
+                var rowIsEmpty = true;
+
                 try
                 {
-                    LoadRowValues(row);
-                    var ok = ProcessRow(row);
-                    if (!ok)
+                    Log.WriteLine($"Processing row {row}");
+                    // Ensure we have a taxonomy ID to work with
+                    var value = Sheet.Cells[row, taxonomyColumn.ColumnNumber].Text.Trim();
+                    if (value != "")
                     {
-                        Log.WriteLine($"Detected end of data at row {row}");
-                        return;
+                        var ptn = ParseTaxonomyName(value);
+                        taxonomyId = GetTaxonomyNodeId(ptn);
+                        jobTitleId = 0;
+                        if (taxonomyId == 0)
+                        {
+                            taxonomyId = CreateNewTaxonomyNode(ptn);
+                            if (taxonomyId == 0)
+                            {
+                                Log.WriteLine($"    Error: taxonomy node {ptn} does not exist and cannot be created");
+                                break; // cannot continue without a valid taxonomy node
+                            }
+                            Log.WriteLine($"    Created taxonomy node {ptn}");
+                        }
+                        rowIsEmpty = false;
                     }
-                    ++row;
+
+                    // Create the job title, if necessary
+                    value = Sheet.Cells[row, jobTitleNameColumn.ColumnNumber].Text.Trim();
+                    if (value != "")
+                    {
+                        if (taxonomyId == 0)
+                        {
+                            Log.WriteLine($"    Error: Missing taxonomy node information");
+                            continue;
+                        }
+
+                        jobTitleId = GetJobTitleId(taxonomyId, value);
+                        if (jobTitleId == 0)
+                        {
+                            jobTitleId = CreateNewJobTitle(taxonomyId, value, Sheet.Cells[row, jobTitleDescriptionColumn.ColumnNumber].Text.Trim());
+                            if (jobTitleId == 0)
+                            {
+                                Log.WriteLine($"    Error: job title '{value}' does not exist and cannot be created");
+                                break; // cannot continue without a valid job title
+                            }
+                            Log.WriteLine($"    Created job title '{value}'");
+                        }
+                        else
+                        {
+                            Log.WriteLine($"    Job title '{value}' already exists");
+                        }
+                        rowIsEmpty = false;
+                    }
+
+                    // If there's an alias, add it
+                    value = Sheet.Cells[row, aliasColumn.ColumnNumber].Text.Trim();
+                    if (value != "")
+                    {
+                        if (taxonomyId == 0)
+                        {
+                            Log.WriteLine($"    Error: Missing taxonomy node information");
+                            continue;
+                        }
+
+                        if (jobTitleId == 0)
+                        {
+                            Log.WriteLine($"    Error: Missing job title information");
+                            continue;
+                        }
+                        var aid = GetJobTitleAliasId(jobTitleId, value);
+                        if (aid == 0)
+                        {
+                            aid = CreateNewJobTitleAlias(jobTitleId, value, Sheet.Cells[row, aliasDescriptionColumn.ColumnNumber].Text.Trim(), false);
+                            if (aid == 0)
+                            {
+                                Log.WriteLine($"    Error: job title alias '{value}' does not exist and cannot be created");
+                                continue;
+                            }
+                            Log.WriteLine($"    Created job title alias '{value}'");
+                        }
+                        else
+                        {
+                            Log.WriteLine($"    Job title alias '{value}' already exists");
+                        }
+                        rowIsEmpty = false;
+                    }
+
+                    if (rowIsEmpty)
+                    {
+                        //Log.WriteLine($"End of data found at row {row}");
+                        //break;
+                    }
+                    Log.Flush();
                 }
                 catch (Exception e)
                 {
                     var e1 = new Exception($"Error on row {row}", e);
+                    Log.WriteLine("    Unhandled exception");
                     Log.WriteLine(e1.ToString());
                     if (Debugger.IsAttached)
                         Debugger.Break();
@@ -57,7 +147,7 @@ namespace ImportJobTitles
             }
         }
 
-
+        #if false
         private int FindFirstRow()
         {
             var first = IsOneBased ? 1 : 0;
@@ -73,6 +163,7 @@ namespace ImportJobTitles
         private bool LoadRowValues(int row)
         {
             var isEmpty = true;
+
             foreach (var cd in ColumnDefinitions)
             {
                 var cv = Sheet.Cells[row, cd.ColumnNumber].Text.Trim();
@@ -85,9 +176,18 @@ namespace ImportJobTitles
                     }
                     else
                     {
-                        cd.CurrentValue = "";
-                        cd.AssignedValue = null;
+                        if (cd.CurrentValue != "")
+                        {
+                            reset = true;
+                            cd.CurrentValue = "";
+                            cd.AssignedValue = null;
+                        }
                     }
+                }
+                else if (reset) // a change in a previous column caused us to dump this column
+                {
+                    cd.CurrentValue = "";
+                    cd.AssignedValue = null;
                 }
                 else
                 {
@@ -111,16 +211,6 @@ namespace ImportJobTitles
             // See if we should ignore the row, or if we have reached the end of the data
             foreach (var cd in ColumnDefinitions)
             {
-                // There are values that cause the row to be excluded
-                // if (cd.Exclusions.Contains(cd.CurrentValue))
-                //    return true;
-
-                //if (Debugger.IsAttached && Breakpoints.Contains(cd.CurrentValue))
-                //{
-                //    Debug.WriteLine(cd.ToString());
-                //    Debugger.Break();
-                //}
-
                 // If a non-optional cell is empty, that indicates the end of the data
                 // (if we don't have a predefined range).
                 if (string.IsNullOrEmpty(cd.CurrentValue) && !cd.SettingsDefinition.Optional)
@@ -134,103 +224,233 @@ namespace ImportJobTitles
                 }
             }
 
-            var alias = ColumnDefinitions["Alias"];
-            if (alias.CurrentValue != "")
+            // Check the taxonomy
+            var tColumn = ColumnDefinitions["Taxonomy"];
+            if (tColumn.AssignedValue is not long tnid)
             {
-                // Check the taxonomy
-                var tColumn = ColumnDefinitions["Taxonomy"];
-                if (tColumn.AssignedValue is not long tnid)
+                tnid = GetTaxonomyNodeId(tColumn.CurrentValue);
+                if (tnid == 0)
                 {
-                    tnid = GetTaxonomyNodeId(tColumn.CurrentValue);
-                    if (tnid == 0)
-                    {
-                        Log.WriteLine($"Error on row {row}: Taxonomy node not found");
-                        return true; // keep going -- the error has been reported
-                    }
-                    tColumn.AssignedValue = tnid;
+                    Log.WriteLine($"Error on row {row}: Error with taxonomy");
+                    return true; // keep going -- the error has been reported
                 }
+                tColumn.AssignedValue = tnid;
+            }
 
-                // See if the job title is defined
-                var jtColumn = ColumnDefinitions["JobTitleName"];
-                if (jtColumn.AssignedValue is not long jtid)
+            // See if the job title is defined
+            var jColumn = ColumnDefinitions["JobTitleName"];
+            long jid = 0;
+            if (jColumn.CurrentValue != "")
+            {
+                if (jColumn.AssignedValue is long xid)
                 {
-                    jtid = GetJobTitleId(tnid, jtColumn.CurrentValue);
-                    if (jtid == 0)
+                    jid = xid;
+                }
+                else
+                {
+                    jid = GetJobTitleId(tnid, jColumn.CurrentValue);
+                    if (jid == 0)
                     {
-                        jtid = CreateNewJobTitle(tnid, jtColumn.CurrentValue, ColumnDefinitions["JobTitleDescription"].CurrentValue);
-                        if (jtid == 0)
+                        jid = CreateNewJobTitle(tnid, jColumn.CurrentValue, ColumnDefinitions["JobTitleDescription"].CurrentValue);
+                        if (jid == 0)
                         {
-                            Log.WriteLine($"Attempted to create new job title {tnid} {jtColumn.CurrentValue} but failed");
+                            Log.WriteLine($"Attempted to create new job title {tnid} {jColumn.CurrentValue} but failed");
                             return true;
                         }
-                        ColumnDefinitions["JobTitleName"].AssignedValue = jtid;
-                        if (alias.CurrentValue == jtColumn.CurrentValue)
-                            return true; // the primary alias is already created
+                        jColumn.AssignedValue = jid;
                     }
                     else
                     {
-                        ColumnDefinitions["JobTitleName"].AssignedValue = jtid;
+                        jColumn.AssignedValue = jid;
                     }
                 }
+            }
 
-                var aid = GetJobTitleAliasId(jtid, alias.CurrentValue);
+            var aColumn = ColumnDefinitions["Alias"];
+            if (aColumn.CurrentValue != "")
+            {
+                Debug.Assert(jid != 0);
+                var aid = GetJobTitleAliasId(jid, aColumn.CurrentValue);
                 if (aid == 0)
                 {
-                    aid = CreateNewJobTitleAlias(jtid, alias.CurrentValue, ColumnDefinitions["AliasDescription"].CurrentValue, false);
-                    if (jtid == 0)
+                    aid = CreateNewJobTitleAlias(jid, aColumn.CurrentValue, ColumnDefinitions["AliasDescription"].CurrentValue, false);
+                    if (aid == 0)
                     {
-                        Log.WriteLine($"Attempted to create new job title alias {alias.CurrentValue} for {jtColumn.CurrentValue} but failed");
+                        Log.WriteLine($"Attempted to create new job title alias {aColumn.CurrentValue} for {jColumn.CurrentValue} but failed");
                         return true;
                     }
                 }
                 else
                 {
-                    Log.WriteLine($"Job Title Alias {alias.CurrentValue} already exists for {jtColumn.CurrentValue}");
+                    Log.WriteLine($"Job Title Alias {aColumn.CurrentValue} already exists for {jColumn.CurrentValue}");
                 }
             }
-
- 
-
-            /*
-            // Now for aliases
-            foreach (var cd in columnDefinitions)
-            {
-                if (!string.IsNullOrEmpty(cd.CurrentValue) && (cd.AliasOf != null))
-                {
-                    AddAliasIfNotPresent(cd.AliasOf.AssignedGeographicLocation!, cd.CurrentValue, false);
-                }
-            }
-            */
 
             return true;
         }
-
+        #endif
         
         private long GetTaxonomyNodeId(string cellValue)
         {
-            var parts = cellValue.Split('.'); // '3.1.5.G&A - Finance - ERP - Finance and Accounting' --> ['3', '1', '5', 'G&A - Finance - ERP - Finance and Accounting']
-            var oid = 100000L;
-            var trail = "";
-            for (var i=0; i<parts.Length; ++i)
+            var ptn = ParseTaxonomyName(cellValue);
+            return GetTaxonomyNodeId(ptn);
+        }
+
+        private long GetTaxonomyNodeId(ParsedTaxonomyName ptn)
+        {
+            var tnid = GetTaxonomyNodeIdByNumbers(ptn.Numbers, out var name);
+            if (tnid > 0)
             {
-                if (!int.TryParse(parts[i]!, out var index))
-                    break;
-                trail += $"{oid}:{index-1}";
-                var query = $"SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = {oid} AND [Index] = {index-1}";
+                if (!name.EndsWith(ptn.Name))
+                {
+                    Log.WriteLine($"    Error: taxonomy node {tnid} has different names: {ptn.Name} vs {name}");
+                    return 0;
+                }
+                return tnid;
+            }
+
+            if (tnid == 0)
+            {
+                Log.WriteLine($"Taxonomy node not found: {ptn}");
+                return 0;
+            }
+            else //if (tnid < 0)
+            {
+                Log.WriteLine($"Multiple taxonomy nodes found: {ptn}");
+                return 0;
+            }
+        }
+
+        private long GetTaxonomyNodeIdByNumbers(int[] numbers, out string name)
+        {
+            return GetTaxonomyNodeIdByNumbers(numbers, 0, numbers.Length, out name);
+        }
+
+        private long GetTaxonomyNodeIdByNumbers(int[] numbers, int offset, int count, out string name)
+        {
+            var oid = 100000L;
+            name = "";
+            for (var i=0; i<count; ++i) // there will be some numeric parts, and then the
+            {
+                var index = numbers[offset+i] - 1;
+                var query = $"SELECT [OID], [Name] FROM [dbo].[vw_TaxonomyNode] WHERE PID = {oid} AND [Index] = {index}";
                 var nodes = Connection.Select(query, r => new { Oid=r.GetInt64(0), Name=r.GetString(1)});
                 if (nodes.Count == 0)
-                {
-                    Log.WriteLine($"Taxonomy node not found: {trail}");
-                    return 0;                    
-                }
+                    return 0;
                 if (nodes.Count > 1)
-                {
-                    Log.WriteLine($"Multiple taxonomy nodes found: {trail}");
-                    return 0;                    
-                }
+                    return -1;
                 oid = nodes[0].Oid;
-                trail += $":'{nodes[0].Name}' ";
+                name = nodes[0].Name;
             }
+            return oid;
+        }
+
+
+        private long GetTaxonomyNodeIdByNames(string[] names, out List<int> numbers)
+        {
+            numbers = new List<int>();
+            var oid = 100000L;
+            for (var i=0; i<names.Length; ++i) // there will be some numeric parts, and then the
+            {
+                var query = $"SELECT [OID], [Index] FROM [dbo].[vw_TaxonomyNode] WHERE PID = {oid} AND [Name] = '{names[i]}'";
+                var nodes = Connection.Select(query, r => new { Oid=r.GetInt64(0), Index=r.GetInt32(1)});
+                if (nodes.Count == 0)
+                    return 0;
+                if (nodes.Count > 1)
+                    return -1;
+                oid = nodes[0].Oid;
+                numbers.Add(nodes[0].Index);
+            }
+            return oid;
+        }
+
+        private record ParsedTaxonomyName(int[] Numbers, string Name)
+        {
+            public override string ToString()
+            {
+                var s = string.Join('.', Numbers) + " " + Name;
+                return s;
+            }
+        }
+
+        //// '3.1.5.G&A - Finance - ERP - Finance and Accounting' --> ['3', '1', '5'] and [, 'G&A - Finance - ERP - Finance and Accounting']
+        private ParsedTaxonomyName ParseTaxonomyName(string name)
+        {
+            // We do this in a way that makes it okay if the text part of the name has dots in it
+            // (I don't think that happens, but it could)
+            var lastDot = 0;
+            for (var i=0; i<name.Length; ++i)
+            {
+                if (name[i] == '.')
+                    lastDot = i;
+                else if (!char.IsDigit(name[i]))
+                    break;
+            }
+
+            var numericParts = name.Substring(0, lastDot).Split('.', StringSplitOptions.RemoveEmptyEntries);
+            var numbers = new int[numericParts.Length];
+            for (var i=0; i<numericParts.Length; ++i)
+                numbers[i] = int.Parse(numericParts[i]);
+
+            var textPart = name.Substring(lastDot+1).Trim();
+            return new ParsedTaxonomyName(numbers, textPart);
+        }
+
+        private long CreateNewTaxonomyNode(ParsedTaxonomyName ptn)
+        {
+            // Find the parent node
+            var pid = 100000L;
+            byte type= 0;
+            for (var i=0; i<ptn.Numbers.Length-1; ++i) // there will be some numeric parts, and then the
+            {
+                var index = ptn.Numbers[i] - 1;
+                var query = $"SELECT [OID], [Type] FROM [dbo].[vw_TaxonomyNode] WHERE [PID] = {pid} AND [Index] = {index}";
+                var nodes = Connection.Select(query, r => new { Oid=r.GetInt64(0), Type=r.GetByte(1)});
+                if (nodes.Count == 0)
+                    return 0;
+                if (nodes.Count > 1)
+                    return -1;
+                pid = nodes[0].Oid;
+                type = nodes[0].Type;
+                Log.WriteLine($"    Found parent node {pid} {type}");
+            }
+
+            // Insert the node
+            var oid = Connection.GetNextOid();
+            ++type;
+            var query2 = $"""
+                            INSERT INTO [dbo].[t_TaxonomyNode]
+                            ([OID], [Version], [PracticeAreaID], [Type], [CreationSession], [CreationDate], [Creator])
+                            VALUES
+                            ({oid}, 0, 2501, {type}, '{Settings.CreationSession}', GETDATE(), {Settings.CreatorId})
+                        """;
+            var result = Connection.ExecuteNonQuery(query2);
+            if (result != 1)
+                return 0;
+
+            string table = type switch
+            {
+                2 => "t_TaxonomyNodeFunctionGroup",
+                3 => "t_TaxonomyNodeFunction",
+                4 => "t_TaxonomyNodeProcessGroup",
+                5 => "t_TaxonomyNodeProcess",
+                6 => "t_TaxonomyNodeActivity",
+                _ => throw new InvalidOperationException($"Invalid taxonomy node type {type}")
+            };
+
+            // Put it into the hierarchy
+            var query3 = $"""
+                            INSERT INTO [dbo].{table}
+                            ([OID], [PID], [Index], [Name])
+                            VALUES
+                            ({oid}, {pid}, {ptn.Numbers[^1]-1}, '{ptn.Name}')
+                        """;
+            result = Connection.ExecuteNonQuery(query3);
+            if (result != 1)
+            {
+                Connection.ExecuteNonQuery($"DELETE FROM [dbo].[t_TaxonomyNode] WHERE [OID] = {oid}");
+            }
+
             return oid;
         }
 

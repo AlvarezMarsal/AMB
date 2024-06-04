@@ -98,7 +98,7 @@ public class AmbDbConnection : DbConnection
             Log.Flush();
             if (Debugger.IsAttached)
                 Debugger.Break();
-            throw;
+            return -1;
         }
     }
 

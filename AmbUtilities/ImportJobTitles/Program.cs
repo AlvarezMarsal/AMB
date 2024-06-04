@@ -91,13 +91,20 @@ namespace ImportLocations
             var view = $"""
                         CREATE OR ALTER VIEW [dbo].[vw_TaxonomyNode]
                         AS
-                            SELECT P.[OID], P.[PID], P.[Index], P.[Name], 't_TaxonomyNodeProcess' AS [Table] FROM [dbo].[t_TaxonomyNodeProcess] P
-                            UNION
-                            SELECT Q.[OID], Q.[PID], Q.[Index], Q.[Name], 't_TaxonomyNodeProcessGroup' AS [Table] FROM [dbo].[t_TaxonomyNodeProcessGroup] Q
-                            UNION
-                            SELECT F.[OID], F.[PID], F.[Index], F.[Name], 't_TaxonomyNodeFunction' AS [Table] FROM [dbo].[t_TaxonomyNodeFunction] F
-                            UNION
-                            SELECT G.[OID], G.[PID], G.[Index], G.[Name], 't_TaxonomyNodeFunctionGroup' AS [Table] FROM [dbo].[t_TaxonomyNodeFunctionGroup] G
+                            SELECT A.[OID], A.[PID], A.[Index], A.[Name], A.[Table], T.[Type]
+                            FROM
+                            (
+                                SELECT P.[OID], P.[PID], P.[Index], P.[Name], 't_TaxonomyNodeProcess' AS [Table] FROM [dbo].[t_TaxonomyNodeProcess] P
+                                UNION
+                                SELECT Q.[OID], Q.[PID], Q.[Index], Q.[Name], 't_TaxonomyNodeProcessGroup' AS [Table] FROM [dbo].[t_TaxonomyNodeProcessGroup] Q
+                                UNION
+                                SELECT F.[OID], F.[PID], F.[Index], F.[Name], 't_TaxonomyNodeFunction' AS [Table] FROM [dbo].[t_TaxonomyNodeFunction] F
+                                UNION
+                                SELECT G.[OID], G.[PID], G.[Index], G.[Name], 't_TaxonomyNodeFunctionGroup' AS [Table] FROM [dbo].[t_TaxonomyNodeFunctionGroup] G
+                                UNION
+                                SELECT A.[OID], A.[PID], A.[Index], A.[Name], 't_TaxonomyNodeActivity' AS [Table] FROM [dbo].[t_TaxonomyNodeActivity] A
+                            ) AS A
+                            JOIN t_TaxonomyNode T ON T.[OID] = A.[OID]
                         """;
             _connection.ExecuteNonQuery(view);
         }

@@ -5,7 +5,7 @@
 	"JobTitleAliasesAreGloballyUnique": true,
 	"Imports": [
 		{
-			"FilePath": "..\\..\\JobTitles_Map_05292024.xlsx",
+			"FilePath": "..\\..\\JobTitles_Map_06042024-Rick.xlsx",
 			"Sheet": "Job Titles by Taxonomy",
 			"FirstRow": 3,
 			"Columns": [
