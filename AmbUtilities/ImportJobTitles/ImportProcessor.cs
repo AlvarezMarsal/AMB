@@ -303,7 +303,7 @@ namespace ImportJobTitles
             {
                 if (!name.EndsWith(ptn.Name))
                 {
-                    Log.WriteLine($"    Error: taxonomy node {tnid} has different names: {ptn.Name} vs {name}");
+                    Log.WriteLine($"    Error: taxonomy node {tnid} has different names: '{ptn.Name}' vs '{name}'");
                     return 0;
                 }
                 return tnid;
@@ -412,7 +412,7 @@ namespace ImportJobTitles
                     return -1;
                 pid = nodes[0].Oid;
                 type = nodes[0].Type;
-                Log.WriteLine($"    Found parent node {pid} {type}");
+                //Log.WriteLine($"    Found parent node {pid} {type}");
             }
 
             // Insert the node
@@ -449,6 +449,7 @@ namespace ImportJobTitles
             if (result != 1)
             {
                 Connection.ExecuteNonQuery($"DELETE FROM [dbo].[t_TaxonomyNode] WHERE [OID] = {oid}");
+                return 0;
             }
 
             return oid;
