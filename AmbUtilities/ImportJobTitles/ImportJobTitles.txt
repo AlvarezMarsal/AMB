@@ -4,7 +4,7 @@ Processing row 4
 Processing row 5
 Processing row 6
 Processing row 7
-    Job title 'JD-Food Service Worker' already exists
+    Created job title 'JD-Food Service Worker'
 Processing row 8
     Job title alias 'Barback' already exists
 Processing row 9
@@ -28,7 +28,7 @@ Processing row 17
 Processing row 18
     Job title alias 'JD-Food Service Worker' already exists
 Processing row 19
-    Job title alias 'Line Cook' already exists
+    Created job title alias 'Line Cook'
 Processing row 20
     Job title alias 'Restaurant Manager' already exists
 Processing row 21
@@ -159,9 +159,9 @@ Processing row 86
 Processing row 87
     Job title alias 'VP Investor Relations' already exists
 Processing row 88
-    Job title 'Administrative Assistant Finance Department' already exists
+    Created job title 'Administrative Assistant Finance Department'
 Processing row 89
-    Job title alias 'EA Finance Department' already exists
+    Created job title alias 'EA Finance Department'
 Processing row 90
 Processing row 91
     Job title 'Credit Department AR Manager' already exists
@@ -211,7 +211,7 @@ Processing row 113
 Processing row 114
     Job title alias 'Supv, Accounts Payable' already exists
 Processing row 115
-    Job title alias 'AP Manager' already exists
+    Created job title alias 'AP Manager'
 Processing row 116
     Job title 'AP Specialist' already exists
 Processing row 117
@@ -242,21 +242,23 @@ Processing row 129
     Job title alias 'AP Processor' already exists
 Processing row 130
 Processing row 131
-    Job title 'Accounts Receivable Manager' already exists
+    Created job title 'Accounts Receivable Manager'
 Processing row 132
-    Job title alias 'AR Mananger' already exists
+    Created job title alias 'AR Mananger'
 Processing row 133
-    Job title alias 'AR Mgr' already exists
+    Created job title alias 'AR Mgr'
 Processing row 134
 Processing row 135
-    Job title 'Accounts Receivable Specialist' already exists
+    Created job title 'Accounts Receivable Specialist'
 Processing row 136
-    Job title alias 'AR Specialist' already exists
+    Created job title alias 'AR Specialist'
 Processing row 137
-    Job title 'Credit Analyst' already exists
+    Error: Taxonomy node not found: 3.1.1.6 G&A - Finance - Transactional Processing - Credit
+    Created taxonomy node 3.1.1.6 G&A - Finance - Transactional Processing - Credit
+    Created job title 'Credit Analyst'
 Processing row 138
 Processing row 139
-    Job title 'Credit Manager' already exists
+    Created job title 'Credit Manager'
 Processing row 140
 Processing row 141
     Job title 'Senior Director Tax Accounting' already exists
@@ -339,7 +341,7 @@ Processing row 179
 Processing row 180
     Job title alias 'VP & Treasurer' already exists
 Processing row 181
-    Job title 'Treasurer' already exists
+    Created job title 'Treasurer'
 Processing row 182
 Processing row 183
     Job title 'Director of Treasury' already exists
@@ -439,7 +441,7 @@ Processing row 230
 Processing row 231
     Job title 'Financial Reporting Analyst' already exists
 Processing row 232
-    Job title alias 'Finance Reporting Analyst' already exists
+    Created job title alias 'Finance Reporting Analyst'
 Processing row 233
     Job title 'Senior Accountant Sales Tax' already exists
 Processing row 234
@@ -463,7 +465,7 @@ Processing row 242
 Processing row 243
     Job title alias 'Revenue Accountant' already exists
 Processing row 244
-    Job title alias 'Cost Accountant' already exists
+    Created job title alias 'Cost Accountant'
 Processing row 245
     Job title alias 'Staff Accountant' already exists
 Processing row 246
@@ -537,7 +539,7 @@ Processing row 279
 Processing row 280
     Job title alias 'Mgr Accting/Financial Rpting' already exists
 Processing row 281
-    Job title alias 'Financial Reporting Manager' already exists
+    Created job title alias 'Financial Reporting Manager'
 Processing row 282
     Job title 'Manager Inventory Control' already exists
 Processing row 283
@@ -558,7 +560,7 @@ Processing row 290
 Processing row 291
     Job title alias 'Plant Controller' already exists
 Processing row 292
-    Job title alias 'Financial Controller' already exists
+    Created job title alias 'Financial Controller'
 Processing row 293
     Job title alias 'Sales Controller' already exists
 Processing row 294
@@ -584,17 +586,17 @@ Processing row 303
 Processing row 304
     Job title alias 'Director Finance Controls' already exists
 Processing row 305
-    Job title 'Director Finance Budget' already exists
+    Created job title 'Director Finance Budget'
 Processing row 306
-    Job title 'Manager Finance Budget' already exists
+    Created job title 'Manager Finance Budget'
 Processing row 307
-    Job title 'Budget Analyst' already exists
+    Created job title 'Budget Analyst'
 Processing row 308
-    Job title 'Senior Budget Analyst' already exists
+    Created job title 'Senior Budget Analyst'
 Processing row 309
-    Job title 'Controller's Assistant' already exists
+    Created job title 'Controller's Assistant'
 Processing row 310
-    Job title alias 'Budget Controller's Assistant' already exists
+    Created job title alias 'Budget Controller's Assistant'
 Processing row 311
     Job title 'Audit Manager' already exists
 Processing row 312
@@ -820,11 +822,11 @@ Processing row 427
 Processing row 428
     Job title alias 'Senior Vice President - CIO' already exists
 Processing row 429
-    Job title 'JD-Researcher' already exists
+    Created job title 'JD-Researcher'
 Processing row 430
     Job title alias 'JD-Researcher' already exists
 Processing row 431
-    Job title alias 'Waiter2' already exists
+    Created job title alias 'Waiter2'
 Processing row 432
     Job title 'Vice President Technology' already exists
 Processing row 433
@@ -1832,6 +1834,8 @@ Processing row 963
 Processing row 964
 Processing row 965
 Processing row 966
+    Error: Taxonomy node not found: 4.10.11 Data Analysis and Reporting
+    Created taxonomy node 4.10.11 Data Analysis and Reporting
 Processing row 967
 Processing row 968
 Processing row 969
@@ -2083,7 +2087,7 @@ Processing row 1106
 Processing row 1107
 Processing row 1108
 Processing row 1109
-    Job title 'JD-Business Owner' already exists
+    Created job title 'JD-Business Owner'
 Processing row 1110
     Job title alias 'Founder' already exists
 Processing row 1111
@@ -2094,9 +2098,17 @@ Processing row 1113
     Job title alias 'Proprietor' already exists
 Processing row 1114
 Processing row 1115
+    Error: Taxonomy node not found: 8.1.1 Jack Sub Sub Node 1 - REname
+    Created taxonomy node 8.1.1 Jack Sub Sub Node 1 - REname
 Processing row 1116
+    Error: Taxonomy node not found: 8.1.1.1 Jack Sub Sub Node 2
+    Created taxonomy node 8.1.1.1 Jack Sub Sub Node 2
 Processing row 1117
+    Error: Taxonomy node not found: 8.1.2 Jack Sub Node 2
+    Created taxonomy node 8.1.2 Jack Sub Node 2
 Processing row 1118
+    Error: Taxonomy node not found: 8.2 Jack - Sub Node 3
+    Created taxonomy node 8.2 Jack - Sub Node 3
 Processing row 1119
     Job title 'Front Desk Agents' already exists
 Processing row 1120
