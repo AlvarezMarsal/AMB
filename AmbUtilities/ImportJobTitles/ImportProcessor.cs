@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Xml.Linq;
 using AmbHelper;
 using OfficeOpenXml;
 using static AmbHelper.Settings;
@@ -26,6 +27,7 @@ namespace ImportJobTitles
             ColumnDefinitions = ColumnDefinition.PreprocessColumnDefinitions(Import, IsOneBased);
             Connection = connection;
         }
+
 
         public void Run()
         {
@@ -147,154 +149,13 @@ namespace ImportJobTitles
             }
         }
 
-        #if false
-        private int FindFirstRow()
-        {
-            var first = IsOneBased ? 1 : 0;
-            for (var i=first; i<Sheet.Dimension.Rows; i++)
-            {
-                if (LoadRowValues(i))
-                    return i;
-            }
-            throw new Exception("No data found in the spreadsheet");
-        }
-
-
-        private bool LoadRowValues(int row)
-        {
-            var isEmpty = true;
-
-            foreach (var cd in ColumnDefinitions)
-            {
-                var cv = Sheet.Cells[row, cd.ColumnNumber].Text.Trim();
-                if (string.IsNullOrEmpty(cv))
-                {
-                    if (cd.BlankIsDitto)
-                    {
-                        if (cd.CurrentValue != "")
-                            isEmpty = false;
-                    }
-                    else
-                    {
-                        if (cd.CurrentValue != "")
-                        {
-                            reset = true;
-                            cd.CurrentValue = "";
-                            cd.AssignedValue = null;
-                        }
-                    }
-                }
-                else if (reset) // a change in a previous column caused us to dump this column
-                {
-                    cd.CurrentValue = "";
-                    cd.AssignedValue = null;
-                }
-                else
-                {
-                    isEmpty = false;
-                    if (cd.CurrentValue != cv)
-                    {
-                        cd.CurrentValue = cv;
-                        cd.AssignedValue = null;
-                    }
-                }
-            }
-            return !isEmpty;
-        }
-
-
-        private bool ProcessRow(int row)
-        {
-            if (row % 100 == 0)
-                Console.WriteLine($"Processing row {row}");
-
-            // See if we should ignore the row, or if we have reached the end of the data
-            foreach (var cd in ColumnDefinitions)
-            {
-                // If a non-optional cell is empty, that indicates the end of the data
-                // (if we don't have a predefined range).
-                if (string.IsNullOrEmpty(cd.CurrentValue) && !cd.SettingsDefinition.Optional)
-                {
-                    if (Import.LastRow < 0)
-                    {
-                        Console.WriteLine($"Detected end of data");
-                        return false;
-                    }
-                    throw new InvalidOperationException($"No value for cell {cd.ColumnNumber}{row}");
-                }
-            }
-
-            // Check the taxonomy
-            var tColumn = ColumnDefinitions["Taxonomy"];
-            if (tColumn.AssignedValue is not long tnid)
-            {
-                tnid = GetTaxonomyNodeId(tColumn.CurrentValue);
-                if (tnid == 0)
-                {
-                    Log.WriteLine($"Error on row {row}: Error with taxonomy");
-                    return true; // keep going -- the error has been reported
-                }
-                tColumn.AssignedValue = tnid;
-            }
-
-            // See if the job title is defined
-            var jColumn = ColumnDefinitions["JobTitleName"];
-            long jid = 0;
-            if (jColumn.CurrentValue != "")
-            {
-                if (jColumn.AssignedValue is long xid)
-                {
-                    jid = xid;
-                }
-                else
-                {
-                    jid = GetJobTitleId(tnid, jColumn.CurrentValue);
-                    if (jid == 0)
-                    {
-                        jid = CreateNewJobTitle(tnid, jColumn.CurrentValue, ColumnDefinitions["JobTitleDescription"].CurrentValue);
-                        if (jid == 0)
-                        {
-                            Log.WriteLine($"Attempted to create new job title {tnid} {jColumn.CurrentValue} but failed");
-                            return true;
-                        }
-                        jColumn.AssignedValue = jid;
-                    }
-                    else
-                    {
-                        jColumn.AssignedValue = jid;
-                    }
-                }
-            }
-
-            var aColumn = ColumnDefinitions["Alias"];
-            if (aColumn.CurrentValue != "")
-            {
-                Debug.Assert(jid != 0);
-                var aid = GetJobTitleAliasId(jid, aColumn.CurrentValue);
-                if (aid == 0)
-                {
-                    aid = CreateNewJobTitleAlias(jid, aColumn.CurrentValue, ColumnDefinitions["AliasDescription"].CurrentValue, false);
-                    if (aid == 0)
-                    {
-                        Log.WriteLine($"Attempted to create new job title alias {aColumn.CurrentValue} for {jColumn.CurrentValue} but failed");
-                        return true;
-                    }
-                }
-                else
-                {
-                    Log.WriteLine($"Job Title Alias {aColumn.CurrentValue} already exists for {jColumn.CurrentValue}");
-                }
-            }
-
-            return true;
-        }
-        #endif
         
         private long GetTaxonomyNodeId(string cellValue)
         {
             var ptn = ParseTaxonomyName(cellValue);
             return GetTaxonomyNodeId(ptn);
         }
+
 
         private long GetTaxonomyNodeId(ParsedTaxonomyName ptn)
         {
@@ -303,7 +164,7 @@ namespace ImportJobTitles
             {
                 if (!name.EndsWith(ptn.Name))
                 {
-                    Log.WriteLine($"    Error: taxonomy node {tnid} has different names: '{ptn.Name}' vs '{name}'");
+                    Log.WriteLine($"    Error: Taxonomy node {tnid} has different name: '{ptn.Name}' vs '{name}'");
                     return 0;
                 }
                 return tnid;
@@ -311,20 +172,22 @@ namespace ImportJobTitles
 
             if (tnid == 0)
             {
-                Log.WriteLine($"Taxonomy node not found: {ptn}");
+                Log.WriteLine($"    Error: Taxonomy node not found: {ptn}");
                 return 0;
             }
             else //if (tnid < 0)
             {
-                Log.WriteLine($"Multiple taxonomy nodes found: {ptn}");
+                Log.WriteLine($"    Error: Multiple taxonomy nodes found: {ptn}");
                 return 0;
             }
         }
+
 
         private long GetTaxonomyNodeIdByNumbers(int[] numbers, out string name)
         {
             return GetTaxonomyNodeIdByNumbers(numbers, 0, numbers.Length, out name);
         }
+
 
         private long GetTaxonomyNodeIdByNumbers(int[] numbers, int offset, int count, out string name)
         {
@@ -345,14 +208,14 @@ namespace ImportJobTitles
             return oid;
         }
 
-
+#if false
         private long GetTaxonomyNodeIdByNames(string[] names, out List<int> numbers)
         {
             numbers = new List<int>();
             var oid = 100000L;
             for (var i=0; i<names.Length; ++i) // there will be some numeric parts, and then the
             {
-                var query = $"SELECT [OID], [Index] FROM [dbo].[vw_TaxonomyNode] WHERE PID = {oid} AND [Name] = '{names[i]}'";
+                var query = $"SELECT [OID], [Index] FROM [dbo].[vw_TaxonomyNode] WHERE PID = {oid} AND LOWER([Name]) = '{names[i]}'";
                 var nodes = Connection.Select(query, r => new { Oid=r.GetInt64(0), Index=r.GetInt32(1)});
                 if (nodes.Count == 0)
                     return 0;
@@ -364,6 +227,8 @@ namespace ImportJobTitles
             return oid;
         }
 
+#endif
+
         private record ParsedTaxonomyName(int[] Numbers, string Name)
         {
             public override string ToString()
@@ -373,7 +238,8 @@ namespace ImportJobTitles
             }
         }
 
-        //// '3.1.5.G&A - Finance - ERP - Finance and Accounting' --> ['3', '1', '5'] and [, 'G&A - Finance - ERP - Finance and Accounting']
+
+        // '3.1.5.G&A - Finance - ERP - Finance and Accounting' --> ['3', '1', '5'] and 'G&A - Finance - ERP - Finance and Accounting'
         private ParsedTaxonomyName ParseTaxonomyName(string name)
         {
             // We do this in a way that makes it okay if the text part of the name has dots in it
@@ -396,12 +262,13 @@ namespace ImportJobTitles
             return new ParsedTaxonomyName(numbers, textPart);
         }
 
+
         private long CreateNewTaxonomyNode(ParsedTaxonomyName ptn)
         {
             // Find the parent node
             var pid = 100000L;
             byte type= 0;
-            for (var i=0; i<ptn.Numbers.Length-1; ++i) // there will be some numeric parts, and then the
+            for (var i=0; i<ptn.Numbers.Length-1; ++i) // there will be some numeric parts, and then the text part
             {
                 var index = ptn.Numbers[i] - 1;
                 var query = $"SELECT [OID], [Type] FROM [dbo].[vw_TaxonomyNode] WHERE [PID] = {pid} AND [Index] = {index}";
@@ -458,15 +325,15 @@ namespace ImportJobTitles
         
         private long GetJobTitleId(long taxonomyId, string name)
         {
-            name = name.Replace("'", "''");
+            name = name.Replace("'", "''").ToLower();
             var query = Settings.JobTitlesAreGloballyUnique 
-                ? $"SELECT [OID] FROM [dbo].[t_JobTitle] WHERE Name = '{name}'"
-                : $"SELECT [OID] FROM [dbo].[t_JobTitle] WHERE TaxonomyId = {taxonomyId} AND Name = '{name}'";
+                ? $"SELECT [OID] FROM [dbo].[t_JobTitle] WHERE LOWER([Name]) = '{name}'"
+                : $"SELECT [OID] FROM [dbo].[t_JobTitle] WHERE TaxonomyId = {taxonomyId} AND LOWER([Name]) = '{name}'";
             var id = Connection.ExecuteScalar(query);   
             if (id is null)
                 return 0; // indicating that it the job title doesn't exist
             if (id is not long nid)
-                throw new InvalidOperationException($"Error retrieving job title {taxonomyId} {name}");
+                throw new InvalidOperationException($"    Error: Error retrieving job title {taxonomyId} {name}");
             return nid;
         }
 
@@ -495,7 +362,7 @@ namespace ImportJobTitles
             }
             catch (Exception e)
             {
-                Log.WriteLine($"Error creating job title {taxonomyId} {name}");
+                Log.WriteLine($"    Error: error creating job title {taxonomyId} {name}");
                 Log.WriteLine(e.ToString());
                 return oid;
             }
@@ -507,26 +374,26 @@ namespace ImportJobTitles
         
         private long GetJobTitleAliasId(long jobTitleId, string name)
         {
-            name = name.Replace("'", "''");
+            name = name.Replace("'", "''").ToLower();
 
             var query = Settings.JobTitleAliasesAreGloballyUnique 
-                ? $"SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE Alias = '{name}'"
-                : $"SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE JobTitleID = {jobTitleId} AND Alias = '{name}'";
+                ? $"SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE LOWER([Alias]) = '{name}'"
+                : $"SELECT [OID] FROM [dbo].[t_JobTitleAlias] WHERE JobTitleID = {jobTitleId} AND LOWER([Alias]) = '{name}'";
 
             var id = Connection.ExecuteScalar(query);   
             if (id is null)
                 return 0; // indicating that it the job title doesn't exist
             if (id is not long nid)
-                throw new InvalidOperationException($"Error retrieving job title alias {jobTitleId} {name}");
+                throw new InvalidOperationException($"    Error: error retrieving job title alias {jobTitleId} {name}");
             return nid;
         }
 
 
         private long CreateNewJobTitleAlias(long jobTitleId, string name, string description, bool isPrimary)
         {
-            name = name.Replace("'", "''");
+            var safeName = name.Replace("'", "''");
             if (string.IsNullOrEmpty(description))
-                description = name;
+                description = safeName;
             else
                 description = description.Replace("'", "''");
 
@@ -537,7 +404,7 @@ namespace ImportJobTitles
                             INSERT INTO [dbo].[t_JobTitleAlias]
                             ([OID], [Alias], [Description], [IsSystemOwned], [IsPrimary], [CreationDate], [CreatorID], [PracticeAreaID], [JobTitleID], [LID], [CreationSession])
                             VALUES
-                            ({oid}, '{name}', '{description}', 0, {primary}, GETDATE(), {Settings.CreatorId}, 2501, {jobTitleId}, 500, '{Settings.CreationSession}')
+                            ({oid}, '{safeName}', '{description}', 0, {primary}, GETDATE(), {Settings.CreatorId}, 2501, {jobTitleId}, 500, '{Settings.CreationSession}')
                         """;
 
             try
@@ -546,7 +413,7 @@ namespace ImportJobTitles
             }
             catch (Exception e)
             {
-                Log.WriteLine($"Error creating job title alias {jobTitleId} {name}");
+                Log.WriteLine($"    Error: Error creating job title alias {jobTitleId} {name}");
                 Log.WriteLine(e.ToString());
                 return 0;
             }
@@ -554,8 +421,30 @@ namespace ImportJobTitles
             CreateNewJobTitleKeys(oid, name);
 
             return oid;
-       }
+        }
 
+
+        private void CreateNewJobTitleKeys(long aliasId, string alias)
+        {
+            alias = alias.Replace("'", "''").ToLower();
+            var words = alias.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var b = new System.Text.StringBuilder();
+            b.Append($"INSERT INTO [dbo].[t_JobTitleAliasKeys] ([JobTitleAliasID],[Key]) VALUES ({aliasId}, '{words[0]}')");
+            for (var i=1; i<words.Length; ++i)
+                b.Append($", ({aliasId}, '{words[1]}')");
+
+            try
+            {
+                Connection.ExecuteNonQuery(b.ToString());
+            }
+            catch (Exception e)
+            {
+                Log.WriteLine($"    Error: Error creating job title keys for {aliasId} {alias}");
+                Log.WriteLine(e.ToString());
+            }
+        }
+
+        #region Dispose
 
         protected virtual void Dispose(bool disposing)
         {
@@ -573,30 +462,14 @@ namespace ImportJobTitles
             }
         }
 
-        private void CreateNewJobTitleKeys(long aliasId, string alias)
-        {
-            var words = alias.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            var b = new System.Text.StringBuilder();
-            b.Append($"INSERT INTO [dbo].[t_JobTitleAliasKeys] ([JobTitleAliasID],[Key]) VALUES ({aliasId}, '{words[0]}')");
-            for (var i=1; i<words.Length; ++i)
-                b.Append($", ({aliasId}, '{words[1]}')");
 
-            try
-            {
-                Connection.ExecuteNonQuery(b.ToString());
-            }
-            catch (Exception e)
-            {
-                Log.WriteLine($"Error creating job title keys for {aliasId} {alias}");
-                Log.WriteLine(e.ToString());
-            }
-        }
-        
         public void Dispose()
         {
             // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
+
+        #endregion
     }
 }
