@@ -1,21 +1,57 @@
-﻿using System.Data;
+﻿using System.Collections.Generic;
+using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Diagnostics.Metrics;
+using System.Security.Cryptography;
 
 namespace AmbHelper;
 
 public class AmbDbConnection : DbConnection
 {
     public readonly SqlConnection SqlConnection;
+    private readonly Dictionary<string, string> _connectionStringParts;
     private readonly LogFile? Log;
+    private const string GetNextOidProc = "[dbo].[sp_GetNextOid]";
 
     public AmbDbConnection(string connectionString, bool log = true)
     {
         if (log)
-        Log = new LogFile("DatabaseLog");            
+            Log = new LogFile("DatabaseLog");
+
+        var parts = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries);
+        _connectionStringParts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var part in parts)
+        {
+            if (!string.IsNullOrEmpty(part))
+            {
+                var subparts = part.Split('=');
+                if (subparts.Length == 2)
+                    _connectionStringParts.Add(subparts[0].Trim(), subparts[1].Trim());
+            }
+        }
+
         SqlConnection = new SqlConnection(connectionString);
         SqlConnection.Open();
+
+        var proc = $"""
+                    CREATE OR ALTER PROCEDURE {GetNextOidProc}
+                        (@oid BIGINT OUTPUT)
+                    AS
+                    SET NOCOUNT ON
+                    BEGIN
+                        SELECT @oid = [NextOID] FROM [t_AMBenchmarkSystem] WITH(TABLOCKX, HOLDLOCK);
+                        UPDATE [t_AMBenchmarkSystem] SET [NextOID] = ([NextOID] + 1);
+                    END
+                    """;
+
+        ExecuteNonQuery(proc);
+
+        var db = _connectionStringParts["Database"];
+        var grant = $"GRANT EXEC ON {db}.{GetNextOidProc} TO PUBLIC";
+        ExecuteNonQuery(grant);
     }
 
 #pragma warning disable CS8765 // Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
@@ -37,6 +73,7 @@ public class AmbDbConnection : DbConnection
 
     public override void Close()
     {
+        ExecuteNonQuery($"DROP PROCEDURE ${GetNextOidProc}");
         SqlConnection.Close();
     }
 
@@ -227,7 +264,7 @@ public class AmbDbConnection : DbConnection
 
     public long GetNextOid()
     {
-        using var command = CreateCommand("[dbo].sp_internalGetNextOID");
+        using var command = CreateCommand(GetNextOidProc);
         command.CommandType = CommandType.StoredProcedure;
         command.Parameters.Add("@oid", SqlDbType.BigInt).Direction = ParameterDirection.Output;
         var result = command.ExecuteNonQuery();

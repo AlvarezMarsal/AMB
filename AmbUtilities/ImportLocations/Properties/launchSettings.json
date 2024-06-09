@@ -7,6 +7,10 @@
     "Test": {
       "commandName": "Project",
       "workingDirectory": "D:\\AMB\\AmbUtilities\\ImportLocations"
+    },
+    "Real": {
+      "commandName": "Project",
+      "workingDirectory": "C:\\AMB\\AmbUtilities\\ImportLocations"
     }
   }
 }
