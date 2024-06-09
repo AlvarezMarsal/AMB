@@ -6,3 +6,7 @@ obj
 /EPPlus/*.vsmdi
 /AmbUtilities/ImportLocations/*.user
 /AmbUtilities/ImportJobTitles/*.user
+/AmbUtilities/ImportLocations/DatabaseLog.txt
+/AmbUtilities/ImportLocations/ImportLocations.txt
+/AmbUtilities/ImportJobTitles/ImportJobTitles.txt
+/AmbUtilities/ImportJobTitles/DatabaseLog.txt

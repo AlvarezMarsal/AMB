@@ -1,10 +1,6 @@
-﻿using System.Data;
-using OfficeOpenXml;
-using System.Data.SqlClient;
+﻿using OfficeOpenXml;
 using System.Diagnostics;
 using AmbHelper;
-
-
 
 namespace ImportLocations
 {
@@ -14,8 +10,8 @@ namespace ImportLocations
         private readonly DateTime _startTime = DateTime.Now;
         private readonly AmbDbConnection _connection;
         private readonly Guid _creationSession;
-        private readonly Dictionary<long, GeographicLocation> _locations = new();
-        private readonly SortedList<string, HashSet<long>> _aliases = [];
+        private readonly Dictionary<long, GeographicLocation> _locationCache= new();
+        //private readonly SortedList<string, HashSet<long>> _aliases = [];
         private string NameCollation => "COLLATE " + _settings.NameCollation;
         private string AliasCollation => "COLLATE " + _settings.AliasCollation;
         // ReSharper disable once CollectionNeverUpdated.Local
@@ -53,7 +49,7 @@ namespace ImportLocations
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                Log.WriteLine(e);
                 throw;
             }
         }
@@ -111,13 +107,15 @@ namespace ImportLocations
                         """;
             _connection.ExecuteNonQuery(view);
 
+            /*
             try
             {
                 var disableIndex = "ALTER TABLE [dbo].[t_GeographicLocationAlias] DROP CONSTRAINT [UQ__t_Geogra__4C49A2004F2CE66A]";
                 _connection.ExecuteNonQuery(disableIndex);
             }
-            catch
+            catch (Exception e)
             {
+                Log.WriteLine(e);
             }
             
             try
@@ -130,14 +128,13 @@ namespace ImportLocations
                                     ([GeographicLocationID] ASC, [Alias] ASC)
                                     WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
                                     """;
-                _connection.ExecuteNonQuery(createIndex);
-                
-                //var enableIndex = $"ALTER TABLE [dbo].[t_GeographicLocationAlias] CHECK CONSTRAINT [UQ__t_Geogra__4C49A2004F2CE66A]";
-                //_connection.ExecuteNonQuery(enableIndex);
+                _connection.ExecuteNonQuery(createIndex);            
             }
-            catch
+            catch (Exception e)
             {
+                Log.WriteLine(e);
             }
+            */
         }
         
         private void DeleteViews()
@@ -153,12 +150,12 @@ namespace ImportLocations
                 try
                 {
                     var pid = preset.Pid.GetValueOrDefault(0);
-                    if (pid != 0)
-                        LoadGeographicLocation(pid, true, 1);
+                    //if (pid != 0)
+                    //    LoadGeographicLocation(pid, true, 1);
                     
-                    var n = preset.Name.Replace("'", "''");
+                    var n = preset.Name.Replace("'", "''").ToLower();
                     var query = $"SELECT [OID], [PID] FROM [dbo].[vw_GeographicLocationNames] " +
-                                $"WHERE [NAME] = N'{n}' {NameCollation} AND [PID] = {pid}";
+                                $"WHERE LOWER([NAME]) = N'{n}' {NameCollation} AND [PID] = {pid}";
                     if (preset.Oid != 0)
                         query += $" AND [OID] = {preset.Oid}";
 
@@ -179,7 +176,7 @@ namespace ImportLocations
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
+                    Log.WriteLine(e);
                     if (Debugger.IsAttached)
                         Debugger.Break();
                     throw;
@@ -192,7 +189,8 @@ namespace ImportLocations
             if (!File.Exists(importInfo.FilePath))
                 throw new FileNotFoundException(importInfo.FilePath);
 
-            Console.WriteLine($"Processing {importInfo.FilePath}");
+            Log.WriteLine($"Processing {importInfo.FilePath}");
+            Log.Indent();
             
             using var package = new ExcelPackage(new FileInfo(importInfo.FilePath));
             var isOneBased = package.Compatibility.IsWorksheets1Based;
@@ -214,9 +212,9 @@ namespace ImportLocations
             // For each row in the spreadsheet, process each column
             for (var row=top; row<=bottom; ++row)
             {
-                if (row % 100 == 0)
-                    Console.WriteLine($"Processing row {row}");
-                
+                Log.WriteLine($"Processing row {row}");
+                Log.Indent();
+               
                 var skipRow = false;
                 // reset, but keep any useful results from the last time through the loop
                 foreach (var cd in columnDefinitions)
@@ -235,7 +233,7 @@ namespace ImportLocations
                     
                     if (Debugger.IsAttached && Breakpoints.Contains(cd.CurrentValue))
                     {
-                        Debug.WriteLine(cd.ToString());
+                        Debug.WriteLine("Hit breakpoint for " + cd.CurrentValue.ToString());
                         Debugger.Break();
                     }
 
@@ -252,18 +250,24 @@ namespace ImportLocations
                         if (scanningBottom)
                         {
                             dataEnded = true;
-                            Console.WriteLine($"Detected end of data at row {row}");
+                            Log.WriteLine($"Detected end of data at row {row}");
                             break;
                         }
 
-                        throw new InvalidOperationException($"No value for cell {cd.ColumnNumber}:{row}");
+                        Log.WriteLine($"Error: No value for cell {cd.ColumnNumber}");
+                        skipRow = true;
                     }
                 }
 
                 if (skipRow)
+                {
+                    Log.Outdent();
                     continue;
+                }
+
                 if (dataEnded)
                     break;
+
                 if (!dataStarted)
                 {
                     Console.WriteLine($"Detected start of data at row {row}");
@@ -275,7 +279,9 @@ namespace ImportLocations
                 foreach (var cd in columnDefinitions)
                 {
                     if (cd.AssignedValue == null)
+                    {
                         ProcessCell(cd);
+                    }
                 }
 
                 // Now for aliases
@@ -286,61 +292,76 @@ namespace ImportLocations
                         AddAliasIfNotPresent(cd.AliasOf.AssignedValue!, cd.CurrentValue, false);
                     }
                 }
+
+                Log.Outdent();
             }
             
-            return;
+            Log.Outdent();
+        }
 
-            void ProcessCell(ColumnDefinition<GeographicLocation> coldef)
+        bool ProcessCell(ColumnDefinition<GeographicLocation> coldef)
+        {
+            //Log.WriteLine($"Processing column {coldef.ColumnName}");
+            //Log.Indent();
+
+            // Make sure that the columns it requires have been satisfied
+            if (coldef.Parent is { AssignedValue: null })
             {
-                // Make sure that the columns it requires have been satisfied
-                if (coldef.Parent is { AssignedValue: null })
+                if (!ProcessCell(coldef.Parent))
                 {
-                    ProcessCell(coldef.Parent);
-                    if (coldef.Parent.AssignedValue == null)
-                        throw new InvalidOperationException("Parent cell is empty");
-                }
-
-                if (coldef.AliasOf is { AssignedValue: null })
-                {
-                    ProcessCell(coldef.AliasOf);
-                    if (coldef.AliasOf.AssignedValue == null)
-                        throw new InvalidOperationException("Predecessor cell is empty");
-                }
-                
-                // If the cell is empty, it must be optional (otherwise we threw an exception above)
-                // Since it might still be someone's parent, we use this cell's parent as its
-                // assigned location.
-                if (string.IsNullOrEmpty(coldef.CurrentValue))
-                {
-                    if (coldef.MustExist)
-                        throw new InvalidOperationException("Empty cell");
-                    if (coldef.AliasOf != null)
-                        coldef.AssignedValue = coldef.AliasOf.AssignedValue;
-                    else if (coldef.Parent != null)
-                        coldef.AssignedValue = coldef.Parent.AssignedValue;
-                }
-                else if (coldef.MustExist)
-                { 
-                    coldef.AssignedValue = 
-                        LoadGeographicLocationByName(coldef.CurrentValue, null) ??
-                        throw new InvalidOperationException($"Missing {coldef.CurrentValue}");
-                }
-                else if (coldef.Parent != null)
-                {
-                    var pal = coldef.Parent.AssignedValue!;
-                    coldef.AssignedValue = 
-                        LoadGeographicLocationByName(coldef.CurrentValue, pal.Oid) ??
-                        AddGeographicLocation(0, pal.Oid, pal.PracticeAreaId, coldef.CurrentValue, coldef.IsSystemOwned);
-                }
-
-                if (coldef.AliasOf != null)
-                {
-                    var pal = coldef.AliasOf.AssignedValue!;
-                    coldef.AssignedValue = pal;
-                    AddAliasIfNotPresent(coldef.AssignedValue, coldef.CurrentValue, false);
+                    Log.WriteLine($"Error: Parent cell of {coldef.ColumnName} is empty");
+                    return false;
                 }
             }
+
+            if (coldef.AliasOf is { AssignedValue: null })
+            {
+                if (!ProcessCell(coldef.AliasOf))
+                {
+                    Log.WriteLine($"Error: Predecessor cell of {coldef.ColumnName} is empty");
+                    return false;
+                }
+            }
+                
+            // If the cell is empty, it must be optional (otherwise we threw an exception above)
+            // Since it might still be someone's parent, we use this cell's parent as its
+            // assigned location.
+            if (string.IsNullOrEmpty(coldef.CurrentValue))
+            {
+                if (coldef.MustExist)
+                    throw new InvalidOperationException("Error: Empty cell");
+                if (coldef.AliasOf != null)
+                    coldef.AssignedValue = coldef.AliasOf.AssignedValue;
+                else if (coldef.Parent != null)
+                    coldef.AssignedValue = coldef.Parent.AssignedValue;
+            }
+            else if (coldef.MustExist)
+            { 
+                coldef.AssignedValue = LoadGeographicLocationByName(coldef.CurrentValue, null);
+                if (coldef.AssignedValue == null)
+                {
+                    Log.WriteLine($"Error: Missing {coldef.CurrentValue}");
+                    return false;
+                }
+            }
+            else if (coldef.Parent != null)
+            {
+                var pal = coldef.Parent.AssignedValue!;
+                coldef.AssignedValue = 
+                    LoadGeographicLocationByName(coldef.CurrentValue, pal.Oid) ??
+                    AddGeographicLocation(0, pal.Oid, pal.PracticeAreaId, coldef.CurrentValue, coldef.IsSystemOwned);
+            }
+
+            if (coldef.AliasOf != null)
+            {
+                var pal = coldef.AliasOf.AssignedValue!;
+                coldef.AssignedValue = pal;
+                AddAliasIfNotPresent(coldef.AssignedValue, coldef.CurrentValue, false);
+            }
+
+            return true;
         }
+
 
         /// <summary>
         /// Retusn a list of ColumnDefinitions in the order they should be processed.
@@ -392,13 +413,14 @@ namespace ImportLocations
             
             foreach (var child in children)
             {
+                /*
                 if (_aliases.TryGetValue(child.Item2, out var oids))
                     oids.Add(child.Item1);
                 else
                     _aliases.Add(child.Item2, [child.Item1]);
-                
+                */
                 var childLocation = LoadGeographicLocation(child.Item1, true);
-                parent.Children.Add(child.Item2, childLocation);
+                parent.Children.Add(child.Item2, childLocation!);
             }
 
             parent.ChildrenLoaded = true;
@@ -412,15 +434,21 @@ namespace ImportLocations
         /// <param name="recursionLevel"></param>
         /// <returns></returns>
         /// <exception cref="InvalidOperationException"></exception>
-        private GeographicLocation LoadGeographicLocation(long oid, bool loadAliases, int recursionLevel = 0)
+        private GeographicLocation? LoadGeographicLocation(long oid, bool loadAliases, int recursionLevel = 0)
         {
-            if (!_locations.TryGetValue(oid, out var location))
+            if (_locationCache.TryGetValue(oid, out var location))
+                return location!;    
+
+            // if (!_locations.TryGetValue(oid, out var location))
             {
-                using (var command = _connection.CreateCommand($"SELECT [PID], [Name], [Index], [Description], [PracticeAreaID], [IsSystemOwned] FROM [dbo].[t_GeographicLocation] WHERE [OID] = {oid}"))
+                //using (var command = _connection.CreateCommand($"SELECT [PID], [Name], [Index], [Description], [PracticeAreaID], [IsSystemOwned] FROM [dbo].[t_GeographicLocation] WHERE [OID] = {oid}"))
                 {
-                    using var reader = command.ExecuteReader();
+                    using var reader = _connection.ExecuteReader($"SELECT [PID], [Name], [Index], [Description], [PracticeAreaID], [IsSystemOwned] FROM [dbo].[t_GeographicLocation] WHERE [OID] = {oid}");
                     if (!reader.Read())
-                        throw new InvalidOperationException($"No record found for {oid}");
+                    {
+                        Log.WriteLine($"Error: No record found for GeographicLocation {oid}");
+                        return null;
+                    }
                     
                     var columnIndex = 0;
                     var pid = reader.IsDBNull(columnIndex) ? (long?) null : reader.GetInt64(columnIndex);
@@ -431,15 +459,17 @@ namespace ImportLocations
                     var isSystemOwned = reader.GetBoolean(++columnIndex);
                     
                     location = new GeographicLocation(oid, pid, name, index, description, paid, isSystemOwned);
-                    _locations.Add(oid, location);
-                    if (!_aliases.TryGetValue(location.Name, out var existingAliases))
-                        _aliases.Add(location.Name, [oid]);
-                    else
-                        existingAliases.Add(oid);
+                    _locationCache.Add(oid, location);
+                    // _locations.Add(oid, location);
+                    // if (!_aliases.TryGetValue(location.Name, out var existingAliases))
+                    //    _aliases.Add(location.Name, [oid]);
+                    // else
+                    //    existingAliases.Add(oid);
                 }
                 
-                var n = location.Name.Replace("'", "''");
-                var query = $"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid} AND [Alias] <> N'{n}'";
+                /*
+                var n = location.Name.Replace("'", "''").ToLower();
+                var query = $"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid} AND LOWER([Alias]) <> N'{n}'";
                 _connection.ExecuteReader(query, reader =>
                 {
                     var alias = reader.GetString(0);
@@ -449,9 +479,10 @@ namespace ImportLocations
                         existingAliases.Add(oid);
                 });
 
+
                 if (loadAliases)
                 {
-                    query = $"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid}";
+                    var query = $"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid}";
                     _connection.ExecuteReader(query, reader =>
                     {
                         var alias = reader.GetString(0);
@@ -461,24 +492,27 @@ namespace ImportLocations
                             existingAliases.Add(oid);
                     });
                 }
+                */
             }
 
             if (recursionLevel-- > 0)
             {
                 if (!location.ChildrenLoaded)
                     LoadChildren(location);
+
                 foreach (var child in location.Children.Values)
                 {
                     LoadGeographicLocation(child.Oid, loadAliases, recursionLevel);
                 }
             }
             
-            return location;
+            return location!;
         }
 
         
         private GeographicLocation? LoadGeographicLocationByName(string name, long? pid)
         {
+            /*
             if ((pid != null) && _aliases.TryGetValue(name, out var oids))
             {
                 foreach (var o in oids)
@@ -488,10 +522,11 @@ namespace ImportLocations
                         return loc;
                 }
             }
+            */
 
-            var n = name.Replace("'", "''");
+            var n = name.Replace("'", "''").ToLower();
             var query = $"SELECT V.[OID] FROM [dbo].[vw_GeographicLocationNames] V " +
-                        $"WHERE V.[Name] = N'{n}' {AliasCollation}";
+                        $"WHERE LOWER(V.[Name]) = N'{n}' {AliasCollation}";
             if (pid != null)
                 query += $" AND V.[PID] = {pid}";
 
@@ -506,7 +541,10 @@ namespace ImportLocations
                 {
                     var otherOid = reader.GetInt64(0);
                     if (otherOid != oid)
-                        throw new InvalidOperationException($"Conflicting records found for {name}");
+                    {
+                        Log.WriteLine($"Conflicting records found for {name}");
+                        return null;
+                    }
                 }
             }
             return LoadGeographicLocation(oid, true);
@@ -555,31 +593,35 @@ namespace ImportLocations
             }
 
             var location = new GeographicLocation(oid, pid, name, index, description, practiceAreaId.Value, isSystemOwned);
-            _locations.Add(oid, location);
+            _locationCache.Add(oid, location);
             parent?.Children.Add(name, location);
 
             AddAliasIfNotPresent(location, name, true);
             return location;
         }
         
-        private void AddAliasIfNotPresent(GeographicLocation location, string alias, bool isPrimary)
+        private bool AddAliasIfNotPresent(GeographicLocation location, string alias, bool isPrimary)
         {
+            /*
             if (_aliases.TryGetValue(alias, out var existing) && existing.Contains(location.Oid))
                 return;
-
-            var a = alias.Replace("'", "''");
+            */
+            alias = alias.Replace("'", "''");
+            var a = alias.ToLower();
             try
             {
-                var query = $"SELECT COUNT(*) FROM [dbo].[vw_GeographicLocationNames] " +
-                            $"WHERE [Name] = N'{a}' {AliasCollation} AND [OID] = {location.Oid}";
+                var query = $"SELECT COUNT(*) FROM [dbo].[t_GeographicLocationAlias] " +
+                            $"WHERE LOWER([Alias]) = N'{a}' {AliasCollation} AND [GeographicLocationID] = {location.Oid}";
                 var result = _connection.ExecuteScalar(query);
                 if ((result is long and > 0))
-                    return;
+                    return true; // it worked
+                if ((result is int and > 0))
+                    return true; // it worked
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                throw;
+                Log.WriteLine(e);
+                return false;
             }
              
             var aliasOid = _connection.GetNextOid();
@@ -588,19 +630,23 @@ namespace ImportLocations
             var practiceAreaId = location.PracticeAreaId;
             var isPrimaryInt = isPrimary ? 1 : 0;
             var isSystemOwnedInt = location.IsSystemOwned ? 1 : 0;
-            using (var command = _connection.CreateCommand($"INSERT [dbo].[t_GeographicLocationAlias] ([OID],[GeographicLocationID],[Alias],[Description],[IsPrimary],[PracticeAreaID],[CreationDate],[CreatorID],[CreationSession],[LID],[IsSystemOwned]) " +
-                                               $"VALUES({aliasOid}, {location.Oid}, N'{a}', N'{d}', {isPrimaryInt}, {practiceAreaId}, '{_startTime}', {_settings.CreatorId}, '{_creationSession}', 500, {isSystemOwnedInt})"))
+            //using (var command = _connection.CreateCommand($"INSERT [dbo].[t_GeographicLocationAlias] ([OID],[GeographicLocationID],[Alias],[Description],[IsPrimary],[PracticeAreaID],[CreationDate],[CreatorID],[CreationSession],[LID],[IsSystemOwned]) " +
+            //                                   $"VALUES({aliasOid}, {location.Oid}, N'{a}', N'{d}', {isPrimaryInt}, {practiceAreaId}, '{_startTime}', {_settings.CreatorId}, '{_creationSession}', 500, {isSystemOwnedInt})"))
             { 
-                var result = command.ExecuteNonQuery();
+                var result = _connection.ExecuteNonQuery($"INSERT [dbo].[t_GeographicLocationAlias] ([OID],[GeographicLocationID],[Alias],[Description],[IsPrimary],[PracticeAreaID],[CreationDate],[CreatorID],[CreationSession],[LID],[IsSystemOwned]) " +
+                                               $"VALUES({aliasOid}, {location.Oid}, N'{alias}', N'{d}', {isPrimaryInt}, {practiceAreaId}, '{_startTime}', {_settings.CreatorId}, '{_creationSession}', 500, {isSystemOwnedInt})");
                 if (result != 1)
-                    throw new InvalidOperationException($"Insert failed for {alias}");
+                {
+                    Log.WriteLine($"Insert failed for {alias}");
+                    return false;
+                }
             }
 
-            if (_aliases.TryGetValue(alias, out existing))
-                existing.Add(location.Oid);
-            else
-                _aliases.Add(alias, [location.Oid]);
-
+            //if (_aliases.TryGetValue(alias, out existing))
+            //    existing.Add(location.Oid);
+            //else
+            //    _aliases.Add(alias, [location.Oid]);
+            return true;
         }
         
         private void Dump()
@@ -638,7 +684,7 @@ namespace ImportLocations
                         Dump(children[j - 1].oid, indent + 1, file);
                         for (var i = 0; i < indent; ++i) 
                             file.Write("\t");
-                        file.Write($"{children[j].oid: 10}\t{children[j].name}");
+                        file.Write($"{children[j].oid: 0000000}\t{children[j].name}");
                     }
                 }
 

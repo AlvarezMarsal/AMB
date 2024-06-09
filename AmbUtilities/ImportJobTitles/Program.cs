@@ -8,10 +8,6 @@ namespace ImportLocations
         private readonly Settings _settings;
         private readonly DateTime _startTime = DateTime.Now;
         private readonly AmbDbConnection _connection;
-        //private readonly Guid _creationSession;
-        //private readonly SortedList<string, HashSet<long>> _aliases = [];
-        //private string NameCollation => "COLLATE " + _settings.NameCollation;
-        //private string AliasCollation => "COLLATE " + _settings.AliasCollation;
         
         static Program()
         {
@@ -75,12 +71,11 @@ namespace ImportLocations
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e);
-                    throw;
+                    Log.WriteLine(e);
                 }
                 finally
                 {
-                    //Dump();
+                    // Dump();
                     DeleteViews();
                 }
             }
