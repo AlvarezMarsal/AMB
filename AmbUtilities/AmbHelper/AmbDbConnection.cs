@@ -14,7 +14,7 @@ public class AmbDbConnection : DbConnection
     public readonly SqlConnection SqlConnection;
     private readonly Dictionary<string, string> _connectionStringParts;
     private readonly LogFile? Log;
-    private const string GetNextOidProc = "[dbo].[sp_GetNextOid]";
+    private const string GetNextOidProc = "[dbo].[sp_internalGetNextOid]";
 
     public AmbDbConnection(string connectionString, bool log = true)
     {
@@ -36,6 +36,7 @@ public class AmbDbConnection : DbConnection
         SqlConnection = new SqlConnection(connectionString);
         SqlConnection.Open();
 
+        /*
         var proc = $"""
                     CREATE OR ALTER PROCEDURE {GetNextOidProc}
                         (@oid BIGINT OUTPUT)
@@ -52,6 +53,7 @@ public class AmbDbConnection : DbConnection
         var db = _connectionStringParts["Database"];
         var grant = $"GRANT EXEC ON {db}.{GetNextOidProc} TO PUBLIC";
         ExecuteNonQuery(grant);
+        */
     }
 
 #pragma warning disable CS8765 // Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
@@ -73,7 +75,7 @@ public class AmbDbConnection : DbConnection
 
     public override void Close()
     {
-        ExecuteNonQuery($"DROP PROCEDURE ${GetNextOidProc}");
+        // ExecuteNonQuery($"DROP PROCEDURE ${GetNextOidProc}");
         SqlConnection.Close();
     }
 
