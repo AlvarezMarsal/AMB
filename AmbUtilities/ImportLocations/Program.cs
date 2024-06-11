@@ -10,6 +10,7 @@ namespace ImportLocations
         private readonly DateTime _startTime = DateTime.Now;
         private readonly AmbDbConnection _connection;
         private readonly Guid _creationSession;
+        private readonly HashSet<string> _aliases = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<long, GeographicLocation> _locationCacheByOid = new();
         private readonly Dictionary<string, GeographicLocation> _locationCacheByName = new Dictionary<string, GeographicLocation>(StringComparer.OrdinalIgnoreCase);
         //private readonly SortedList<string, HashSet<long>> _aliases = [];
@@ -559,7 +560,7 @@ namespace ImportLocations
                 }
             }
             var location = LoadGeographicLocation(oid, true);
-            Log.WriteLine($"Found location {oid} {location!.Name} in the database by Name");
+            // Log.WriteLine($"Found location {oid} {location!.Name} in the database by Name"); // already reported
             return location!;
         }
 
@@ -616,10 +617,9 @@ namespace ImportLocations
         
         private bool AddAliasIfNotPresent(GeographicLocation location, string alias, bool isPrimary)
         {
-            /*
-            if (_aliases.TryGetValue(alias, out var existing) && existing.Contains(location.Oid))
-                return;
-            */
+            if (_aliases.Contains($"{location.Oid}{alias}"))
+                return true;
+
             alias = alias.Replace("'", "''");
             var a = alias.ToLower();
             try
@@ -629,11 +629,13 @@ namespace ImportLocations
                 var result = _connection.ExecuteScalar(query);
                 if ((result is long and > 0))
                 {
+                    _aliases.Add($"{location.Oid}{alias}");
                     Log.WriteLine($"Found alias {alias} for {location.Oid} {location.Name}");
                     return true; // it worked
                 }
                 if ((result is int and > 0))
                 {
+                    _aliases.Add($"{location.Oid}{alias}");
                     Log.WriteLine($"Found alias {alias} for {location.Oid} {location.Name}");
                     return true; // it worked
                 }
@@ -666,6 +668,7 @@ namespace ImportLocations
             //    existing.Add(location.Oid);
             //else
             //    _aliases.Add(alias, [location.Oid]);
+            _aliases.Add($"{location.Oid}{alias}");
             Log.WriteLine($"Inserted alias {alias} for {location.Oid} {location.Name}");
             return true;
         }

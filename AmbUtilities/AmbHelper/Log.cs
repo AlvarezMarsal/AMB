@@ -42,6 +42,7 @@ public class LogFile : IDisposable
     private int _indentLevel;
     private string _indentString = "";
     private static readonly char[] LineSeparators = ['\r', '\n'];
+    private bool _disposed = false;
 
     public LogFile(string name)
     {
@@ -51,7 +52,7 @@ public class LogFile : IDisposable
         _logFile = File.CreateText(filename);
         _logFile.WriteLine($"Log file created at {DateTime.Now}");
 
-        AtExit.Add(() => { _logFile.Flush(); _logFile.Dispose(); });
+        AtExit.Add(() => { _logFile.Dispose(); });
     }
 
     public void WriteLine(string message)
@@ -91,7 +92,12 @@ public class LogFile : IDisposable
 
     public void Dispose()
     {
-        _logFile.Dispose();
+        if (!_disposed)
+        {
+            _disposed = true;
+            _logFile.Flush();
+            _logFile.Dispose();
+        }
     }
 
     public void Flush()
