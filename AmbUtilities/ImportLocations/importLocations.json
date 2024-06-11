@@ -47,50 +47,6 @@
 	],
 	"Imports": [
 		{
-			"FilePath": "..\\..\\uscities.xlsx",
-			"Sheet": "Sheet1",
-			"FirstRow": 2,
-			"Columns": [
-				{
-					"Tag": "City",
-					"Name": "A",
-					"AliasOf": "B",
-					"IsSystemOwned": true
-				},
-				{
-					"Tag": "CityAscii",
-					"Name": "B",
-					"IsSystemOwned": true
-				},
-				{
-					"Tag": "StateId",
-					"Name": "C",
-					"AliasOf": "D",
-					"IsSystemOwned": true
-				},
-				{
-					"Tag": "StateName",
-					"Name": "D",
-					"ParentOf": [ "F" ],
-					"IsSystemOwned": true
-				},
-				{
-					"Tag": "CountyName",
-					"Name": "F",
-					"ParentOf": [ "B" ],
-					"IsSystemOwned": true
-				},
-				{
-					"Tag": "Country",
-					"Name": "R",
-					"ParentOf": [ "D" ],
-					"MustExist": true,
-					"IsSystemOwned": true
-				}
-			]
-		},
-
-		{
 			"FilePath": "..\\..\\World Cities.xlsx",
 			"Sheet": "Cities",
 			"FirstRow": 1000713,
@@ -140,6 +96,49 @@
 				{
 					"Tag": "CityAscii",
 					"Name": "H",
+					"IsSystemOwned": true
+				}
+			]
+		},
+		{
+			"FilePath": "..\\..\\uscities.xlsx",
+			"Sheet": "Sheet1",
+			"FirstRow": 2,
+			"Columns": [
+				{
+					"Tag": "City",
+					"Name": "A",
+					"AliasOf": "B",
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "CityAscii",
+					"Name": "B",
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "StateId",
+					"Name": "C",
+					"AliasOf": "D",
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "StateName",
+					"Name": "D",
+					"ParentOf": [ "F" ],
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "CountyName",
+					"Name": "F",
+					"ParentOf": [ "B" ],
+					"IsSystemOwned": true
+				},
+				{
+					"Tag": "Country",
+					"Name": "R",
+					"ParentOf": [ "D" ],
+					"MustExist": true,
 					"IsSystemOwned": true
 				}
 			]

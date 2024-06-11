@@ -10,7 +10,8 @@ namespace ImportLocations
         private readonly DateTime _startTime = DateTime.Now;
         private readonly AmbDbConnection _connection;
         private readonly Guid _creationSession;
-        private readonly Dictionary<long, GeographicLocation> _locationCache= new();
+        private readonly Dictionary<long, GeographicLocation> _locationCacheByOid = new();
+        private readonly Dictionary<string, GeographicLocation> _locationCacheByName = new Dictionary<string, GeographicLocation>(StringComparer.OrdinalIgnoreCase);
         //private readonly SortedList<string, HashSet<long>> _aliases = [];
         private string NameCollation => "COLLATE " + _settings.NameCollation;
         private string AliasCollation => "COLLATE " + _settings.AliasCollation;
@@ -95,12 +96,12 @@ namespace ImportLocations
             var view = $"""
                         CREATE OR ALTER VIEW [dbo].[vw_GeographicLocationNames]
                         AS
-                        	SELECT [OID], ISNULL([PID],0) AS PID, cast([Name] {AliasCollation} as nvarchar(512)) AS [Name], 1 AS IsPrimary
+                        	SELECT [OID], ISNULL([PID],0) AS PID, cast([Name] {AliasCollation} as nvarchar(512)) AS [Name], 1 AS IsPrimary, [Index]
                         	FROM [dbo].[t_GeographicLocation]
                         
                         	UNION
                         
-                        	SELECT L.[OID], ISNULL(L.[PID],0) AS PID, cast(A.[Alias] {AliasCollation} as nvarchar(512)) AS [Name], 0 AS IsPrimary
+                        	SELECT L.[OID], ISNULL(L.[PID],0) AS PID, cast(A.[Alias] {AliasCollation} as nvarchar(512)) AS [Name], 0 AS IsPrimary, [Index]
                         	FROM [dbo].[t_GeographicLocationAlias] A 
                         	JOIN [dbo].[t_GeographicLocation] L ON L.OID = A.GeographicLocationID
                         	WHERE A.Alias <> L.Name {AliasCollation}
@@ -154,7 +155,7 @@ namespace ImportLocations
                     //    LoadGeographicLocation(pid, true, 1);
                     
                     var n = preset.Name.Replace("'", "''").ToLower();
-                    var query = $"SELECT [OID], [PID] FROM [dbo].[vw_GeographicLocationNames] " +
+                    var query = $"SELECT [OID], [PID], [Index] FROM [dbo].[vw_GeographicLocationNames] " +
                                 $"WHERE LOWER([NAME]) = N'{n}' {NameCollation} AND [PID] = {pid}";
                     if (preset.OID != 0)
                         query += $" AND [OID] = {preset.OID}";
@@ -169,6 +170,9 @@ namespace ImportLocations
                             var npid = reader.GetInt64(1);
                             if (npid != pid)
                                 throw new InvalidOperationException($"Missing preset {preset.Name}");
+                            var index = reader.GetInt32(2);
+                            var location = new GeographicLocation(oid, pid, preset.Name, index, preset.Name, 2501, true);
+                            AddToCache(location);
                             continue;
                         }
                     }
@@ -336,8 +340,9 @@ namespace ImportLocations
                     coldef.AssignedValue = coldef.Parent.AssignedValue;
             }
             else if (coldef.MustExist)
-            { 
-                coldef.AssignedValue = LoadGeographicLocationByName(coldef.CurrentValue, null);
+            {
+                //var parent = coldef.Parent?.AssignedValue!.Oid;
+                coldef.AssignedValue = LoadGeographicLocationByName(coldef.CurrentValue, 20000);
                 if (coldef.AssignedValue == null)
                 {
                     Log.WriteLine($"Error: Missing {coldef.CurrentValue}");
@@ -348,7 +353,7 @@ namespace ImportLocations
             {
                 var pal = coldef.Parent.AssignedValue!;
                 coldef.AssignedValue = 
-                    LoadGeographicLocationByName(coldef.CurrentValue, pal.Oid) ??
+                    LoadGeographicLocationByName(coldef.CurrentValue, coldef.Parent.AssignedValue!.Oid) ??
                     AddGeographicLocation(0, pal.Oid, pal.PracticeAreaId, coldef.CurrentValue, coldef.IsSystemOwned);
             }
 
@@ -436,10 +441,8 @@ namespace ImportLocations
         /// <exception cref="InvalidOperationException"></exception>
         private GeographicLocation? LoadGeographicLocation(long oid, bool loadAliases, int recursionLevel = 0)
         {
-            if (_locationCache.TryGetValue(oid, out var location))
-                return location!;    
-
-            // if (!_locations.TryGetValue(oid, out var location))
+            var loc = GetFromCache(oid);
+            if (loc == null)
             {
                 //using (var command = _connection.CreateCommand($"SELECT [PID], [Name], [Index], [Description], [PracticeAreaID], [IsSystemOwned] FROM [dbo].[t_GeographicLocation] WHERE [OID] = {oid}"))
                 {
@@ -458,8 +461,9 @@ namespace ImportLocations
                     var paid = reader.GetInt64(++columnIndex);
                     var isSystemOwned = reader.GetBoolean(++columnIndex);
                     
-                    location = new GeographicLocation(oid, pid, name, index, description, paid, isSystemOwned);
-                    _locationCache.Add(oid, location);
+                    loc = new GeographicLocation(oid, pid, name, index, description, paid, isSystemOwned);
+                    AddToCache(loc);
+                    Log.WriteLine($"Found location {oid} {loc.Name} in the database by OID");
                     // _locations.Add(oid, location);
                     // if (!_aliases.TryGetValue(location.Name, out var existingAliases))
                     //    _aliases.Add(location.Name, [oid]);
@@ -497,16 +501,16 @@ namespace ImportLocations
 
             if (recursionLevel-- > 0)
             {
-                if (!location.ChildrenLoaded)
-                    LoadChildren(location);
+                if (!loc!.ChildrenLoaded)
+                    LoadChildren(loc);
 
-                foreach (var child in location.Children.Values)
+                foreach (var child in loc!.Children.Values)
                 {
                     LoadGeographicLocation(child.Oid, loadAliases, recursionLevel);
                 }
             }
             
-            return location!;
+            return loc!;
         }
 
         
@@ -524,6 +528,10 @@ namespace ImportLocations
             }
             */
 
+            var loc = GetFromCache(pid ?? 0, name);
+            if (loc != null)
+                return loc;
+
             var n = name.Replace("'", "''").ToLower();
             var query = $"SELECT V.[OID] FROM [dbo].[vw_GeographicLocationNames] V " +
                         $"WHERE LOWER(V.[Name]) = N'{n}' {AliasCollation}";
@@ -535,19 +543,24 @@ namespace ImportLocations
             using (var reader = command.ExecuteReader())
             {
                 if (!reader.Read())
+                {
+                    Log.WriteLine($"Did not find location {name} in the database by Name");
                     return null;
+                }
                 oid = reader.GetInt64(0);
                 while (reader.Read())
                 {
                     var otherOid = reader.GetInt64(0);
                     if (otherOid != oid)
                     {
-                        Log.WriteLine($"Conflicting records found for {name}");
+                        Log.WriteLine($"Conflicting records found for location {name}");
                         return null;
                     }
                 }
             }
-            return LoadGeographicLocation(oid, true);
+            var location = LoadGeographicLocation(oid, true);
+            Log.WriteLine($"Found location {oid} {location!.Name} in the database by Name");
+            return location!;
         }
 
         private GeographicLocation AddGeographicLocation(long oid, long pid, long? practiceAreaId, string name, bool isSystemOwned)
@@ -582,6 +595,7 @@ namespace ImportLocations
                 var result = _connection.ExecuteNonQuery(query);
                 if (result != 1)
                     throw new InvalidOperationException($"Insert failed for {name}");
+                Log.WriteLine($"Added location {oid} {name} to database.");
             }
             catch (Exception e)
             {
@@ -593,7 +607,7 @@ namespace ImportLocations
             }
 
             var location = new GeographicLocation(oid, pid, name, index, description, practiceAreaId.Value, isSystemOwned);
-            _locationCache.Add(oid, location);
+            AddToCache(location);
             parent?.Children.Add(name, location);
 
             AddAliasIfNotPresent(location, name, true);
@@ -614,9 +628,15 @@ namespace ImportLocations
                             $"WHERE LOWER([Alias]) = N'{a}' {AliasCollation} AND [GeographicLocationID] = {location.Oid}";
                 var result = _connection.ExecuteScalar(query);
                 if ((result is long and > 0))
+                {
+                    Log.WriteLine($"Found alias {alias} for {location.Oid} {location.Name}");
                     return true; // it worked
+                }
                 if ((result is int and > 0))
+                {
+                    Log.WriteLine($"Found alias {alias} for {location.Oid} {location.Name}");
                     return true; // it worked
+                }
             }
             catch (Exception e)
             {
@@ -637,7 +657,7 @@ namespace ImportLocations
                                                $"VALUES({aliasOid}, {location.Oid}, N'{alias}', N'{d}', {isPrimaryInt}, {practiceAreaId}, '{_startTime}', {_settings.CreatorId}, '{_creationSession}', 500, {isSystemOwnedInt})");
                 if (result != 1)
                 {
-                    Log.WriteLine($"Insert failed for {alias}");
+                    Log.WriteLine($"Failed to insert alias {alias} for {location.Oid} {location.Name}");
                     return false;
                 }
             }
@@ -646,6 +666,7 @@ namespace ImportLocations
             //    existing.Add(location.Oid);
             //else
             //    _aliases.Add(alias, [location.Oid]);
+            Log.WriteLine($"Inserted alias {alias} for {location.Oid} {location.Name}");
             return true;
         }
         
@@ -700,6 +721,22 @@ namespace ImportLocations
                 pid = names[j - 1].oid;
                 indent += "    ";
             }
+        }
+
+        private void AddToCache(GeographicLocation geographicLocation)
+        {
+            _locationCacheByOid.Add(geographicLocation.Oid, geographicLocation);
+            _locationCacheByName.Add($"{geographicLocation.Pid ?? 0}{geographicLocation.Name}", geographicLocation);
+        }
+
+        private GeographicLocation? GetFromCache(long oid)
+        {
+            return _locationCacheByOid.TryGetValue(oid, out var geographicLocation) ? geographicLocation : null;
+        }
+
+        private GeographicLocation? GetFromCache(long pid, string name)
+        {
+            return _locationCacheByName.TryGetValue($"{pid}{name}", out var geographicLocation) ? geographicLocation : null;
         }
     }
 }
