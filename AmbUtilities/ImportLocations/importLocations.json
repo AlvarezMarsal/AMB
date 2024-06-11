@@ -1,38 +1,48 @@
 {
-	"ConnectionString": "Server=.;Database=AMBenchmark_DB;Integrated Security=True;",
+	"ConnectionString": "Server=USE1DEVDRPSQL01;Database=AMBenchmark_DB;Integrated Security=True;",
 	"CreatorId": 100,
 	"NameCollation": "SQL_Latin1_General_CP1_CI_AS",
 	"_AliasCollation": "Latin1_General_100_BIN2",
 	"Presets": [
 		{
 			"Name": "World",
+			"OID": 20000
 		},
 		{
-			"Name": "North America"
+			"Name": "North America",
+			"PID": 20000
 		},
 		{
-			"Name": "Latin America"
+			"Name": "Latin America",
+			"PID": 20000
 		},
 		{
-			"Name": "Europe"
+			"Name": "Europe",
+			"PID": 20000
 		},
 		{
-			"Name": "Middle East"
+			"Name": "Middle East",
+			"PID": 20000
 		},
 		{
-			"Name": "North Asia"
+			"Name": "North Asia",
+			"PID": 20000
 		},
 		{
-			"Name": "Central Asia"
+			"Name": "Central Asia",
+			"PID": 20000
 		},
 		{
-			"Name": "Southeast Asia & Australia (SEAA)"
+			"Name": "Southeast Asia & Australia (SEAA)",
+			"PID": 20000
 		},
 		{
-			"Name": "Africa"
+			"Name": "Africa",
+			"PID": 20000
 		},
 		{
-			"Name": "Antarctica"
+			"Name": "Antarctica",
+			"PID": 20000
 		}
 	],
 	"Imports": [

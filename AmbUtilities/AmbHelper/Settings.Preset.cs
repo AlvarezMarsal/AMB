@@ -8,7 +8,7 @@ public partial class Settings
     public class Preset
     {
         public string Name { get; set; } = "";
-        public long Oid { get; set; }
-        public long? Pid { get; set; }
+        public long OID { get; set; }
+        public long? PID { get; set; }
     }
 }

@@ -1,11 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Data;
+﻿using System.Data;
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Diagnostics;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Diagnostics.Metrics;
-using System.Security.Cryptography;
+
 
 namespace AmbHelper;
 
@@ -13,13 +10,31 @@ public class AmbDbConnection : DbConnection
 {
     public readonly SqlConnection SqlConnection;
     private readonly Dictionary<string, string> _connectionStringParts;
-    private readonly LogFile? Log;
+    private LogFile? _log;
     private const string GetNextOidProc = "[dbo].[sp_internalGetNextOid]";
+
+    public bool Log
+    {
+        get { return _log != null; }
+        set
+        {
+            if (value)
+            {
+                _log ??= new LogFile("DatabaseLog");
+            }
+            else
+            {
+                _log?.Dispose();
+                _log = null;
+            }
+            
+        }
+    }
 
     public AmbDbConnection(string connectionString, bool log = true)
     {
         if (log)
-            Log = new LogFile("DatabaseLog");
+            _log = new LogFile("DatabaseLog");
 
         var parts = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries);
         _connectionStringParts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -96,7 +111,7 @@ public class AmbDbConnection : DbConnection
 
     public SqlCommand CreateCommand(string sql)
     {
-        Log?.WriteLine($"AmbDbConnection: creating command `{sql}`");
+        _log?.WriteLine($"AmbDbConnection: creating command `{sql}`");
         try
         {
             var cmd = SqlConnection.CreateCommand();
@@ -105,9 +120,9 @@ public class AmbDbConnection : DbConnection
         }
         catch (Exception e)
         {
-            Log?.WriteLine($"AmbDbConnection: Exception");
-            Log?.WriteLine(e.ToString());
-            Log?.Flush();
+            _log?.WriteLine($"AmbDbConnection: Exception");
+            _log?.WriteLine(e.ToString());
+            _log?.Flush();
             if (Debugger.IsAttached)
                 Debugger.Break();
             throw;
@@ -122,20 +137,20 @@ public class AmbDbConnection : DbConnection
 
     public int ExecuteNonQuery(string sql)
     {
-        Log?.WriteLine($"AmbDbConnection: executing non-query `{sql}`");
+        _log?.WriteLine($"AmbDbConnection: executing non-query `{sql}`");
         try
         {
             using var cmd = SqlConnection.CreateCommand();
             cmd.CommandText = sql;
             var result = cmd.ExecuteNonQuery();
-            Log?.WriteLine($"AmbDbConnection: nonquery command result {result}");
+            _log?.WriteLine($"AmbDbConnection: nonquery command result {result}");
             return result;
         }
         catch (Exception e)
         {
-            Log?.WriteLine($"AmbDbConnection: Exception");
-            Log?.WriteLine(e.ToString());
-            Log?.Flush();
+            _log?.WriteLine($"AmbDbConnection: Exception");
+            _log?.WriteLine(e.ToString());
+            _log?.Flush();
             if (Debugger.IsAttached)
                 Debugger.Break();
             return -1;
@@ -144,21 +159,21 @@ public class AmbDbConnection : DbConnection
 
     public object? ExecuteScalar(string sql)
     {
-        Log?.WriteLine($"AmbDbConnection: executing scalar `{sql}`");
+        _log?.WriteLine($"AmbDbConnection: executing scalar `{sql}`");
         try
         {
             using var cmd = SqlConnection.CreateCommand();
             cmd.CommandText = sql;
             var result = cmd.ExecuteScalar();
             var r = result?.ToString() ?? "null";
-            Log?.WriteLine($"AmbDbConnection: scalar command result {r}");
+            _log?.WriteLine($"AmbDbConnection: scalar command result {r}");
             return result;
         }
         catch (Exception e)
         {
-            Log?.WriteLine($"AmbDbConnection: Exception");
-            Log?.WriteLine(e.ToString());
-            Log?.Flush();
+            _log?.WriteLine($"AmbDbConnection: Exception");
+            _log?.WriteLine(e.ToString());
+            _log?.Flush();
             if (Debugger.IsAttached)
                 Debugger.Break();
             throw;
@@ -167,7 +182,7 @@ public class AmbDbConnection : DbConnection
 
     public SqlDataReader ExecuteReader(string sql)
     {
-        Log?.WriteLine($"AmbDbConnection: executing reader `{sql}`");
+        _log?.WriteLine($"AmbDbConnection: executing reader `{sql}`");
         try
         {            
             using var cmd = SqlConnection.CreateCommand();
@@ -176,9 +191,9 @@ public class AmbDbConnection : DbConnection
         }
         catch (Exception e)
         {
-            Log?.WriteLine($"AmbDbConnection: Exception");
-            Log?.WriteLine(e.ToString());
-            Log?.Flush();
+            _log?.WriteLine($"AmbDbConnection: Exception");
+            _log?.WriteLine(e.ToString());
+            _log?.Flush();
             if (Debugger.IsAttached)
                 Debugger.Break();
             throw;
@@ -192,19 +207,19 @@ public class AmbDbConnection : DbConnection
             using (var reader = ExecuteReader(sql))
             {
                 while (reader.Read())
-                {   
-                    Log?.WriteLine($"AmbDbConnection: reader succeeded");
+                {
+                    _log?.WriteLine($"AmbDbConnection: reader succeeded");
                     action(reader);
                 }
-                Log?.WriteLine($"AmbDbConnection: reader finished");
-                Log?.Flush();
+                _log?.WriteLine($"AmbDbConnection: reader finished");
+                _log?.Flush();
             }
         }
         catch (Exception e)
         {
-            Log?.WriteLine($"AmbDbConnection: Exception");
-            Log?.WriteLine(e.ToString());
-            Log?.Flush();
+            _log?.WriteLine($"AmbDbConnection: Exception");
+            _log?.WriteLine(e.ToString());
+            _log?.Flush();
             if (Debugger.IsAttached)
                 Debugger.Break();
             throw;
@@ -270,9 +285,9 @@ public class AmbDbConnection : DbConnection
         command.CommandType = CommandType.StoredProcedure;
         command.Parameters.Add("@oid", SqlDbType.BigInt).Direction = ParameterDirection.Output;
         var result = command.ExecuteNonQuery();
-        Log?.WriteLine($"AmbDbConnection: nonquery command result {result}");
+        _log?.WriteLine($"AmbDbConnection: nonquery command result {result}");
         var oid = Convert.ToInt64(command.Parameters["@oid"].Value);
-        Log?.WriteLine($"AmbDbConnection: new oid {oid}");
+        _log?.WriteLine($"AmbDbConnection: new oid {oid}");
         return oid;
     }
 }

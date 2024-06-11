@@ -89,7 +89,7 @@ public class LogFile : IDisposable
 
     public void WriteLine(Exception ex) => WriteLine(ex.ToString());
 
-   public void Dispose()
+    public void Dispose()
     {
         _logFile.Dispose();
     }

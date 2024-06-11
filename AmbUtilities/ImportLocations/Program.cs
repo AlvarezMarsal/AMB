@@ -149,22 +149,22 @@ namespace ImportLocations
             {
                 try
                 {
-                    var pid = preset.Pid.GetValueOrDefault(0);
+                    var pid = preset.PID.GetValueOrDefault(0);
                     //if (pid != 0)
                     //    LoadGeographicLocation(pid, true, 1);
                     
                     var n = preset.Name.Replace("'", "''").ToLower();
                     var query = $"SELECT [OID], [PID] FROM [dbo].[vw_GeographicLocationNames] " +
                                 $"WHERE LOWER([NAME]) = N'{n}' {NameCollation} AND [PID] = {pid}";
-                    if (preset.Oid != 0)
-                        query += $" AND [OID] = {preset.Oid}";
+                    if (preset.OID != 0)
+                        query += $" AND [OID] = {preset.OID}";
 
                     using (var reader = _connection.ExecuteReader(query))
                     {
                         if (reader.Read())
                         {
                             var oid = reader.GetInt64(0);
-                            if ((preset.Oid != 0) && (preset.Oid != oid))
+                            if ((preset.OID != 0) && (preset.OID != oid))
                                 throw new InvalidOperationException($"Missing preset {preset.Name}");
                             var npid = reader.GetInt64(1);
                             if (npid != pid)
@@ -651,47 +651,54 @@ namespace ImportLocations
         
         private void Dump()
         {
+            var oldLog = _connection.Log;
+            _connection.Log = false;
             const string filename = "dump.txt";
 
             if (File.Exists(filename))
                 File.Delete(filename);
 
             using var file = File.CreateText(filename);
-            Dump(0, 0, file);
+            Dump(0, "", file);
+            _connection.Log = oldLog;
         }
 
-        private void Dump(long pid, int indent, StreamWriter file)
+        private void Dump(long pid, string indent, StreamWriter file)
         {
             while (true)
             {
-                var children = _connection.Select($"SELECT [OID],[Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [PID] = ${pid} ORDER BY [OID], [IsPrimary], [Name]", reader => new { oid = reader.GetInt64(0), name = reader.GetString(1) });
+                var names = _connection.Select($"SELECT [OID], [Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [PID] = ${pid} ORDER BY [OID], [IsPrimary], [Name]", 
+                    reader => new { oid = reader.GetInt64(0), name = reader.GetString(1) });
 
-                if (children.Count == 0) return;
+                if (names.Count == 0) 
+                    return;
 
-                for (var i = 0; i < indent; ++i) 
-                    file.Write("\t");
+                // Write the first name
                 var j = 0;
-                file.Write($"{children[j].oid: 10}\t{children[j].name}");
-                for (++j; j < children.Count; ++j)
+                file.Write($"{indent}{names[j].oid} {names[j].name}");
+
+                // Write the other names
+                for (++j; j < names.Count; ++j)
                 {
-                    if (children[j].oid == children[j - 1].oid)
+                    // if it's another name for the same OID we just emitted, write it on the same line
+                    if (names[j].oid == names[j - 1].oid)
                     {
-                        file.Write($", {children[j].name}");
+                        file.Write($", {names[j].name}");
                     }
-                    else
+                    else // it's the name of another OID
                     {
-                        file.WriteLine();
-                        Dump(children[j - 1].oid, indent + 1, file);
-                        for (var i = 0; i < indent; ++i) 
-                            file.Write("\t");
-                        file.Write($"{children[j].oid: 0000000}\t{children[j].name}");
+                        file.WriteLine(); // finish the line...
+                        Dump(names[j - 1].oid, indent + "    ", file); //... and dump the OID's children
+
+                        // Write the name
+                        file.Write($"{indent}{names[j].oid} {names[j].name}");
                     }
                 }
 
-                file.WriteLine();
-                file.Flush();
-                pid = children[j - 1].oid;
-                indent += 1;
+                file.WriteLine(); // finish the last name
+                // file.Flush();
+                pid = names[j - 1].oid;
+                indent += "    ";
             }
         }
     }
