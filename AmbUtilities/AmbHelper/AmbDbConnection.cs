@@ -110,24 +110,32 @@ public class AmbDbConnection : DbConnection
     }
 
     public SqlCommand CreateCommand(string sql)
+        => CreateCommand(sql, true);
+
+    private SqlCommand CreateCommand(string sql, bool log)
     {
-        _log?.WriteLine($"AmbDbConnection: creating command `{sql}`");
         try
         {
             var cmd = SqlConnection.CreateCommand();
             cmd.CommandText = sql;
+            if (log)
+                _log?.WriteLine($"AmbDbConnection: created command \"{sql}\"");
             return cmd;
         }
         catch (Exception e)
         {
-            _log?.WriteLine($"AmbDbConnection: Exception");
-            _log?.WriteLine(e.ToString());
-            _log?.Flush();
-            if (Debugger.IsAttached)
-                Debugger.Break();
+            if (log)
+            {
+                _log?.WriteLine($"AmbDbConnection: Exception while creating command \"{sql}\"");
+                _log?.WriteLine(e.ToString());
+                _log?.Flush();
+                if (Debugger.IsAttached)
+                    Debugger.Break();
+            }
             throw;
         }
     }
+
 
     protected override void Dispose(bool disposing)
     {
@@ -137,18 +145,18 @@ public class AmbDbConnection : DbConnection
 
     public int ExecuteNonQuery(string sql)
     {
-        _log?.WriteLine($"AmbDbConnection: executing non-query `{sql}`");
+        //_log?.WriteLine($"AmbDbConnection: executing non-query \"{sql}\"");
         try
         {
             using var cmd = SqlConnection.CreateCommand();
             cmd.CommandText = sql;
             var result = cmd.ExecuteNonQuery();
-            _log?.WriteLine($"AmbDbConnection: nonquery command result {result}");
+            _log?.WriteLine($"AmbDbConnection: {result} rows affected by non-query \"{sql}\"");
             return result;
         }
         catch (Exception e)
         {
-            _log?.WriteLine($"AmbDbConnection: Exception");
+            _log?.WriteLine($"AmbDbConnection: Exception thrown by non-query \"{sql}\"");
             _log?.WriteLine(e.ToString());
             _log?.Flush();
             if (Debugger.IsAttached)
@@ -159,19 +167,19 @@ public class AmbDbConnection : DbConnection
 
     public object? ExecuteScalar(string sql)
     {
-        _log?.WriteLine($"AmbDbConnection: executing scalar `{sql}`");
+        //_log?.WriteLine($"AmbDbConnection: executing scalar \"{sql}\"");
         try
         {
             using var cmd = SqlConnection.CreateCommand();
             cmd.CommandText = sql;
             var result = cmd.ExecuteScalar();
             var r = result?.ToString() ?? "null";
-            _log?.WriteLine($"AmbDbConnection: scalar command result {r}");
+            _log?.WriteLine($"AmbDbConnection: value {r} returned by scalar command \"{sql}\"");
             return result;
         }
         catch (Exception e)
         {
-            _log?.WriteLine($"AmbDbConnection: Exception");
+            _log?.WriteLine($"AmbDbConnection: Exception thrown by scalar command \"{sql}\"");
             _log?.WriteLine(e.ToString());
             _log?.Flush();
             if (Debugger.IsAttached)
@@ -181,43 +189,52 @@ public class AmbDbConnection : DbConnection
     }
 
     public SqlDataReader ExecuteReader(string sql)
+        => ExecuteReader(sql, true);
+
+    private SqlDataReader ExecuteReader(string sql, bool log)
     {
-        _log?.WriteLine($"AmbDbConnection: executing reader `{sql}`");
         try
-        {            
+        {
             using var cmd = SqlConnection.CreateCommand();
             cmd.CommandText = sql;
+            if (log)
+                _log?.WriteLine($"AmbDbConnection: executing reader \"{sql}\"");
             return cmd.ExecuteReader();
         }
         catch (Exception e)
         {
-            _log?.WriteLine($"AmbDbConnection: Exception");
-            _log?.WriteLine(e.ToString());
-            _log?.Flush();
-            if (Debugger.IsAttached)
-                Debugger.Break();
+            if (log)
+            {
+                _log?.WriteLine($"AmbDbConnection: Exception thrown by reader \"{sql}\"");
+                _log?.WriteLine(e.ToString());
+                _log?.Flush();
+                if (Debugger.IsAttached)
+                    Debugger.Break();
+            }
             throw;
         }
     }
+
 
     public void ExecuteReader(string sql, Action<SqlDataReader> action)
     {
         try
         {           
-            using (var reader = ExecuteReader(sql))
+            using (var reader = ExecuteReader(sql, false))
             {
+                int count = 0;
                 while (reader.Read())
                 {
-                    _log?.WriteLine($"AmbDbConnection: reader succeeded");
+                    ++count;
                     action(reader);
                 }
-                _log?.WriteLine($"AmbDbConnection: reader finished");
-                _log?.Flush();
+                _log?.WriteLine($"AmbDbConnection: {count} reads from reader \"{sql}\"");
+                // _log?.Flush();
             }
         }
         catch (Exception e)
         {
-            _log?.WriteLine($"AmbDbConnection: Exception");
+            _log?.WriteLine($"AmbDbConnection: Exception thrown by reader \"{sql}\"");
             _log?.WriteLine(e.ToString());
             _log?.Flush();
             if (Debugger.IsAttached)
@@ -243,45 +260,11 @@ public class AmbDbConnection : DbConnection
 
     }
 
-
-    /*
-    public bool ExecuteReaderOnce<T>(string sql, Action<SqlDataReader> action)
-    {
-        using (var command = new SqlCommand(sql, SqlConnection))
-        {
-            using var reader = command.ExecuteReader();
-            if (!reader.Read())
-                return false;
-            action(reader);
-            return true;
-        }
-    }
-
-    public T? ExecuteReaderOnce<T>(string sql, Func<SqlDataReader, T> func)
-    {
-        using (var command = new SqlCommand(sql, SqlConnection))
-        {
-            using var reader = command.ExecuteReader();
-            if (!reader.Read())
-                return default;
-            var t = func(reader);
-            return t;
-        }
-    }
-
-    
-    public List<T> ExecuteList<T>(string sql, Func<SqlDataReader, T> func)
-    {
-        var list = new List<T>();
-        ExecuteReader(sql, r => list.Add(func(r)));
-        return list;
-    }
-    */
     
 
     public long GetNextOid()
     {
-        using var command = CreateCommand(GetNextOidProc);
+        using var command = CreateCommand(GetNextOidProc, false);
         command.CommandType = CommandType.StoredProcedure;
         command.Parameters.Add("@oid", SqlDbType.BigInt).Direction = ParameterDirection.Output;
         var result = command.ExecuteNonQuery();

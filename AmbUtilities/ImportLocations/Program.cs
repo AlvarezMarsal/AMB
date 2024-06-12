@@ -1,6 +1,7 @@
 ﻿using OfficeOpenXml;
 using System.Diagnostics;
 using AmbHelper;
+using System.Data;
 
 namespace ImportLocations
 {
@@ -70,6 +71,7 @@ namespace ImportLocations
 
                 try
                 {
+                    //Dump();
                     CreateViews();
                     EnforcePresets();
 
@@ -94,6 +96,7 @@ namespace ImportLocations
         
         private void CreateViews()
         {
+            /*
             var view = $"""
                         CREATE OR ALTER VIEW [dbo].[vw_GeographicLocationNames]
                         AS
@@ -108,7 +111,7 @@ namespace ImportLocations
                         	WHERE A.Alias <> L.Name {AliasCollation}
                         """;
             _connection.ExecuteNonQuery(view);
-
+            */
             /*
             try
             {
@@ -151,33 +154,61 @@ namespace ImportLocations
             {
                 try
                 {
-                    var pid = preset.PID.GetValueOrDefault(0);
+                    var pid = preset.PID.HasValue ? $"[PID] = {preset.PID}" : "[PID] IS NULL";
                     //if (pid != 0)
                     //    LoadGeographicLocation(pid, true, 1);
-                    
+
                     var n = preset.Name.Replace("'", "''").ToLower();
-                    var query = $"SELECT [OID], [PID], [Index] FROM [dbo].[vw_GeographicLocationNames] " +
-                                $"WHERE LOWER([NAME]) = N'{n}' {NameCollation} AND [PID] = {pid}";
+                    var query = $"SELECT [OID], COALESCE([PID],0), [Index] FROM [dbo].[t_GeographicLocation] " +
+                                $"WHERE LOWER([NAME]) = N'{n}' {NameCollation} AND {pid}";
                     if (preset.OID != 0)
                         query += $" AND [OID] = {preset.OID}";
 
-                    using (var reader = _connection.ExecuteReader(query))
-                    {
-                        if (reader.Read())
+                    var locations = _connection.Select(query,
+                        (reader) =>
                         {
                             var oid = reader.GetInt64(0);
                             if ((preset.OID != 0) && (preset.OID != oid))
                                 throw new InvalidOperationException($"Missing preset {preset.Name}");
-                            var npid = reader.GetInt64(1);
-                            if (npid != pid)
+                            var pid = reader.GetInt64(1);
+                            var p = preset.PID.GetValueOrDefault(0);
+                            if (pid != p)
                                 throw new InvalidOperationException($"Missing preset {preset.Name}");
                             var index = reader.GetInt32(2);
-                            var location = new GeographicLocation(oid, pid, preset.Name, index, preset.Name, 2501, true);
-                            AddToCache(location);
-                            continue;
-                        }
+                            return new { OID = oid, PID = pid, Index = index };
+                        });
+
+                    if (locations.Count == 0)
+                    {
+                        query = $"SELECT [OID], COALESCE([PID],0), [Index] FROM [dbo].[t_GeographicLocationAlias] A " +
+                                 "JOIN [dbo].[t_GeographicLocation] G ON G.OID = A.GeographicLocationID " +
+                                $"WHERE LOWER(A.[Alias]) = N'{n}' {NameCollation} AND G.{pid}";
+                        if (preset.OID != 0)
+                            query += $" AND G.[OID] = {preset.OID}";
+
+                        locations = _connection.Select(query,
+                            (reader) =>
+                            {
+                                var oid = reader.GetInt64(0);
+                                var pid = reader.GetInt64(1);
+                                var p = preset.PID.GetValueOrDefault(0);
+                                if (pid != p)
+                                    throw new InvalidOperationException($"Missing preset {preset.Name}");
+                                //if (npid != preset.PID.Value)
+                                //    throw new InvalidOperationException($"Missing preset {preset.Name}");
+                                var index = reader.GetInt32(2);
+                                return new { OID = oid, PID = pid, Index = index };
+                            });
                     }
-                    AddGeographicLocation(0, pid, 2501, preset.Name, true);
+
+                    if (locations.Count == 0)
+                        AddGeographicLocation(0, preset.PID.GetValueOrDefault(0), 2501, preset.Name, true);
+                    else if (locations.Count > 1)
+                    {
+                        Log.WriteLine("Multiple presets");
+                        if (Debugger.IsAttached)
+                            Debugger.Break();
+                    }
                 }
                 catch (Exception e)
                 {
@@ -221,13 +252,26 @@ namespace ImportLocations
                 Log.Indent();
                
                 var skipRow = false;
+                var allBlank = true;
                 // reset, but keep any useful results from the last time through the loop
                 foreach (var cd in columnDefinitions)
                 {
-                    cd.CurrentValue = sheet.Cells[row, cd.ColumnNumber].Text.Trim();
-                    cd.AssignedValue = null;
+                    var text = sheet.Cells[row, cd.ColumnNumber].Text.Trim();
+                    if (!string.IsNullOrEmpty(text))
+                    {
+                        allBlank = false;
+                        cd.CurrentValue = text;
+                        cd.AssignedValue = null;
+                    }
                 }
                 
+                if (allBlank)
+                {
+                    dataEnded = true;
+                    Log.WriteLine($"Detected end of data at row {row}");
+                    break;
+                }
+
                 foreach (var cd in columnDefinitions)
                 {
                     if (cd.Exclusions.Contains(cd.CurrentValue))
@@ -342,8 +386,12 @@ namespace ImportLocations
             }
             else if (coldef.MustExist)
             {
-                //var parent = coldef.Parent?.AssignedValue!.Oid;
-                coldef.AssignedValue = LoadGeographicLocationByName(coldef.CurrentValue, 20000);
+                long parent;
+                if (coldef.Parent == null)
+                    parent = 20000;
+                else
+                    parent = coldef.Parent.AssignedValue!.Oid;
+                coldef.AssignedValue = LoadGeographicLocationByName(coldef.CurrentValue, parent);
                 if (coldef.AssignedValue == null)
                 {
                     Log.WriteLine($"Error: Missing {coldef.CurrentValue}");
@@ -414,7 +462,7 @@ namespace ImportLocations
         private void LoadChildren(GeographicLocation parent)
         {
             // Connect to the database and load the world and continent records
-            var children = _connection.Select<(long,string)>($"SELECT [OID], [Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [PID] = {parent.Oid}", 
+            var children = _connection.Select<(long,string)>($"SELECT [OID], [Name] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parent.Oid}", 
                 reader => new (reader.GetInt64(0), reader.GetString(1)));
             
             foreach (var child in children)
@@ -447,57 +495,36 @@ namespace ImportLocations
             {
                 //using (var command = _connection.CreateCommand($"SELECT [PID], [Name], [Index], [Description], [PracticeAreaID], [IsSystemOwned] FROM [dbo].[t_GeographicLocation] WHERE [OID] = {oid}"))
                 {
-                    using var reader = _connection.ExecuteReader($"SELECT [PID], [Name], [Index], [Description], [PracticeAreaID], [IsSystemOwned] FROM [dbo].[t_GeographicLocation] WHERE [OID] = {oid}");
-                    if (!reader.Read())
+                    var locations = _connection.Select($"SELECT [PID], [Name], [Index], [Description], [PracticeAreaID], [IsSystemOwned] FROM [dbo].[t_GeographicLocation] WHERE [OID] = {oid}",
+                                        (reader) => {
+                                            var columnIndex = 0;
+                                            var pid = reader.IsDBNull(columnIndex) ? (long?)null : reader.GetInt64(columnIndex);
+                                            var name = reader.GetString(++columnIndex);
+                                            var index = reader.GetInt32(++columnIndex);
+                                            var description = reader.GetString(++columnIndex);
+                                            var paid = reader.GetInt64(++columnIndex);
+                                            var isSystemOwned = reader.GetBoolean(++columnIndex);
+                                            return new GeographicLocation(oid, pid, name, index, description, paid, isSystemOwned);
+                                        });
+
+                    if (locations.Count == 0)
                     {
                         Log.WriteLine($"Error: No record found for GeographicLocation {oid}");
                         return null;
                     }
                     
-                    var columnIndex = 0;
-                    var pid = reader.IsDBNull(columnIndex) ? (long?) null : reader.GetInt64(columnIndex);
-                    var name = reader.GetString(++columnIndex);
-                    var index = reader.GetInt32(++columnIndex);
-                    var description = reader.GetString(++columnIndex);
-                    var paid = reader.GetInt64(++columnIndex);
-                    var isSystemOwned = reader.GetBoolean(++columnIndex);
-                    
-                    loc = new GeographicLocation(oid, pid, name, index, description, paid, isSystemOwned);
+                    loc = locations[0];
                     AddToCache(loc);
                     Log.WriteLine($"Found location {oid} {loc.Name} in the database by OID");
-                    // _locations.Add(oid, location);
-                    // if (!_aliases.TryGetValue(location.Name, out var existingAliases))
-                    //    _aliases.Add(location.Name, [oid]);
-                    // else
-                    //    existingAliases.Add(oid);
-                }
-                
-                /*
-                var n = location.Name.Replace("'", "''").ToLower();
-                var query = $"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid} AND LOWER([Alias]) <> N'{n}'";
-                _connection.ExecuteReader(query, reader =>
-                {
-                    var alias = reader.GetString(0);
-                    if (!_aliases.TryGetValue(alias, out var existingAliases))
-                        _aliases.Add(alias, [oid]);
-                    else
-                        existingAliases.Add(oid);
-                });
 
-
-                if (loadAliases)
-                {
-                    var query = $"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid}";
-                    _connection.ExecuteReader(query, reader =>
-                    {
-                        var alias = reader.GetString(0);
-                        if (!_aliases.TryGetValue(alias, out var existingAliases))
-                            _aliases.Add(alias, [oid]);
-                        else
-                            existingAliases.Add(oid);
-                    });
+                    var n = loc.Name.Replace("'", "''").ToLower();
+                    _connection.ExecuteReader($"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid}",
+                        (reader) =>
+                        {
+                            var a = reader.GetString(0);
+                            _aliases.Add($"{loc.Oid}{a}");
+                        });
                 }
-                */
             }
 
             if (recursionLevel-- > 0)
@@ -534,32 +561,40 @@ namespace ImportLocations
                 return loc;
 
             var n = name.Replace("'", "''").ToLower();
-            var query = $"SELECT V.[OID] FROM [dbo].[vw_GeographicLocationNames] V " +
-                        $"WHERE LOWER(V.[Name]) = N'{n}' {AliasCollation}";
-            if (pid != null)
-                query += $" AND V.[PID] = {pid}";
+            var query1 = $"SELECT V.[OID] FROM [dbo].[t_GeographicLocation] V " +
+                        $"WHERE LOWER(V.[Name]) = N'{n}' {NameCollation}";
+            if ((pid == null) || (pid.Value == 0))
+                query1 += $" AND V.[PID] IS NULL";
+            else
+                query1 += $" AND V.[PID] = {pid.Value}";
 
-            long oid;
-            using var command = _connection.CreateCommand(query);
-            using (var reader = command.ExecuteReader())
+            var locations = _connection.Select(query1, (reader) => reader.GetInt64(0));
+
+            if (locations.Count == 0)
             {
-                if (!reader.Read())
-                {
-                    Log.WriteLine($"Did not find location {name} in the database by Name");
-                    return null;
-                }
-                oid = reader.GetInt64(0);
-                while (reader.Read())
-                {
-                    var otherOid = reader.GetInt64(0);
-                    if (otherOid != oid)
-                    {
-                        Log.WriteLine($"Conflicting records found for location {name}");
-                        return null;
-                    }
-                }
+                var query2 = $"SELECT G.[OID] FROM [dbo].[t_GeographicLocationAlias] V " +
+                             $"JOIN [dbo].[t_GeographicLocation] G ON (G.OID = V.GeographicLocationID) " +
+                             $"WHERE LOWER(V.[Alias]) = N'{n}' {NameCollation}";
+                if ((pid == null) || (pid.Value == 0))
+                    query2 += $" AND G.[PID] IS NULL";
+                else
+                    query2 += $" AND G.[PID] = {pid.Value}";
+                locations = _connection.Select(query2, (reader) => reader.GetInt64(0));
             }
-            var location = LoadGeographicLocation(oid, true);
+
+            if (locations.Count == 0)
+            {
+                Log.WriteLine($"Did not find location {name} in the database by Name");
+                return null;
+            }
+            else if (locations.Count > 1)
+            {
+                var s = string.Join(", ", locations);
+                Log.WriteLine($"Conflicting records found for location {name}: {s}");
+                return null;
+            }
+
+            var location = LoadGeographicLocation(locations[0], true);
             // Log.WriteLine($"Found location {oid} {location!.Name} in the database by Name"); // already reported
             return location!;
         }
@@ -683,47 +718,49 @@ namespace ImportLocations
                 File.Delete(filename);
 
             using var file = File.CreateText(filename);
-            Dump(0, "", file);
+            Dump(0, "", file, new HashSet<long>());
             _connection.Log = oldLog;
         }
 
-        private void Dump(long pid, string indent, StreamWriter file)
+        private void Dump(long pid, string indent, StreamWriter file, HashSet<long> pids)
         {
-            while (true)
+            if (!pids.Add(pid))
+                throw new Exception();
+            var p = (pid == 0) ? "G.[PID] IS NULL" : ("G.[PID] = " + pid);
+            var names = _connection.Select("SELECT G.[OID], A.Alias FROM [dbo].[t_GeographicLocationAlias] A " +
+                                            "JOIN [dbo].[t_GeographicLocation] G ON G.OID = A.GeographicLocationID " +
+                                            $"WHERE {p} ORDER BY G.[OID], A.[IsPrimary], A.[Alias]", 
+                reader => new { oid = reader.GetInt64(0), name = reader.GetString(1) });
+
+            if (names.Count == 0) 
+                return;
+
+            // Write the first name
+            var j = 0;
+            file.Write($"{indent}{names[j].oid} {names[j].name}");
+
+            // Write the other names
+            var lastChildrenDumped = 0L;
+            for (++j; j < names.Count; ++j)
             {
-                var names = _connection.Select($"SELECT [OID], [Name] FROM [dbo].[vw_GeographicLocationNames] WHERE [PID] = ${pid} ORDER BY [OID], [IsPrimary], [Name]", 
-                    reader => new { oid = reader.GetInt64(0), name = reader.GetString(1) });
-
-                if (names.Count == 0) 
-                    return;
-
-                // Write the first name
-                var j = 0;
-                file.Write($"{indent}{names[j].oid} {names[j].name}");
-
-                // Write the other names
-                for (++j; j < names.Count; ++j)
+                // if it's another name for the same OID we just emitted, write it on the same line
+                if (names[j].oid == names[j - 1].oid)
                 {
-                    // if it's another name for the same OID we just emitted, write it on the same line
-                    if (names[j].oid == names[j - 1].oid)
-                    {
-                        file.Write($", {names[j].name}");
-                    }
-                    else // it's the name of another OID
-                    {
-                        file.WriteLine(); // finish the line...
-                        Dump(names[j - 1].oid, indent + "    ", file); //... and dump the OID's children
-
-                        // Write the name
-                        file.Write($"{indent}{names[j].oid} {names[j].name}");
-                    }
+                    file.Write($", {names[j].name}");
                 }
-
-                file.WriteLine(); // finish the last name
-                // file.Flush();
-                pid = names[j - 1].oid;
-                indent += "    ";
+                else // it's the name of another OID
+                {
+                    file.WriteLine(); // finish the line...
+                    lastChildrenDumped = names[j - 1].oid;
+                    Dump(names[j - 1].oid, indent + "    ", file, pids); //... and dump the OID's children
+                    // Write the name
+                    file.Write($"{indent}{names[j].oid} {names[j].name}");
+                }
             }
+
+            file.WriteLine(); // finish the last name
+            if (lastChildrenDumped != names[j-1].oid)
+                Dump(names[j - 1].oid, indent + "    ", file, pids); //... and dump the OID's children
         }
 
         private void AddToCache(GeographicLocation geographicLocation)

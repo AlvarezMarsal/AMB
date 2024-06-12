@@ -113,51 +113,6 @@ namespace ImportLocations
             _connection.ExecuteNonQuery(drop);
         }
 
-        #if false
-        private void EnforcePresets()
-        {
-            foreach (var preset in _settings.Presets)
-            {
-                try
-                {
-                    var pid = preset.Pid.GetValueOrDefault(0);
-                    if (pid != 0)
-                        LoadGeographicLocation(pid, true, 1);
-
-                    var n = preset.Name.Replace("'", "''");
-                    var query = $"SELECT [OID], [PID] FROM [dbo].[vw_GeographicLocationNames] " +
-                                $"WHERE [NAME] = N'{n}' {NameCollation} AND [PID] = {pid}";
-                    if (preset.Oid != 0)
-                        query += $" AND [OID] = {preset.Oid}";
-
-                    using (var command = new SqlCommand(query, _connection))
-                    {
-                        using var reader = command.ExecuteReader();
-                        if (reader.Read())
-                        {
-                            var oid = reader.GetInt64(0);
-                            if ((preset.Oid != 0) && (preset.Oid != oid))
-                                throw new InvalidOperationException($"Missing preset {preset.Name}");
-                            var npid = reader.GetInt64(1);
-                            if (npid != pid)
-                                throw new InvalidOperationException($"Missing preset {preset.Name}");
-                            continue;
-                        }
-                    }
-
-                    AddGeographicLocation(0, pid, 2501, preset.Name, true);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    if (Debugger.IsAttached)
-                        Debugger.Break();
-                    throw;
-                }
-            }
-        }
-#endif
-
         private void ProcessImport(Settings.Import import, AmbDbConnection connection)
         {
             if (!File.Exists(import.FilePath))
