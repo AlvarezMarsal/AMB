@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ImportLocationsFromWeb": {
+      "commandName": "Project",
+      "commandLineArgs": "q"
+    }
+  }
+}

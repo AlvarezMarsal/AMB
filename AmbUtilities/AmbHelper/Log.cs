@@ -14,25 +14,31 @@ public static class Log
         _logFile = new LogFile(filename);
     }
 
-    public static void WriteLine(string message)
+    public static bool NoDebugger { get => _logFile.NoDebugger; set => _logFile.NoDebugger = value; }
+    public static bool NoConsole { get => _logFile.NoConsole; set => _logFile.NoConsole = value; }
+
+    public static LogFile WriteLine(string message)
     {
-        _logFile.WriteLine(message);
+        return _logFile.WriteLine(message);
     }
 
-    public static void WriteLine(Exception e)
+    public static LogFile WriteLine(Exception e)
     {
-        _logFile.WriteLine(e.ToString());
+        return _logFile.WriteLine(e.ToString());
+    }
+    public static LogFile WriteLine()
+    {
+        return _logFile.WriteLine();
     }
 
-
-    public static void Flush()
+    public static LogFile Flush()
     {
-        _logFile.Flush();
+        return _logFile.Flush();
     }
 
-    public static int Indent(int n=1) => _logFile.Indent(n);
+    public static LogFile Indent(int n=1) => _logFile.Indent(n);
 
-    public static int Outdent(int n=1) => _logFile.Outdent(n);
+    public static LogFile Outdent(int n=1) => _logFile.Outdent(n);
 }
 
 
@@ -43,6 +49,8 @@ public class LogFile : IDisposable
     private string _indentString = "";
     private static readonly char[] LineSeparators = ['\r', '\n'];
     private bool _disposed = false;
+    public bool NoDebugger { get; set; }
+    public bool NoConsole { get; set; }
 
     public LogFile(string name)
     {
@@ -55,7 +63,7 @@ public class LogFile : IDisposable
         AtExit.Add(() => { _logFile.Dispose(); });
     }
 
-    public void WriteLine(string message)
+    public LogFile WriteLine(string message)
     {
         if (message.IndexOfAny(LineSeparators) < 0)
             WriteIndentedLine(message);
@@ -71,24 +79,39 @@ public class LogFile : IDisposable
                     WriteIndentedLine(trimmed);
             }
         }
+        return this;
     }
 
-    private void WriteIndentedLine(string line)
+    public LogFile WriteLine()
+    {
+        if (!NoConsole)
+            Console.WriteLine();
+        //Debug.WriteLine("");
+        _logFile.WriteLine();
+        return this;
+    }
+
+    private LogFile WriteIndentedLine(string line)
     {
         if (_indentLevel > 0)
         {
-            Console.Write(_indentString);
-            Debug.Write(_indentString);
+            if (!NoConsole)
+                Console.Write(_indentString);
+            if (!NoDebugger)
+                Debug.Write(_indentString);
             _logFile.Write(_indentString);
         }
 
-        Console.WriteLine(line);
-        Debug.WriteLine(line);
+        if (!NoConsole)
+            Console.WriteLine(line);
+        if (!NoDebugger)
+            Debug.WriteLine(line);
         _logFile.WriteLine(line);
+        return this;
     }
 
 
-    public void WriteLine(Exception ex) => WriteLine(ex.ToString());
+    public LogFile WriteLine(Exception ex) => WriteLine(ex.ToString());
 
     public void Dispose()
     {
@@ -100,22 +123,23 @@ public class LogFile : IDisposable
         }
     }
 
-    public void Flush()
+    public LogFile Flush()
     {
         _logFile.Flush();
+        return this;
     }
 
-    public int Indent(int n=1)  => SetIndentation(_indentLevel + n);
+    public LogFile Indent(int n=1)  => SetIndentation(_indentLevel + n);
 
-    public int Outdent(int n=1) => SetIndentation(_indentLevel - n);
+    public LogFile Outdent(int n=1) => SetIndentation(_indentLevel - n);
 
-    private int SetIndentation(int n)
+    private LogFile SetIndentation(int n)
     {
         if (n < 0)
             n = 0;
         _indentLevel = n;
         _indentString = new string(' ', _indentLevel * 4);
-        return n;
+        return this;
 
     }
 }
