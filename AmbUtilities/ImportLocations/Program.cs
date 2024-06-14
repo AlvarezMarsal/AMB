@@ -710,8 +710,8 @@ namespace ImportLocations
         
         private void Dump()
         {
-            var oldLog = _connection.Log;
-            _connection.Log = false;
+            var oldLog = Log.Enabled;
+            Log.Enabled = false;
             const string filename = "dump.txt";
 
             if (File.Exists(filename))
@@ -719,7 +719,7 @@ namespace ImportLocations
 
             using var file = File.CreateText(filename);
             Dump(0, "", file, new HashSet<long>());
-            _connection.Log = oldLog;
+            Log.Enabled = oldLog;
         }
 
         private void Dump(long pid, string indent, StreamWriter file, HashSet<long> pids)

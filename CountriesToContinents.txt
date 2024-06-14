@@ -1,0 +1,271 @@
+AD	Andorra	Europe
+AE	United Arab Emirates	Middle East
+AF	Afghanistan	Central Asia
+AG	Antigua and Barbuda	North America
+AI	Anguilla	North America
+AL	Albania	Europe
+AM	Armenia	Central Asia
+AO	Angola	Africa
+AQ	Antarctica	Antarctica
+AR	Argentina	Latin America
+AS	American Samoa	Southeast Asia & Australia (SEAA)
+AT	Austria	Europe
+AU	Australia	Southeast Asia & Australia (SEAA)
+AW	Aruba	North America
+AX	Åland	Europe
+AZ	Azerbaijan	Central Asia
+BA	Bosnia and Herzegovina	Europe
+BB	Barbados	North America
+BD	Bangladesh	Central Asia
+BE	Belgium	Europe
+BF	Burkina Faso	Africa
+BG	Bulgaria	Europe
+BH	Bahrain	Middle East
+BI	Burundi	Africa
+BJ	Benin	Africa
+BL	Saint Barthélemy	North America
+BM	Bermuda	North America
+BN	Brunei	Southeast Asia & Australia (SEAA)
+BO	Bolivia	Latin America
+BQ	Bonaire, Sint Eustatius, and Saba	North America
+BR	Brazil	Latin America
+BS	Bahamas	North America
+BT	Bhutan	North Asia
+BV	Bouvet Island	Antarctica
+BW	Botswana	Africa
+BY	Belarus	Europe
+BZ	Belize	North America
+CA	Canada	North America
+CC	Cocos (Keeling) Islands	Southeast Asia & Australia (SEAA)
+CD	DR Congo	Africa
+CF	Central African Republic	Africa
+CG	Congo Republic	Africa
+CH	Switzerland	Europe
+CI	Ivory Coast	Africa
+CK	Cook Islands	Southeast Asia & Australia (SEAA)
+CL	Chile	Latin America
+CM	Cameroon	Africa
+CN	China	North Asia
+CO	Colombia	Latin America
+CR	Costa Rica	North America
+CU	Cuba	North America
+CV	Cabo Verde	Africa
+CW	Curaçao	North America
+CX	Christmas Island	Southeast Asia & Australia (SEAA)
+CY	Cyprus	Middle East
+CZ	Czechia	Europe
+DE	Germany	Europe
+DJ	Djibouti	Africa
+DK	Denmark	Europe
+DM	Dominica	North America
+DO	Dominican Republic	North America
+DZ	Algeria	Africa
+EC	Ecuador	Latin America
+EE	Estonia	Europe
+EG	Egypt	Middle East
+EH	Western Sahara	Africa
+ER	Eritrea	Africa
+ES	Spain	Europe
+ET	Ethiopia	Africa
+FI	Finland	Europe
+FJ	Fiji	Southeast Asia & Australia (SEAA)
+FK	Falkland Islands	Latin America
+FM	Micronesia	Southeast Asia & Australia (SEAA)
+FO	Faroe Islands	Europe
+FR	France	Europe
+GA	Gabon	Africa
+GB	United Kingdom	Europe
+GD	Grenada	North America
+GE	Georgia	Central Asia
+GF	French Guiana	Latin America
+GG	Guernsey	Europe
+GH	Ghana	Africa
+GI	Gibraltar	Europe
+GL	Greenland	North America
+GM	The Gambia	Africa
+GN	Guinea	Africa
+GP	Guadeloupe	North America
+GQ	Equatorial Guinea	Africa
+GR	Greece	Europe
+GS	South Georgia and South Sandwich Islands	Antarctica
+GT	Guatemala	North America
+GU	Guam	Southeast Asia & Australia (SEAA)
+GW	Guinea-Bissau	Africa
+GY	Guyana	Latin America
+HK	Hong Kong	North Asia
+HM	Heard and McDonald Islands	Antarctica
+HN	Honduras	North America
+HR	Croatia	Europe
+HT	Haiti	North America
+HU	Hungary	Europe
+ID	Indonesia	Southeast Asia & Australia (SEAA)
+IE	Ireland	Europe
+IL	Israel	Middle East
+IM	Isle of Man	Europe
+IN	India	Central Asia
+IO	British Indian Ocean Territory	Southeast Asia & Australia (SEAA)
+IQ	Iraq	Middle East
+IR	Iran	Middle East
+IS	Iceland	Europe
+IT	Italy	Europe
+JE	Jersey	Europe
+JM	Jamaica	North America
+JO	Jordan	Middle East
+JP	Japan	North Asia
+KE	Kenya	Africa
+KG	Kyrgyzstan	Central Asia
+KH	Cambodia	Southeast Asia & Australia (SEAA)
+KI	Kiribati	Southeast Asia & Australia (SEAA)
+KM	Comoros	Africa
+KN	St Kitts and Nevis	North America
+KP	North Korea	North Asia
+KR	South Korea	North Asia
+KW	Kuwait	Middle East
+KY	Cayman Islands	North America
+KZ	Kazakhstan	Central Asia
+LA	Laos	Southeast Asia & Australia (SEAA)
+LB	Lebanon	Middle East
+LC	Saint Lucia	North America
+LI	Liechtenstein	Europe
+LK	Sri Lanka	Southeast Asia & Australia (SEAA)
+LR	Liberia	Africa
+LS	Lesotho	Africa
+LT	Lithuania	Europe
+LU	Luxembourg	Europe
+LV	Latvia	Europe
+LY	Libya	Africa
+MA	Morocco	Africa
+MC	Monaco	Europe
+MD	Moldova	Europe
+ME	Montenegro	Europe
+MF	Saint Martin	North America
+MG	Madagascar	Africa
+MH	Marshall Islands	Southeast Asia & Australia (SEAA)
+MK	North Macedonia	Europe
+ML	Mali	Africa
+MM	Myanmar	Southeast Asia & Australia (SEAA)
+MN	Mongolia	North Asia
+MO	Macao	Southeast Asia & Australia (SEAA)
+MP	Northern Mariana Islands	Southeast Asia & Australia (SEAA)
+MQ	Martinique	North America
+MR	Mauritania	Africa
+MS	Montserrat	North America
+MT	Malta	Europe
+MU	Mauritius	Africa
+MV	Maldives	Southeast Asia & Australia (SEAA)
+MW	Malawi	Africa
+MX	Mexico	North America
+MY	Malaysia	Southeast Asia & Australia (SEAA)
+MZ	Mozambique	Africa
+NA	Namibia	Africa
+NC	New Caledonia	Southeast Asia & Australia (SEAA)
+NE	Niger	Africa
+NF	Norfolk Island	Southeast Asia & Australia (SEAA)
+NG	Nigeria	Africa
+NI	Nicaragua	North America
+NL	The Netherlands	Europe
+NO	Norway	Europe
+NP	Nepal	Central Asia
+NR	Nauru	Southeast Asia & Australia (SEAA)
+NU	Niue	Southeast Asia & Australia (SEAA)
+NZ	New Zealand	Southeast Asia & Australia (SEAA)
+OM	Oman	Middle East
+PA	Panama	North America
+PE	Peru	Latin America
+PF	French Polynesia	Southeast Asia & Australia (SEAA)
+PG	Papua New Guinea	Southeast Asia & Australia (SEAA)
+PH	Philippines	North Asia
+PK	Pakistan	Central Asia
+PL	Poland	Europe
+PM	Saint Pierre and Miquelon	North America
+PN	Pitcairn Islands	Southeast Asia & Australia (SEAA)
+PR	Puerto Rico	North America
+PS	Palestine	Middle East
+PT	Portugal	Europe
+PW	Palau	Southeast Asia & Australia (SEAA)
+PY	Paraguay	Latin America
+QA	Qatar	Middle East
+RE	Réunion	Africa
+RO	Romania	Europe
+RS	Serbia	Europe
+RU	Russia	Europe
+RW	Rwanda	Africa
+SA	Saudi Arabia	Middle East
+SB	Solomon Islands	Latin America
+SC	Seychelles	Africa
+SD	Sudan	Africa
+SE	Sweden	Europe
+SG	Singapore	Southeast Asia & Australia (SEAA)
+SH	Saint Helena	Africa
+SI	Slovenia	Europe
+SJ	Svalbard and Jan Mayen	Europe
+SK	Slovakia	Europe
+SL	Sierra Leone	Africa
+SM	San Marino	Europe
+SN	Senegal	Africa
+SO	Somalia	Africa
+SR	Suriname	Latin America
+SS	South Sudan	Africa
+ST	São Tomé and Príncipe	Africa
+SV	El Salvador	North America
+SX	Sint Maarten	North America
+SY	Syria	Middle East
+SZ	Eswatini	Africa
+TC	Turks and Caicos Islands	North America
+TD	Chad	Africa
+TF	French Southern Territories	Antarctica
+TG	Togo	Africa
+TH	Thailand	Southeast Asia & Australia (SEAA)
+TJ	Tajikistan	Central Asia
+TK	Tokelau	Southeast Asia & Australia (SEAA)
+TL	Timor-Leste	Southeast Asia & Australia (SEAA)
+TM	Turkmenistan	Central Asia
+TN	Tunisia	Africa
+TO	Tonga	Southeast Asia & Australia (SEAA)
+TR	Türkiye	Middle East
+TT	Trinidad and Tobago	North America
+TV	Tuvalu	Southeast Asia & Australia (SEAA)
+TW	Taiwan	North Asia
+TZ	Tanzania	Africa
+UA	Ukraine	Europe
+UG	Uganda	Africa
+UM	U.S. Outlying Islands	Southeast Asia & Australia (SEAA)
+US	United States	North America
+UY	Uruguay	Latin America
+UZ	Uzbekistan	Central Asia
+VA	Vatican City	Europe
+VC	St Vincent and Grenadines	North America
+VE	Venezuela	Latin America
+VG	British Virgin Islands	North America
+VI	U.S. Virgin Islands	North America
+VN	Vietnam	Southeast Asia & Australia (SEAA)
+VU	Vanuatu	Southeast Asia & Australia (SEAA)
+WF	Wallis and Futuna	Southeast Asia & Australia (SEAA)
+WS	Samoa	Southeast Asia & Australia (SEAA)
+XK	Kosovo	Europe
+YE	Yemen	Middle East
+YT	Mayotte	Africa
+ZA	South Africa	Africa
+ZM	Zambia	Africa
+ZW	Zimbabwe	Africa
+	Turkey	Middle East
+	Congo (Kinshasa)	Africa
+	Netherlands	Europe
+	Congo (Brazzaville)	Africa
+	Côte d’Ivoire	Africa
+	Burma	Southeast Asia & Australia (SEAA)
+	Macau	Southeast Asia & Australia (SEAA)
+	Gambia, The	Africa
+	Reunion	Africa
+	Bahamas, The	North America
+	Gaza Strip	Middle East
+	West Bank	Middle East
+	Sao Tome and Principe	Africa
+	Saint Vincent and the Grenadines	North America
+	Micronesia, Federated States of	Southeast Asia & Australia (SEAA)
+	Saint Kitts and Nevis	North America
+	Virgin Islands, British	North America
+	Saint Barthelemy	North America
+	Falkland Islands (Islas Malvinas)	Latin America
+	Svalbard	Europe
+	Saint Helena, Ascension, and Tristan da Cunha	Africa

@@ -4,41 +4,42 @@ namespace AmbHelper;
 
 public static class Log
 {
-    static LogFile _logFile;
+    public static readonly LogFile ApplicationLog;
 
     static Log()
     {
         var args = Environment.GetCommandLineArgs();
         var exe = args[0];
         var filename = Path.GetFileNameWithoutExtension(exe);
-        _logFile = new LogFile(filename);
+        ApplicationLog = new LogFile(filename);
     }
 
-    public static bool NoDebugger { get => _logFile.NoDebugger; set => _logFile.NoDebugger = value; }
-    public static bool NoConsole { get => _logFile.NoConsole; set => _logFile.NoConsole = value; }
+    public static bool Enabled { get => ApplicationLog.Enabled; set => ApplicationLog.Enabled = value; } 
+    public static bool NoDebugger { get => ApplicationLog.NoDebugger; set => ApplicationLog.NoDebugger = value; }
+    public static bool NoConsole { get => ApplicationLog.NoConsole; set => ApplicationLog.NoConsole = value; }
 
     public static LogFile WriteLine(string message)
     {
-        return _logFile.WriteLine(message);
+        return ApplicationLog.WriteLine(message);
     }
 
     public static LogFile WriteLine(Exception e)
     {
-        return _logFile.WriteLine(e.ToString());
+        return ApplicationLog.WriteLine(e.ToString());
     }
     public static LogFile WriteLine()
     {
-        return _logFile.WriteLine();
+        return ApplicationLog.WriteLine();
     }
 
     public static LogFile Flush()
     {
-        return _logFile.Flush();
+        return ApplicationLog.Flush();
     }
 
-    public static LogFile Indent(int n=1) => _logFile.Indent(n);
+    public static LogFile Indent(int n=1) => ApplicationLog.Indent(n);
 
-    public static LogFile Outdent(int n=1) => _logFile.Outdent(n);
+    public static LogFile Outdent(int n=1) => ApplicationLog.Outdent(n);
 }
 
 
@@ -49,6 +50,7 @@ public class LogFile : IDisposable
     private string _indentString = "";
     private static readonly char[] LineSeparators = ['\r', '\n'];
     private bool _disposed = false;
+    public bool Enabled { get; set; } = true;
     public bool NoDebugger { get; set; }
     public bool NoConsole { get; set; }
 
@@ -65,6 +67,8 @@ public class LogFile : IDisposable
 
     public LogFile WriteLine(string message)
     {
+        if (!Enabled)
+            return this;
         if (message.IndexOfAny(LineSeparators) < 0)
             WriteIndentedLine(message);
         else
@@ -84,6 +88,8 @@ public class LogFile : IDisposable
 
     public LogFile WriteLine()
     {
+        if (!Enabled)
+            return this;
         if (!NoConsole)
             Console.WriteLine();
         //Debug.WriteLine("");
@@ -111,7 +117,7 @@ public class LogFile : IDisposable
     }
 
 
-    public LogFile WriteLine(Exception ex) => WriteLine(ex.ToString());
+    public LogFile WriteLine(Exception ex) { if (Enabled) WriteLine(ex.ToString()); return this; }
 
     public void Dispose()
     {
@@ -133,12 +139,17 @@ public class LogFile : IDisposable
 
     public LogFile Outdent(int n=1) => SetIndentation(_indentLevel - n);
 
-    private LogFile SetIndentation(int n)
+    private LogFile SetIndentation(int newIndentLevel)
     {
-        if (n < 0)
-            n = 0;
-        _indentLevel = n;
-        _indentString = new string(' ', _indentLevel * 4);
+        if (newIndentLevel < 0)
+            newIndentLevel = 0;
+        else if (newIndentLevel > 20)
+            newIndentLevel = 20;
+        if (_indentLevel != newIndentLevel)
+        {
+            _indentLevel = newIndentLevel;
+            _indentString = new string(' ', _indentLevel * 4);
+        }
         return this;
 
     }

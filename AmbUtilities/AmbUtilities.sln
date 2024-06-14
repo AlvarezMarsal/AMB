@@ -3,15 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34728.123
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImportLocations", "ImportLocations\ImportLocations.csproj", "{58E7F226-B560-401E-BDF5-AA82FB7861F0}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AmbHelper", "AmbHelper\AmbHelper.csproj", "{376404B3-917C-4FE4-A8C7-A5ED05A8DD24}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EPPlus", "EPPlus\EPPlus\EPPlus.csproj", "{0F4D6629-2880-472C-8520-9FF170269AA3}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImportJobTitles", "ImportJobTitles\ImportJobTitles.csproj", "{57924805-4AF9-45A3-A710-CC294BD1FCC1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImportLocationsFromWeb", "ImportLocationsFromWeb\ImportLocationsFromWeb.csproj", "{7D7BBEBA-BD43-4579-A831-C54A7D6EC0C6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImportLocationsFromWeb", "ImportLocationsFromWeb\ImportLocationsFromWeb.csproj", "{7D7BBEBA-BD43-4579-A831-C54A7D6EC0C6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -19,10 +17,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{58E7F226-B560-401E-BDF5-AA82FB7861F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{58E7F226-B560-401E-BDF5-AA82FB7861F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{58E7F226-B560-401E-BDF5-AA82FB7861F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{58E7F226-B560-401E-BDF5-AA82FB7861F0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{376404B3-917C-4FE4-A8C7-A5ED05A8DD24}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{376404B3-917C-4FE4-A8C7-A5ED05A8DD24}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{376404B3-917C-4FE4-A8C7-A5ED05A8DD24}.Release|Any CPU.ActiveCfg = Release|Any CPU
