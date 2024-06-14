@@ -2,6 +2,7 @@
 using System.Data;
 using AmbHelper;
 using System.Xml.Linq;
+using System.Security.Cryptography;
 
 
 namespace ImportLocations;
@@ -544,8 +545,9 @@ internal class Program
         _worldId = w.Value;
         _continents = _connection.Select($"SELECT [OID], [NAME] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {_worldId}", (r) => new Tuple<string, long>(r.GetString(1), r.GetInt64(0)));
 
-        foreach (var continent in CountryToContinent.Values)
+        foreach (var kvp in CountryToContinent)
         {
+            var continent = kvp.Value;
             if (!_continents.ContainsKey(continent))
             {
                 var index = NextChildIndex(_worldId);
@@ -555,6 +557,11 @@ internal class Program
                     "VALUES " +
                     $"({oid}, {_worldId}, 1,'{continent}', {index}, '{continent}', '{CreationDate}', {CreatorId}, {PracticeAreaId}, '{CreationSession}')");
                 _continents.Add(continent, oid);
+                AddEnglishAliasToDatabase(oid, continent, true);
+            }
+            else
+            {
+                AddEnglishAliasToDatabase(_continents[continent], continent, true);
             }
         }
 
@@ -569,36 +576,37 @@ internal class Program
         if (!c.HasValue)
         {
             c = _connection!.SelectOneValue("SELECT L.[OID] FROM [dbo].[t_GeographicLocationAlias] A " + 
-                                            "JOIN [dbo].[t_GeographicLocation] L ON (L.[OID] = A.[GeographicLocationID] " +
-                                           $"WHERE LOWER(A.Alias]) = '{lname}' AND L.{_inContenents}", 
+                                            "JOIN [dbo].[t_GeographicLocation] L ON (L.[OID] = A.[GeographicLocationID]) " +
+                                           $"WHERE LOWER(A.[Alias]) = '{lname}' AND L.{_inContenents}", 
                                            (r) => r.GetInt64(0));
             if (!c.HasValue)
             {
-                if (CountryToContinent.TryGetValue(entry.CountryCode, out var continentName))
+                c = _connection!.SelectOneValue("SELECT L.[OID] FROM [dbo].[t_GeographicLocationAlias] A " + 
+                                                "JOIN [dbo].[t_GeographicLocation] L ON (L.[OID] = A.[GeographicLocationID]) " +
+                                               $"WHERE LOWER(A.[Alias]) = '{entry.CountryCode.ToLower()}' AND L.{_inContenents}", 
+                                           (r) => r.GetInt64(0));
+                if (!c.HasValue)
                 {
-                    var continentId = _continents[continentName];
-                    AddChildGeographicLocationToDatabase(continentId, entry);
-                }
-                else
-                {
-                    throw new Exception($"Country {entry.AsciiName} not found");
+                    if (CountryToContinent.TryGetValue(entry.CountryCode, out var continentName))
+                    {
+                        var continentId = _continents[continentName];
+                        AddChildGeographicLocationToDatabase(continentId, entry);
+                        AddEnglishAliasToDatabase(entry, entry.CountryCode, true);
+                        return;
+                    }
+                    else
+                    {
+                        throw new Exception($"Country {entry.AsciiName} not found");
+                    }
                 }
             }
-            else
-            {
-                entry.BenchmarkId = c.Value;
-                AddEnglishAliasToDatabase(entry, entry.AsciiName, true);
-                if (IsEnglish(entry.Name))
-                    AddEnglishAliasToDatabase(entry, entry.Name);
-            }
         }
-        else
-        {
-            entry.BenchmarkId = c.Value;
-            AddEnglishAliasToDatabase(entry, entry.AsciiName, true);
-            if (IsEnglish(entry.Name))
-                AddEnglishAliasToDatabase(entry, entry.Name);
-        }
+
+        entry.BenchmarkId = c.Value;
+        AddEnglishAliasToDatabase(entry, entry.AsciiName, true);
+        AddEnglishAliasToDatabase(entry, entry.CountryCode, true);
+        if (IsEnglish(entry.Name))
+            AddEnglishAliasToDatabase(entry, entry.Name);
     }
 
     private static long NextChildIndex(long parentId)
@@ -671,6 +679,11 @@ internal class Program
         if (entry.BenchmarkId == 0)
             throw new Exception($"Geographic location of {entry.CountryCode} not found");
         AddAliasToDatabase(entry.BenchmarkId, alias, isPrimary, 500);
+    }
+
+    private static void AddEnglishAliasToDatabase(long geographyId, string alias, bool isPrimary = false)
+    {
+        AddAliasToDatabase(geographyId, alias, isPrimary, 500);
     }
 
     private static void AddForeignAliasToDatabase(Entry entry, string alias, string language)
