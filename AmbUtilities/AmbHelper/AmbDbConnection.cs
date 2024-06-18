@@ -12,6 +12,7 @@ public class AmbDbConnection : DbConnection
     private readonly Dictionary<string, string> _connectionStringParts;
     public LogFile? Log { get; private set; }
     private const string GetNextOidProc = "[dbo].[sp_internalGetNextOid]";
+    private const string GetNextOidsProc = "[dbo].[sp_internalGetNextOids]";
 
     public AmbDbConnection(string connectionString)
         : this(connectionString, AmbHelper.Log.ApplicationLog)
@@ -274,6 +275,7 @@ public class AmbDbConnection : DbConnection
 
     public long GetNextOid()
     {
+        /*
         using var command = CreateCommand(GetNextOidProc, false);
         command.CommandType = CommandType.StoredProcedure;
         command.Parameters.Add("@oid", SqlDbType.BigInt).Direction = ParameterDirection.Output;
@@ -282,5 +284,25 @@ public class AmbDbConnection : DbConnection
         var oid = Convert.ToInt64(command.Parameters["@oid"].Value);
         Log?.WriteLine($"AmbDbConnection: new oid {oid}");
         return oid;
+        */
+        return GetNextOidCached();
+    }
+
+    private const int CachedOidCount = 100; 
+    private static readonly Queue<long> _cachedOids = new Queue<long>(CachedOidCount);
+
+    public long GetNextOidCached()
+    {
+        if (_cachedOids.Count == 0)
+        {
+            using var command = CreateCommand(GetNextOidsProc, false);
+            command.CommandType = CommandType.StoredProcedure;
+            command.Parameters.Add("@count", SqlDbType.Int, 4).Value = CachedOidCount;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+                _cachedOids.Enqueue(reader.GetInt64(1));
+        }
+
+        return _cachedOids.Dequeue();
     }
 }

@@ -52,6 +52,7 @@ internal class Program
         public string AsciiName => Fields[FieldIndex.AsciiName];
         public string CountryCode => Fields[FieldIndex.CountryCode];
         public long BenchmarkId { get; set; } = 0;
+        public string Description => Fields[FieldIndex.AsciiName];
 
         protected Entry(string[] fields)
         {
@@ -126,11 +127,19 @@ internal class Program
     private static bool _quick = false;
     private static AmbDbConnection? _connection;
     private static readonly DateTime CreationDate = DateTime.Now;
+    private static readonly string CreationDateAsString;
     private const long CreatorId = 100;
     private const int PracticeAreaId = 2501;
     private static readonly Guid CreationSession = Guid.NewGuid();
+    private static readonly string CreationSessionAsString;
     private const long PopulationCutoff = 1000;
     private static Dictionary<string, string> CountryToContinent = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+    static Program()
+    {
+        CreationDateAsString = CreationDate.ToString();
+        CreationSessionAsString = CreationSession.ToString();
+    }
 
     static void Main(string[] args)
     {
@@ -139,13 +148,13 @@ internal class Program
 
         if (args.Length > 3)
         {
-            Console.WriteLine("ImportLocationsFromWeb [q] server database");
+            Console.WriteLine("ImportLocationsFromWeb [-quick] server database");
             return;
         }
 
         foreach (var arg in args)
         {
-            if (arg == "q")
+            if (arg == "-quick")
                 _quick = true;
             else if (_server == null)
                 _server = arg;
@@ -162,6 +171,7 @@ internal class Program
             ImportContinents();
             ImportGeographyLocations();
             ImportAliases();
+            ImportCountryCodes();
             //OrganizeData();
         }
         catch (Exception e)
@@ -226,6 +236,39 @@ internal class Program
         ProcessLines(allCountries, "ADM2.txt", ProcessCountyRecord);
         ProcessLines(allCountries, "PPL.txt", ProcessCityRecord);
     }
+
+    private static void ImportCountryCodes()
+    {
+        const string countryInfo = "countryInfo";
+        DownloadFile("https://download.geonames.org/export/dump/" + countryInfo + ".txt");
+
+        // split the lines across several files
+        ProcessLines(countryInfo, countryInfo + ".txt", (line) =>
+        {
+            var fields = line.Split('\t', StringSplitOptions.TrimEntries);
+            var i = 0;
+            var iso2 = fields[i++];
+            var iso3 = fields[i++];
+            var isoNumeric = fields[i++];
+            var fips = fields[i++];
+            var country = fields[i++];
+            var capital = fields[i++];
+            var area = fields[i++];
+            var population = fields[i++];
+            var continent = fields[i++];
+            var tld = fields[i++];
+            var currencyCode = fields[i++];
+            var currencyName = fields[i++];
+            var phone = fields[i++];
+            var postalCodeFormat = fields[i++];
+            var postalCodeRegex = fields[i++];
+            var languages = fields[i++];
+            var geonameid = fields[i++];
+            var neighbours = fields[i++];
+            var equivalentFipsCode = fields[i++];
+        });
+    }
+
 
     private static void ProcessCountryRecord(string line, bool optional)
     {
@@ -380,10 +423,10 @@ internal class Program
             if (isEnglish)
             {
                 //_english.Add(language);
-                AddEnglishAliasToDatabase(area!, alias);
+                AddEnglishAliasToDatabase(area!, alias, area.Description);
             }
             //_foreign.Add(language);
-            AddForeignAliasToDatabase(area!, alias, language);
+            AddForeignAliasToDatabase(area!, alias, area.Description, language);
         });
 
         /*
@@ -495,6 +538,8 @@ internal class Program
                         break;
                     //Log.WriteLine($"Processing line {line}").Indent();
                     ++line;
+                    if (line2.StartsWith("#"))
+                        continue;
                     try
                     {
                         action(line2);
@@ -553,15 +598,15 @@ internal class Program
                 var index = NextChildIndex(_worldId);
                 var oid = _connection.GetNextOid();
                 _connection!.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocation] " +
-                    "([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorId],[PracticeAreaID],[CreationSession])" +
+                    "([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorId],[PracticeAreaID],[CreationSession]) " +
                     "VALUES " +
-                    $"({oid}, {_worldId}, 1,'{continent}', {index}, '{continent}', '{CreationDate}', {CreatorId}, {PracticeAreaId}, '{CreationSession}')");
+                    $"({oid}, {_worldId}, 1,'{continent}', {index}, '{continent}', '{CreationDateAsString}', {CreatorId}, {PracticeAreaId}, '{CreationSessionAsString}')");
                 _continents.Add(continent, oid);
-                AddEnglishAliasToDatabase(oid, continent, true);
+                AddEnglishAliasToDatabase(oid, continent, continent);
             }
             else
             {
-                AddEnglishAliasToDatabase(_continents[continent], continent, true);
+                AddEnglishAliasToDatabase(_continents[continent], continent, continent);
             }
         }
 
@@ -591,7 +636,7 @@ internal class Program
                     {
                         var continentId = _continents[continentName];
                         AddChildGeographicLocationToDatabase(continentId, entry);
-                        AddEnglishAliasToDatabase(entry, entry.CountryCode, true);
+                        AddEnglishAliasToDatabase(entry, entry.CountryCode, entry.AsciiName);
                         return;
                     }
                     else
@@ -603,10 +648,10 @@ internal class Program
         }
 
         entry.BenchmarkId = c.Value;
-        AddEnglishAliasToDatabase(entry, entry.AsciiName, true);
-        AddEnglishAliasToDatabase(entry, entry.CountryCode, true);
+        AddEnglishAliasToDatabase(entry, entry.AsciiName, entry.AsciiName);
+        AddEnglishAliasToDatabase(entry, entry.CountryCode, entry.AsciiName);
         if (IsEnglish(entry.Name))
-            AddEnglishAliasToDatabase(entry, entry.Name);
+            AddEnglishAliasToDatabase(entry, entry.Name, entry.AsciiName);
     }
 
     private static long NextChildIndex(long parentId)
@@ -634,6 +679,10 @@ internal class Program
     private static void AddCountyToDatabase(Country country, Division1 state, Division2 county)
     {
         AddChildGeographicLocationToDatabase(state, county);
+        if (county.AsciiName.EndsWith(" County"))
+            AddEnglishAliasToDatabase(county, county.AsciiName.Substring(0, county.AsciiName.Length - 7), county.AsciiName);
+        else if (county.AsciiName.EndsWith(" Parish"))
+            AddEnglishAliasToDatabase(county, county.AsciiName.Substring(0, county.AsciiName.Length - 7), county.AsciiName);
     }
 
     private static void AddCityToDatabase(Entry parent, City city)
@@ -658,39 +707,39 @@ internal class Program
             child.BenchmarkId = _connection.GetNextOid();
 
             _connection!.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocation] " +
-                "([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorId],[PracticeAreaID],[CreationSession])" +
-            "VALUES " +
-                $"({child.BenchmarkId}, {parentId}, 1,'{name}', {index}, '{name}', '{CreationDate}', {CreatorId}, {PracticeAreaId}, '{CreationSession}')");
-            AddEnglishAliasToDatabase(child, child.AsciiName, true);
+                "([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorId],[PracticeAreaID],[CreationSession]) " +
+                "VALUES " +
+                $"({child.BenchmarkId}, {parentId}, 1,'{name}', {index}, '{name}', '{CreationDateAsString}', {CreatorId}, {PracticeAreaId}, '{CreationSessionAsString}')");
+            AddEnglishAliasToDatabase(child, child.AsciiName, child.AsciiName);
             if (IsEnglish(child.Name))
-                AddEnglishAliasToDatabase(child, child.Name);
+                AddEnglishAliasToDatabase(child, child.Name, child.AsciiName);
         }
         else
         {
             child.BenchmarkId = c.Value;
-            AddEnglishAliasToDatabase(child, child.AsciiName, true);
+            AddEnglishAliasToDatabase(child, child.AsciiName, child.AsciiName);
             if (IsEnglish(child.Name))
-                AddEnglishAliasToDatabase(child, child.Name);
+                AddEnglishAliasToDatabase(child, child.Name, child.AsciiName);
         }    
     }
 
-    private static void AddEnglishAliasToDatabase(Entry entry, string alias, bool isPrimary = false)
+    private static void AddEnglishAliasToDatabase(Entry entry, string alias, string description)
     {
         if (entry.BenchmarkId == 0)
             throw new Exception($"Geographic location of {entry.CountryCode} not found");
-        AddAliasToDatabase(entry.BenchmarkId, alias, isPrimary, 500);
+        AddAliasToDatabase(entry.BenchmarkId, alias, description, 500);
     }
 
-    private static void AddEnglishAliasToDatabase(long geographyId, string alias, bool isPrimary = false)
+    private static void AddEnglishAliasToDatabase(long geographyId, string alias, string description)
     {
-        AddAliasToDatabase(geographyId, alias, isPrimary, 500);
+        AddAliasToDatabase(geographyId, alias, description, 500);
     }
 
-    private static void AddForeignAliasToDatabase(Entry entry, string alias, string language)
+    private static void AddForeignAliasToDatabase(Entry entry, string alias, string description, string language)
     {
     }
 
-    private static void AddAliasToDatabase(long benchmarkId, string alias, bool isPrimary, long languageId)
+    private static void AddAliasToDatabase(long benchmarkId, string alias, string description, long languageId)
     {
         var name = alias.Replace("'", "''");
         var lname = name.ToLower();
@@ -698,15 +747,18 @@ internal class Program
         if (c.HasValue)
             return;
 
+        var createAsPrimary = (languageId == 500);
         var c2 = _connection.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocationAlias] WHERE [IsPrimary] = 1 AND [GeographicLocationId] = {benchmarkId}", (r) => r.GetInt64(0));
-        var hasPrimary = c2.HasValue;
+        if (c2.HasValue)
+            createAsPrimary = false;
+        var p = createAsPrimary ? 1 : 0;
 
-        var p = hasPrimary ? 0 : 1;
         var oid = _connection.GetNextOid();
+        description = description.Replace("'", "''");
         _connection!.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocationAlias] " +
-            "([OID],[Alias],[Description],[IsSystemOwned],[IsPrimary],[CreationDate],[CreatorId],[PracticeAreaID],[GeographicLocationID],[LID],[CreationSession])" +
-        "VALUES " +
-            $"({oid}, '{name}', '{name}', 1, {p}, '{CreationDate}', {CreatorId}, {PracticeAreaId}, {benchmarkId},{languageId},'{CreationSession}')");
+            "([OID],[Alias],[Description],[IsSystemOwned],[IsPrimary],[CreationDate],[CreatorId],[PracticeAreaID],[GeographicLocationID],[LID],[CreationSession]) " +
+            "VALUES " +
+            $"({oid}, '{name}', '{description}', 1, {p}, '{CreationDateAsString}', {CreatorId}, {PracticeAreaId}, {benchmarkId}, {languageId},'{CreationSessionAsString}')");
     }
 
 }
