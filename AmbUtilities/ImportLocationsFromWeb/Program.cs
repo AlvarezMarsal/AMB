@@ -125,6 +125,7 @@ internal class Program
     private static string? _server = ".";
     private static string? _database = "AMBenchmark_DB";
     private static bool _quick = false;
+    private static bool _dump = false;
     private static AmbDbConnection? _connection;
     private static readonly DateTime CreationDate = DateTime.Now;
     private static readonly string CreationDateAsString;
@@ -132,8 +133,11 @@ internal class Program
     private const int PracticeAreaId = 2501;
     private static readonly Guid CreationSession = Guid.NewGuid();
     private static readonly string CreationSessionAsString;
-    private const long PopulationCutoff = 1000;
+    private static long _populationCutoff = 1000;
     private static Dictionary<string, string> CountryToContinent = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+    private static readonly List<string> delayedStates = [];
+    private static readonly List<string> delayedCounties = [];
+    private static readonly List<string> delayedCities = [];
 
     static Program()
     {
@@ -143,23 +147,25 @@ internal class Program
 
     static void Main(string[] args)
     {
-        //Log.NoDebugger = true;
-        Log.NoConsole = true;
-
-        if (args.Length > 3)
-        {
-            Console.WriteLine("ImportLocationsFromWeb [-quick] server database");
-            return;
-        }
+        Log.Console = false;
 
         foreach (var arg in args)
         {
             if (arg == "-quick")
                 _quick = true;
+            else if (arg == "-dump")
+                _dump = true;
+            else if (arg.StartsWith("-cutoff:"))
+                _populationCutoff = int.Parse(arg.Substring(8));
             else if (_server == null)
                 _server = arg;
             else if (_database == null)
                 _database = arg;
+            else
+            {
+                Console.WriteLine("ImportLocationsFromWeb [-quick] server database");
+                return;
+            }
         }
 
         _server ??= ".";
@@ -172,14 +178,22 @@ internal class Program
             ImportGeographyLocations();
             ImportAliases();
             ImportCountryCodes();
-            //OrganizeData();
+
+            foreach (var line in delayedStates)
+                ProcessStateRecord(line, false);
+            foreach (var line in delayedCounties)
+                ProcessCountyRecord(line, false);
+            foreach (var line in delayedCities)
+                ProcessCityRecord(line, false);
+
+            if (_dump)
+                Dump();
         }
         catch (Exception e)
         {
             _connection?.Dispose();
-            Log.NoDebugger = false;
-            Log.NoConsole = false;
-            Log.WriteLine(e);
+            Log.Console = true;
+            Log.Error(e);
             throw;
         }
     }
@@ -198,6 +212,7 @@ internal class Program
             }
         });
         AddContinentsToDatabase();
+        Log.Flush();
     }
 
     private static void ImportGeographyLocations()
@@ -232,9 +247,12 @@ internal class Program
         ProcessLines(allCountries, "PCLS.txt", line => ProcessCountryRecord(line, false));
         ProcessLines(allCountries, "PCLF.txt", line => ProcessCountryRecord(line, false));
         ProcessLines(allCountries, "PCL.txt", line => ProcessCountryRecord(line, false));        
-        ProcessLines(allCountries, "ADM1.txt", ProcessStateRecord);
-        ProcessLines(allCountries, "ADM2.txt", ProcessCountyRecord);
-        ProcessLines(allCountries, "PPL.txt", ProcessCityRecord);
+        ProcessLines(allCountries, "ADM1.txt", line => ProcessStateRecord(line, true));
+        ProcessLines(allCountries, "ADM1H.txt", line => ProcessStateRecord(line, true));
+        ProcessLines(allCountries, "ADM2.txt", line => ProcessCountyRecord(line, true));
+        ProcessLines(allCountries, "ADM2H.txt", line => ProcessCountyRecord(line, true));
+        ProcessLines(allCountries, "PPL.txt", line => ProcessCityRecord(line, true));
+        Log.Flush();
     }
 
     private static void ImportCountryCodes()
@@ -243,7 +261,7 @@ internal class Program
         DownloadFile("https://download.geonames.org/export/dump/" + countryInfo + ".txt");
 
         // split the lines across several files
-        ProcessLines(countryInfo, countryInfo + ".txt", (line) =>
+        ProcessLines(".", countryInfo + ".txt", (line) =>
         {
             var fields = line.Split('\t', StringSplitOptions.TrimEntries);
             var i = 0;
@@ -253,7 +271,7 @@ internal class Program
             var fips = fields[i++];
             var country = fields[i++];
             var capital = fields[i++];
-            var area = fields[i++];
+            var area1 = fields[i++];
             var population = fields[i++];
             var continent = fields[i++];
             var tld = fields[i++];
@@ -263,10 +281,23 @@ internal class Program
             var postalCodeFormat = fields[i++];
             var postalCodeRegex = fields[i++];
             var languages = fields[i++];
-            var geonameid = fields[i++];
+            var geonameid = long.Parse(fields[i++]);
             var neighbours = fields[i++];
             var equivalentFipsCode = fields[i++];
+
+            if (AreasById.TryGetValue(geonameid, out var area))
+            {
+                AddEnglishAliasToDatabase(area, iso2, area.Description);
+                AddEnglishAliasToDatabase(area, iso3, area.Description);
+                //AddEnglishAliasToDatabase(area, isoNumeric, area.Description);
+                AddEnglishAliasToDatabase(area, country, area.Description);
+            }
+            else
+            {
+                Log.Error("ERROR: Unknown country: " + iso2 + " " + country + "    (" + geonameid + ")");
+            }
         });
+        Log.Flush();
     }
 
 
@@ -279,7 +310,7 @@ internal class Program
         {
             if (optional)
                 return;
-            Log.WriteLine("Duplicate country code: " + countryCode);
+            Log.Error("Duplicate country code: " + countryCode);
         }
         else
         {
@@ -290,7 +321,7 @@ internal class Program
         }
     }
 
-    private static void ProcessStateRecord(string line)
+    private static void ProcessStateRecord(string line, bool permitDelays)
     {
         var fields = line.Split('\t');
 
@@ -299,7 +330,10 @@ internal class Program
         {
             if (country.States.ContainsKey(state.Admin1))
             {
-                Log.WriteLine("ERROR: Duplicate state code: " + state.CountryCode + "." + state.Admin1);
+                if (permitDelays)
+                    delayedStates.Add(line);
+                else
+                    Log.Error("ERROR: Duplicate state code: " + state.CountryCode + "." + state.Admin1 + "    (" + state.Id + ")");
             }
             else
             {
@@ -310,11 +344,14 @@ internal class Program
         }
         else
         {
-            Log.WriteLine("ERROR: Unknown country code: " + state.CountryCode);
+            if (permitDelays)
+                delayedStates.Add(line);
+            else
+                Log.Error("ERROR: Unknown country code: " + state.CountryCode + "    (" + state.Id + ")");
         }
     }
 
-    private static void ProcessCountyRecord(string line)
+    private static void ProcessCountyRecord(string line, bool permitDelays)
     {
         var fields = line.Split('\t');
 
@@ -325,7 +362,10 @@ internal class Program
             {
                 if (state.Counties.ContainsKey(county.Admin2))
                 {
-                    Log.WriteLine("ERROR: Duplicate county code: " + county.CountryCode + "." + county.Admin1 + "." + county.Admin2);
+                    if (permitDelays)
+                        delayedCounties.Add(line);
+                    else
+                        Log.Error("ERROR: Duplicate county code: " + county.CountryCode + "." + county.Admin1 + "." + county.Admin2 + "    (" + county.Id + ")");
                 }
                 else
                 {
@@ -336,20 +376,26 @@ internal class Program
             }
             else
             {
-                Log.WriteLine("ERROR: Unknown state code: " + county.CountryCode + "." + county.Admin1);
+                if (permitDelays)
+                    delayedCounties.Add(line);
+                else                
+                    Log.Error("ERROR: Unknown state code: " + county.CountryCode + "." + county.Admin1 + "    (" + county.Id + ")");
             }
         }
         else
         {
-            Log.WriteLine("ERROR: Unknown country code: " + county.CountryCode);
+            if (permitDelays)
+                delayedCounties.Add(line);
+            else            
+                Log.Error("ERROR: Unknown country code: " + county.CountryCode + "    (" + county.Id + ")");
         }
     }
 
-    private static void ProcessCityRecord(string line)
+    private static void ProcessCityRecord(string line, bool permitDelays)
     {
         var fields = line.Split('\t');
         var city = new City(fields);
-        if (city.Population >= PopulationCutoff)
+        if (city.Population >= _populationCutoff)
         {
             if (Countries.TryGetValue(city.CountryCode, out var country))
             {
@@ -375,17 +421,46 @@ internal class Program
                     }
                     else
                     {
-                        Log.WriteLine("ERROR: Unknown county code: " + city.CountryCode + "." + city.Admin1 + "." + city.Admin2);
+                        if (permitDelays)
+                        {
+                            delayedCities.Add(line);
+                        }
+                        else if (city.Admin2 == "00")
+                        {
+                            state.Cities.Add(city.Id, city);
+                            AreasById.Add(city.Id, city);
+                            AddCityToDatabase(state, city);
+                        }
+                        else
+                        {
+                            Log.Error("ERROR: Unknown county code: " + city.CountryCode + "." + city.Admin1 + "." + city.Admin2 + "    (" + city.Id + ")");
+                        }
                     }
                 }
                 else
                 {
-                    Log.WriteLine("ERROR: Unknown state code: " + city.CountryCode + "." + city.Admin1);
+                    if (permitDelays)
+                    {
+                        delayedCities.Add(line);
+                    }
+                    else if (city.Admin1 == "00")
+                    {
+                        country.Cities.Add(city.Id, city);
+                        AreasById.Add(city.Id, city);
+                        AddCityToDatabase(country, city);
+                    }
+                    else
+                    {
+                         Log.Error("ERROR: Unknown state code: " + city.CountryCode + "." + city.Admin1+ "    (" + city.Id + ")");
+                    }
                 }
             }
             else
             {
-                Log.WriteLine("ERROR: Unknown country code: " + city.CountryCode);
+                if (permitDelays)
+                    delayedCities.Add(line);
+                else               
+                    Log.Error("ERROR: Unknown country code: " + city.CountryCode+ "    (" + city.Id + ")");
             }
         }
     }
@@ -408,7 +483,7 @@ internal class Program
         {
             var fields = line.Split('\t', StringSplitOptions.TrimEntries);
 
-            if (fields[FieldIndex.IsHistoric] == "1")
+            if ((fields[FieldIndex.IsHistoric] == "1") || (fields[FieldIndex.IsColloquial] == "1"))
                 return;
             var language = fields[FieldIndex.Language];
             if (language is "link" or "wkdt" or "post" or "iata" or "icao" or "faac" or "fr_1793")
@@ -455,7 +530,7 @@ internal class Program
         var fields = line.Split('\t', StringSplitOptions.TrimEntries);
         if (fields.Length != 19)
         {
-            Log.WriteLine($"Expected 19 fields, saw {fields.Length}");
+            Log.Error($"Expected 19 fields, saw {fields.Length}");
             return "";
         }
 
@@ -483,8 +558,8 @@ internal class Program
         }
         catch (Exception ex)
         {
-            Log.WriteLine($"Exception while downloading file: {filename} from {url}");
-            Log.WriteLine(ex);
+            Log.Error($"Exception while downloading file: {filename} from {url}");
+            Log.Error(ex);
             return false;
         }
     }
@@ -512,8 +587,8 @@ internal class Program
         }
         catch (Exception ex)
         {
-            Log.WriteLine($"Exception while unzipping file: {zipFilename}");
-            Log.WriteLine(ex);
+            Log.Error($"Exception while unzipping file: {zipFilename}");
+            Log.Error(ex);
             return false;
         }
     }
@@ -546,15 +621,15 @@ internal class Program
                     }
                     catch (Exception e)
                     {
-                        Log.WriteLine($"Exception while processing line {line}");
-                        Log.WriteLine(e);
-                        Log.Outdent();
+                        Log.Error($"Exception while processing line {line}");
+                        Log.Error(e);
+                        //Log.Outdent();
                         if (Debugger.IsAttached)
                             Debugger.Break();
                     }
                     finally
                     {
-                        Log.Outdent();
+                        //Log.Outdent();
                     }
                 }
 
@@ -572,8 +647,8 @@ internal class Program
         catch (Exception ex)
         {
             Log.Outdent();
-            Log.WriteLine($"Exception while processing file: {filename}");
-            Log.WriteLine(ex);
+            Log.Error($"Exception while processing file: {filename}");
+            Log.Error(ex);
         }
     }
 
@@ -589,10 +664,10 @@ internal class Program
             throw new Exception("World not found");
         _worldId = w.Value;
         _continents = _connection.Select($"SELECT [OID], [NAME] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {_worldId}", (r) => new Tuple<string, long>(r.GetString(1), r.GetInt64(0)));
+        var ctc = new HashSet<string>(CountryToContinent.Values, StringComparer.OrdinalIgnoreCase);
 
-        foreach (var kvp in CountryToContinent)
+        foreach (var continent in ctc)
         {
-            var continent = kvp.Value;
             if (!_continents.ContainsKey(continent))
             {
                 var index = NextChildIndex(_worldId);
@@ -718,7 +793,7 @@ internal class Program
         {
             child.BenchmarkId = c.Value;
             AddEnglishAliasToDatabase(child, child.AsciiName, child.AsciiName);
-            if (IsEnglish(child.Name))
+            if ((child.Name != child.AsciiName) && IsEnglish(child.Name))
                 AddEnglishAliasToDatabase(child, child.Name, child.AsciiName);
         }    
     }
@@ -739,8 +814,19 @@ internal class Program
     {
     }
 
+    private static long memoBenchmarkId;
+    private static long memoLanguageId;
+    private static string memoAlias = "";
+
     private static void AddAliasToDatabase(long benchmarkId, string alias, string description, long languageId)
     {
+        // There are a LOT of duplicates, so we can skip them
+        if ((benchmarkId == memoBenchmarkId) && (languageId == memoLanguageId) && (alias == memoAlias))
+            return;
+        memoBenchmarkId = benchmarkId;
+        memoLanguageId = languageId;
+        memoAlias = alias;
+
         var name = alias.Replace("'", "''");
         var lname = name.ToLower();
         var c = _connection!.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocationAlias] WHERE LOWER([Alias]) = '{lname}' AND [GeographicLocationId] = {benchmarkId}", (r) => r.GetInt64(0));
@@ -760,5 +846,36 @@ internal class Program
             "VALUES " +
             $"({oid}, '{name}', '{description}', 1, {p}, '{CreationDateAsString}', {CreatorId}, {PracticeAreaId}, {benchmarkId}, {languageId},'{CreationSessionAsString}')");
     }
+
+    private static void Dump()
+    {
+        using var file = File.CreateText("Dump.txt");
+        Dump(20000, 0, file);
+    }
+
+    private static void Dump(long benchmarkId, int indentation, StreamWriter writer)
+    {
+        var oids = _connection!.Select($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {benchmarkId}", (r) => r.GetInt64(0));
+        foreach (var oid in oids)
+        {
+            var names = _connection.Select($"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid} ORDER BY IsPrimary DESC, Alias", (r) => r.GetString(0));
+            
+            for (var i=0; i<indentation; i++)
+                writer.Write("\t");
+
+            writer.Write(oid);
+            writer.Write(": ");
+            writer.Write(names[0]);
+
+            for (var i=1; i<names.Count; i++)
+            {
+                writer.Write(", ");
+                writer.Write(names[i]);
+            }
+
+            writer.WriteLine();
+            Dump(oid, indentation + 1, writer);
+        }
+   }
 
 }

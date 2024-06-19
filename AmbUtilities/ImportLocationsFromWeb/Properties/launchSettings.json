@@ -1,7 +1,8 @@
 {
   "profiles": {
     "ImportLocationsFromWeb": {
-      "commandName": "Project"
+      "commandName": "Project",
+      "commandLineArgs": "-quick -dump -cutoff:1000"
     }
   }
 }
