@@ -1,8 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Data;
 using AmbHelper;
-using System.Xml.Linq;
-using System.Security.Cryptography;
+using System.Globalization;
 
 
 namespace ImportLocations;
@@ -53,11 +52,13 @@ internal class Program
         public string CountryCode => Fields[FieldIndex.CountryCode];
         public long BenchmarkId { get; set; } = 0;
         public string Description => Fields[FieldIndex.AsciiName];
+        public readonly long Population;
 
         protected Entry(string[] fields)
         {
             Fields = fields;
             Id = long.Parse(fields[FieldIndex.Id]);
+            Population = long.Parse(Fields[FieldIndex.Population]);
         }
 
         public static string MakeKey(params object[] parts)
@@ -111,11 +112,9 @@ internal class Program
     {
         public string Admin1 => Fields[FieldIndex.Admin1];
         public string Admin2 => Fields[FieldIndex.Admin2];
-        public readonly long Population;
 
         public City(string[] fields) : base(fields)
         {
-            Population = long.Parse(Fields[FieldIndex.Population]);
         }
     }
 
@@ -128,8 +127,8 @@ internal class Program
     private static AmbDbConnection? _connection;
     private static readonly DateTime CreationDate = DateTime.Now;
     private static readonly string CreationDateAsString;
-    private const long CreatorId = 100;
-    private const int PracticeAreaId = 2501;
+    private static long _creatorId = 100;
+    private static int _practiceAreaId = 2501;
     private static readonly Guid CreationSession = Guid.NewGuid();
     private static readonly string CreationSessionAsString;
     private static long _populationCutoff = 1000;
@@ -137,6 +136,8 @@ internal class Program
     private static readonly List<string> delayedStates = [];
     private static readonly List<string> delayedCounties = [];
     private static readonly List<string> delayedCities = [];
+    private static HashSet<long> UninhabitedCounties = new HashSet<long>();
+    private static HashSet<long> UninhabitedStates = new HashSet<long>();
 
     static Program()
     {
@@ -155,8 +156,12 @@ internal class Program
             else if (arg == "-dump")
                 _dump = true;
             else if (arg.StartsWith("-cutoff:"))
-                _populationCutoff = int.Parse(arg.Substring(8));
-            else if (_server == null)
+                ParseCmdLineValue(arg, ref _populationCutoff);
+            else if (arg.StartsWith("-creator:"))
+                ParseCmdLineValue(arg, ref _creatorId);
+             else if (arg.StartsWith("-practice:"))
+                ParseCmdLineValue(arg, ref _practiceAreaId);
+           else if (_server == null)
                 _server = arg;
             else if (_database == null)
                 _database = arg;
@@ -185,6 +190,9 @@ internal class Program
             foreach (var line in delayedCities)
                 ProcessCityRecord(line, false);
 
+            Log.WriteLine("Uninhabited counties: " + UninhabitedCounties.Count);
+            Log.WriteLine("Uninhabited states: " + UninhabitedStates.Count);
+
             if (_dump)
                 Dump();
         }
@@ -196,6 +204,26 @@ internal class Program
         }
 
         Log.Dispose();
+    }
+
+    private static void ParseCmdLineValue(string arg, ref int value)
+    {
+        var colon = arg.IndexOf(':');
+        if (colon >= 0)
+        {
+            if (int.TryParse(arg.AsSpan(colon+1), out var v))
+                value = v;
+        }
+    }
+
+    private static void ParseCmdLineValue(string arg, ref long value)
+    {
+        var colon = arg.IndexOf(':');
+        if (colon >= 0)
+        {
+            if (long.TryParse(arg.AsSpan(colon+1), out var v))
+                value = v;
+        }
     }
 
     private static void ImportContinents()
@@ -287,10 +315,10 @@ internal class Program
 
             if (AreasById.TryGetValue(geonameid, out var area))
             {
-                AddEnglishAliasToDatabase(area, iso2, area.Description);
-                AddEnglishAliasToDatabase(area, iso3, area.Description);
+                AddAliasToDatabase(area.BenchmarkId, iso2, area.Description, 500);
+                AddAliasToDatabase(area.BenchmarkId, iso3, area.Description, 500);
                 // AddEnglishAliasToDatabase(area, isoNumeric, area.Description);
-                AddEnglishAliasToDatabase(area, country, area.Description);
+                AddAliasToDatabase(area.BenchmarkId, country, area.Description, 500);
             }
             else
             {
@@ -328,18 +356,21 @@ internal class Program
         var state = new Division1(fields);
         if (Countries.TryGetValue(state.CountryCode, out var country))
         {
+            
             if (country.States.ContainsKey(state.Admin1))
             {
-                if (permitDelays)
-                    delayedStates.Add(line);
-                else
-                    Log.Error("ERROR: Duplicate state code: " + state.CountryCode + "." + state.Admin1 + "    state (" + state.Id + ")");
+                Log.Error("ERROR: Duplicate state code: " + state.CountryCode + "." + state.Admin1 + "    state (" + state.Id + ")");
             }
+            //else if (state.Population < _populationCutoff)
+            //{
+            //    Log.Error("State " + state.AsciiName + " [" + state.CountryCode + "." + state.Admin1 + "] has too little population    (" + state.Id + ")");
+            //}
             else
             {
                 country.States.Add(state.Admin1, state);
                 AreasById.Add(state.Id, state);
                 AddStateToDatabase(country, state);
+                UninhabitedStates.Add(state.Id);
             }
         }
         else
@@ -362,16 +393,18 @@ internal class Program
             {
                 if (state.Counties.ContainsKey(county.Admin2))
                 {
-                    if (permitDelays)
-                        delayedCounties.Add(line);
-                    else
-                        Log.Error("ERROR: Duplicate county code: " + county.CountryCode + "." + county.Admin1 + "." + county.Admin2 + "    county (" + county.Id + ")");
+                    Log.Error("ERROR: Duplicate county code: " + county.CountryCode + "." + county.Admin1 + "." + county.Admin2 + "    county (" + county.Id + ")");
                 }
+                //else if (county.Population < _populationCutoff)
+                //{
+                //    Log.Error("County " + county.AsciiName + " [" + county.CountryCode + "." + county.Admin1 + "." + county.Admin2 + "] has too little population    (" + county.Id + ")");
+                //}
                 else
                 {
                     state.Counties.Add(county.Admin2, county);
                     AreasById.Add(county.Id, county);
                     AddCountyToDatabase(country, state, county);
+                    UninhabitedCounties.Add(county.Id);
                 }
             }
             else
@@ -395,7 +428,11 @@ internal class Program
     {
         var fields = line.Split('\t');
         var city = new City(fields);
-        if (city.Population >= _populationCutoff)
+        if ((city.Population > 0) && (city.Population < _populationCutoff))
+        {
+            Log.Error($"City {city.Id} {city.AsciiName} [{city.CountryCode}.{city.Admin1}.{city.Admin2}] has too little population at {city.Population}");
+        }
+        else
         {
             if (Countries.TryGetValue(city.CountryCode, out var country))
             {
@@ -412,12 +449,15 @@ internal class Program
                         state.Cities.Add(city.Id, city);
                         AreasById.Add(city.Id, city);
                         AddCityToDatabase(state, city);
+                        UninhabitedStates.Remove(state.Id);
                     }
                     else if (state.Counties.TryGetValue(city.Admin2, out var county))
                     {
                         county.Cities.Add(city.Id, city);
                         AreasById.Add(city.Id, city);
                         AddCityToDatabase(county, city);
+                        UninhabitedCounties.Remove(county.Id);
+                        UninhabitedStates.Remove(state.Id);
                     }
                     else
                     {
@@ -430,6 +470,7 @@ internal class Program
                             state.Cities.Add(city.Id, city);
                             AreasById.Add(city.Id, city);
                             AddCityToDatabase(state, city);
+                            UninhabitedStates.Remove(state.Id);
                         }
                         //else
                         //{
@@ -465,9 +506,9 @@ internal class Program
         }
     }
 
-    private static HashSet<string> _english = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    private static HashSet<string> _englishLike = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    private static HashSet<string> _foreign = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    //private static HashSet<string> _english = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    //private static HashSet<string> _englishLike = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    //private static HashSet<string> _foreign = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 
     private static void ImportAliases()
@@ -493,11 +534,9 @@ internal class Program
             var isEnglish = false;
             if ((language == "") || language.StartsWith("en-")) 
             {
-                isEnglish = true;
-                var translated = ToEnglish(alias);
-                if (translated == null)
+                isEnglish = TryTranslate(alias, out var translated);
+                if (!isEnglish)
                 {
-                    isEnglish = false;
                     Log.WriteLine("Could not translate: " + alias);
                     return;
                 }
@@ -512,112 +551,30 @@ internal class Program
             if (isEnglish)
             {
                 //_english.Add(language);
-                AddEnglishAliasToDatabase(area!, alias, area.Description);
+                AddAliasToDatabase(area!.BenchmarkId, alias!, area.Description, 500);
             }
             else
             {
                 //_foreign.Add(language);
-                AddForeignAliasToDatabase(area!, alias, area.Description, language);
             }
         });
-
-        /*
-        foreach (var l in _foreign)
-        {
-            _english.Remove(l);
-            _englishLike.Remove(l);
-        }
-        foreach (var l in _englishLike)
-            _english.Remove(l);
-        */
-    }
-
-    private static bool IsEnglish(string name)
-    {
-        foreach (var ch in name)
-        {
-            if (ch > 0x007F)
-                return false;
-        }
-        return true;
     }
 
     private static string? ToEnglish(string name)
     {
-        var chars = name.ToCharArray();
-        for (var i=0; i<chars.Length; ++i)
-        {
-            var c = chars[i];
-            if (c < 0x0020)         // 0000-001F  -- control characters, no good
-                return null;
-            else if (c < 0x007F)         // 0020-007E  -- printable characters, no change
-                continue;
-            else if (c < 0x00A0)         // 007F-009F  -- control characters, no good
-                return null;
-            else if (c == 0x00A0)        // 00A0 - non-breaking space
-                chars[i] = ' ';
-            else if (c < 0x00AD)         
-                return null;
-            else if (c == 0x00AD)         
-                chars[i] = '-';
-            else if (c < 0x00C0)         // 00A1-00BF  -- weird characters, no good
-                return null;
-            else if (c < 0x00C6)
-                chars[i] = 'A';     // 0060-00C5 -- A's with accents
-            else if (c == 0x00C6)
-                return null;    // 0066 -- AE
-            else if (c == 0x00C7)
-                chars[i] = 'C';    // 0067 -- AE
-            else if (c < 0x00CC)
-                chars[i] = 'E';     // 00C8-00CB -- E's with accents
-            else if (c < 0x00D0)
-                chars[i] = 'I';     // 00CC-00CF -- I's with accents
-            else if (c == 0x00D0)
-                return null;
-            else if (c == 0x00D1)
-                chars[i] = 'N';     // 00D1 
-            else if (c < 0x00D7)
-                chars[i] = 'O';     
-            else if (c == 0x00D7)
-                return null;    
-            else if (c == 0x00D8)
-                chars[i] = 'O';    
-            else if (c < 0x00DD)
-                chars[i] = 'U';    
-            else if (c < 0x00E0)
-                return null;    
-            else if (c < 0x00E6)
-                chars[i] = 'a';    
-            else if (c == 0x00E6)
-                return null;
-            else if (c == 0x00E7)
-                chars[i] = 'c';    
-            else if (c < 0x00EC)
-                chars[i] = 'e';    
-            else if (c < 0x00F0)
-                chars[i] = 'i';    
-            else if (c == 0x00F0)
-                chars[i] = 'o';    
-            else if (c == 0x00F1)
-                chars[i] = 'n';    
-            else if (c < 0x00F7)
-                chars[i] = 'u';    
-            else if (c == 0x00F7)
-                return null;   
-            else if (c == 0x00F8)
-                chars[i] = 'o';    
-            else if (c < 0x00FD)
-                chars[i] = 'u';    
-            else if (c == 0x00FD)
-                chars[i] = 'y';    
-            else if (c == 0x00FE)
-                return null;
-            else if (c == 0x00FF)
-                chars[i] = 'y';  
-            else
-                return null;
-        }
-        return new string(chars);
+        var n = name.Normalize(System.Text.NormalizationForm.FormD);
+        var a = n.ToCharArray()
+            .Where(c => (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark) && (c < 0x007F))
+            .ToArray();
+        if (a.Length == 0)
+            return null;
+        return new string(a);
+    }
+
+    private static bool TryTranslate(string name, out string? translation)
+    {
+        translation = ToEnglish(name);
+        return translation != null;
     }
 
     private static string SplitData(string line)
@@ -770,13 +727,13 @@ internal class Program
                 _connection!.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocation] " +
                     "([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorId],[PracticeAreaID],[CreationSession]) " +
                     "VALUES " +
-                    $"({oid}, {_worldId}, 1,'{continent}', {index}, '{continent}', '{CreationDateAsString}', {CreatorId}, {PracticeAreaId}, '{CreationSessionAsString}')");
+                    $"({oid}, {_worldId}, 1,'{continent}', {index}, '{continent}', '{CreationDateAsString}', {_creatorId}, {_practiceAreaId}, '{CreationSessionAsString}')");
                 _continents.Add(continent, oid);
-                AddEnglishAliasToDatabase(oid, continent, continent);
+                AddAliasToDatabase(oid, continent, continent, 500);
             }
             else
             {
-                AddEnglishAliasToDatabase(_continents[continent], continent, continent);
+                AddAliasToDatabase(_continents[continent], continent, continent, 500);
             }
         }
 
@@ -806,7 +763,7 @@ internal class Program
                     {
                         var continentId = _continents[continentName];
                         AddChildGeographicLocationToDatabase(continentId, entry);
-                        AddEnglishAliasToDatabase(entry, entry.CountryCode, entry.AsciiName);
+                        AddAliasToDatabase(entry.BenchmarkId, entry.CountryCode, entry.AsciiName, 500);
                         return;
                     }
                     else
@@ -814,32 +771,67 @@ internal class Program
                         throw new Exception($"Country {entry.AsciiName} not found");
                     }
                 }
+                else
+                {
+                    entry.BenchmarkId = c.Value;
+                }
             }
-        }
-
-        entry.BenchmarkId = c.Value;
-        AddEnglishAliasToDatabase(entry, entry.AsciiName, entry.AsciiName);
-        AddEnglishAliasToDatabase(entry, entry.CountryCode, entry.AsciiName);
-        if (IsEnglish(entry.Name))
-            AddEnglishAliasToDatabase(entry, entry.Name, entry.AsciiName);
-    }
-
-    private static long NextChildIndex(long parentId)
-    {
-        var i = _connection!.ExecuteScalar($"SELECT MAX([Index]) FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId}");
-        if (i is int index)
-        {
-            return index + 1;
-        }
-        else if (i is DBNull)
-        {
-            return 0;
+            else
+            {
+                entry.BenchmarkId = c.Value;
+            }
         }
         else
         {
-            throw new Exception($"Could not get index");
+            entry.BenchmarkId = c.Value;
         }
+
+        AddAliasToDatabase(entry.BenchmarkId, entry.AsciiName, entry.AsciiName, 500);
+        AddAliasToDatabase(entry.BenchmarkId, entry.CountryCode, entry.AsciiName, 500);
+        if ((entry.Name != entry.AsciiName) && TryTranslate(entry.Name, out var translation))
+            if (translation != entry.AsciiName)
+                AddAliasToDatabase(entry.BenchmarkId, translation!, entry.AsciiName, 500);
     }
+
+
+    static readonly Dictionary<long, long> _previousChildIndex = new();
+
+    private static long NextChildIndex(long parentId)
+    {
+        long nextIndex;
+        if (_previousChildIndex.ContainsKey(parentId))
+        {
+            nextIndex = _previousChildIndex[parentId] + 1;
+        }
+        else
+        {
+            var i = _connection!.ExecuteScalar($"SELECT MAX([Index]) FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId}");
+            if (i is int j)
+            {
+                nextIndex = j;
+                ++nextIndex;
+            }
+            else if (i is long l)
+            {
+                nextIndex = l;
+                ++nextIndex;
+            }
+            else if (i is DBNull)
+            {
+                nextIndex = 0;
+            }
+            else
+            {
+                throw new Exception($"Could not get index");
+            }
+        }
+
+        _previousChildIndex[parentId] = nextIndex;
+        return nextIndex; 
+    }
+
+
+    private static string[] EndingRedundancies = new string[] { " Region", " District", " Province", " County", " Parish" }; // need to have a space before each one
 
     private static void AddStateToDatabase(Country country, Division1 state)
     {
@@ -849,10 +841,6 @@ internal class Program
     private static void AddCountyToDatabase(Country country, Division1 state, Division2 county)
     {
         AddChildGeographicLocationToDatabase(state, county);
-        if (county.AsciiName.EndsWith(" County"))
-            AddEnglishAliasToDatabase(county, county.AsciiName.Substring(0, county.AsciiName.Length - 7), county.AsciiName);
-        else if (county.AsciiName.EndsWith(" Parish"))
-            AddEnglishAliasToDatabase(county, county.AsciiName.Substring(0, county.AsciiName.Length - 7), county.AsciiName);
     }
 
     private static void AddCityToDatabase(Entry parent, City city)
@@ -868,6 +856,7 @@ internal class Program
         if (parentId == 0)
             throw new Exception($"Parent of {child.AsciiName} not found");
 
+        // We use the GeoNames AsciiName as the GL's name, and as the first (primary) alias
         var name = child.AsciiName.Replace("'", "''");
         var lname = name.ToLower();
         var c = _connection!.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE LOWER([NAME]) = '{lname}' AND [PID] = {parentId}", (r) => r.GetInt64(0));
@@ -879,34 +868,34 @@ internal class Program
             _connection!.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocation] " +
                 "([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorId],[PracticeAreaID],[CreationSession]) " +
                 "VALUES " +
-                $"({child.BenchmarkId}, {parentId}, 1,'{name}', {index}, '{name}', '{CreationDateAsString}', {CreatorId}, {PracticeAreaId}, '{CreationSessionAsString}')");
-            AddEnglishAliasToDatabase(child, child.AsciiName, child.AsciiName);
-            if (IsEnglish(child.Name))
-                AddEnglishAliasToDatabase(child, child.Name, child.AsciiName);
+                $"({child.BenchmarkId}, {parentId}, 1,'{name}', {index}, '{name}', '{CreationDateAsString}', {_creatorId}, {_practiceAreaId}, '{CreationSessionAsString}')");
         }
         else
         {
             child.BenchmarkId = c.Value;
-            AddEnglishAliasToDatabase(child, child.AsciiName, child.AsciiName);
-            if ((child.Name != child.AsciiName) && IsEnglish(child.Name))
-                AddEnglishAliasToDatabase(child, child.Name, child.AsciiName);
         }    
-    }
 
-    private static void AddEnglishAliasToDatabase(Entry entry, string alias, string description)
-    {
-        if (entry.BenchmarkId == 0)
-            throw new Exception($"Geographic location of {entry.CountryCode} not found");
-        AddAliasToDatabase(entry.BenchmarkId, alias, description, 500);
-    }
+        // We use the GeoNames AsciiName as the GL's name, and as the first (primary) alias
+        AddAlias(child.AsciiName);
 
-    private static void AddEnglishAliasToDatabase(long geographyId, string alias, string description)
-    {
-        AddAliasToDatabase(geographyId, alias, description, 500);
-    }
+        if ((child.Name != child.AsciiName) && TryTranslate(child.Name, out var translation))
+            if (translation != child.AsciiName)
+                AddAlias(translation!);
 
-    private static void AddForeignAliasToDatabase(Entry entry, string alias, string description, string language)
-    {
+        return;
+
+        void AddAlias(string a)
+        {
+            AddAliasToDatabase(child.BenchmarkId, a, child.AsciiName, 500);
+            foreach (var ending in EndingRedundancies)
+            {
+                if (a.EndsWith(ending))
+                {
+                    AddAliasToDatabase(child.BenchmarkId, a.Substring(0, a.Length - ending.Length), child.AsciiName, 500);
+                    break;
+                }
+            }
+        }
     }
 
     private static long memoBenchmarkId;
@@ -939,7 +928,7 @@ internal class Program
         _connection!.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocationAlias] " +
             "([OID],[Alias],[Description],[IsSystemOwned],[IsPrimary],[CreationDate],[CreatorId],[PracticeAreaID],[GeographicLocationID],[LID],[CreationSession]) " +
             "VALUES " +
-            $"({oid}, '{name}', '{description}', 1, {p}, '{CreationDateAsString}', {CreatorId}, {PracticeAreaId}, {benchmarkId}, {languageId},'{CreationSessionAsString}')");
+            $"({oid}, '{name}', '{description}', 1, {p}, '{CreationDateAsString}', {_creatorId}, {_practiceAreaId}, {benchmarkId}, {languageId},'{CreationSessionAsString}')");
     }
 
     private static void Dump()
