@@ -119,7 +119,6 @@ internal class Program
         }
     }
 
-    //private static readonly HashSet<string> ExcludedFeatureCodes = new(StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<string, Country> Countries = new (StringComparer.OrdinalIgnoreCase);
     private static readonly Dictionary<long, Entry> AreasById = new ();
     private static string? _server = ".";
@@ -194,8 +193,9 @@ internal class Program
             _connection?.Dispose();
             Log.Console = true;
             Log.Error(e);
-            throw;
         }
+
+        Log.Dispose();
     }
 
     private static void ImportContinents()
@@ -248,9 +248,9 @@ internal class Program
         ProcessLines(allCountries, "PCLF.txt", line => ProcessCountryRecord(line, false));
         ProcessLines(allCountries, "PCL.txt", line => ProcessCountryRecord(line, false));        
         ProcessLines(allCountries, "ADM1.txt", line => ProcessStateRecord(line, true));
-        ProcessLines(allCountries, "ADM1H.txt", line => ProcessStateRecord(line, true));
+        // ProcessLines(allCountries, "ADM1H.txt", line => ProcessStateRecord(line, true));
         ProcessLines(allCountries, "ADM2.txt", line => ProcessCountyRecord(line, true));
-        ProcessLines(allCountries, "ADM2H.txt", line => ProcessCountyRecord(line, true));
+        // ProcessLines(allCountries, "ADM2H.txt", line => ProcessCountyRecord(line, true));
         ProcessLines(allCountries, "PPL.txt", line => ProcessCityRecord(line, true));
         Log.Flush();
     }
@@ -289,12 +289,12 @@ internal class Program
             {
                 AddEnglishAliasToDatabase(area, iso2, area.Description);
                 AddEnglishAliasToDatabase(area, iso3, area.Description);
-                //AddEnglishAliasToDatabase(area, isoNumeric, area.Description);
+                // AddEnglishAliasToDatabase(area, isoNumeric, area.Description);
                 AddEnglishAliasToDatabase(area, country, area.Description);
             }
             else
             {
-                Log.Error("ERROR: Unknown country: " + iso2 + " " + country + "    (" + geonameid + ")");
+                Log.Error("ERROR: Unknown country: " + iso2 + " " + country + "    country (" + geonameid + ")");
             }
         });
         Log.Flush();
@@ -333,7 +333,7 @@ internal class Program
                 if (permitDelays)
                     delayedStates.Add(line);
                 else
-                    Log.Error("ERROR: Duplicate state code: " + state.CountryCode + "." + state.Admin1 + "    (" + state.Id + ")");
+                    Log.Error("ERROR: Duplicate state code: " + state.CountryCode + "." + state.Admin1 + "    state (" + state.Id + ")");
             }
             else
             {
@@ -347,7 +347,7 @@ internal class Program
             if (permitDelays)
                 delayedStates.Add(line);
             else
-                Log.Error("ERROR: Unknown country code: " + state.CountryCode + "    (" + state.Id + ")");
+                Log.Error("ERROR: Unknown country code: " + state.CountryCode + "    state (" + state.Id + ")");
         }
     }
 
@@ -365,7 +365,7 @@ internal class Program
                     if (permitDelays)
                         delayedCounties.Add(line);
                     else
-                        Log.Error("ERROR: Duplicate county code: " + county.CountryCode + "." + county.Admin1 + "." + county.Admin2 + "    (" + county.Id + ")");
+                        Log.Error("ERROR: Duplicate county code: " + county.CountryCode + "." + county.Admin1 + "." + county.Admin2 + "    county (" + county.Id + ")");
                 }
                 else
                 {
@@ -379,7 +379,7 @@ internal class Program
                 if (permitDelays)
                     delayedCounties.Add(line);
                 else                
-                    Log.Error("ERROR: Unknown state code: " + county.CountryCode + "." + county.Admin1 + "    (" + county.Id + ")");
+                    Log.Error("ERROR: Unknown state code: " + county.CountryCode + "." + county.Admin1 + "    county (" + county.Id + ")");
             }
         }
         else
@@ -387,7 +387,7 @@ internal class Program
             if (permitDelays)
                 delayedCounties.Add(line);
             else            
-                Log.Error("ERROR: Unknown country code: " + county.CountryCode + "    (" + county.Id + ")");
+                Log.Error("ERROR: Unknown country code: " + county.CountryCode + "    county (" + county.Id + ")");
         }
     }
 
@@ -425,16 +425,16 @@ internal class Program
                         {
                             delayedCities.Add(line);
                         }
-                        else if (city.Admin2 == "00")
+                        else // if (city.Admin2 == "00")
                         {
                             state.Cities.Add(city.Id, city);
                             AreasById.Add(city.Id, city);
                             AddCityToDatabase(state, city);
                         }
-                        else
-                        {
-                            Log.Error("ERROR: Unknown county code: " + city.CountryCode + "." + city.Admin1 + "." + city.Admin2 + "    (" + city.Id + ")");
-                        }
+                        //else
+                        //{
+                        //    Log.Error("ERROR: Unknown county code: " + city.CountryCode + "." + city.Admin1 + "." + city.Admin2 + "    city (" + city.Id + ")");
+                        //}
                     }
                 }
                 else
@@ -443,16 +443,16 @@ internal class Program
                     {
                         delayedCities.Add(line);
                     }
-                    else if (city.Admin1 == "00")
+                    else // if (city.Admin1 == "00")
                     {
                         country.Cities.Add(city.Id, city);
                         AreasById.Add(city.Id, city);
                         AddCityToDatabase(country, city);
                     }
-                    else
-                    {
-                         Log.Error("ERROR: Unknown state code: " + city.CountryCode + "." + city.Admin1+ "    (" + city.Id + ")");
-                    }
+                    //else
+                    //{
+                    //     Log.Error("ERROR: Unknown state code: " + city.CountryCode + "." + city.Admin1+ "    city (" + city.Id + ")");
+                    //}
                 }
             }
             else
@@ -460,7 +460,7 @@ internal class Program
                 if (permitDelays)
                     delayedCities.Add(line);
                 else               
-                    Log.Error("ERROR: Unknown country code: " + city.CountryCode+ "    (" + city.Id + ")");
+                    Log.Error("ERROR: Unknown country code: " + city.CountryCode+ "    city (" + city.Id + ")");
             }
         }
     }
@@ -486,22 +486,39 @@ internal class Program
             if ((fields[FieldIndex.IsHistoric] == "1") || (fields[FieldIndex.IsColloquial] == "1"))
                 return;
             var language = fields[FieldIndex.Language];
-            if (language is "link" or "wkdt" or "post" or "iata" or "icao" or "faac" or "fr_1793")
+            if (language is "link" or "wkdt" or "post" or "iata" or "icao" or "faac" or "fr_1793" or "unlc")
                 return;
+
+            var alias = fields[FieldIndex.AlternatName];
+            var isEnglish = false;
+            if ((language == "") || language.StartsWith("en-")) 
+            {
+                isEnglish = true;
+                var translated = ToEnglish(alias);
+                if (translated == null)
+                {
+                    isEnglish = false;
+                    Log.WriteLine("Could not translate: " + alias);
+                    return;
+                }
+                alias = translated;
+            }
 
             var areaId = long.Parse(fields[FieldIndex.GeographicId]);
             if (!AreasById.TryGetValue(areaId, out var area))
                 return;
 
-            var alias = fields[FieldIndex.AlternatName];
-            bool isEnglish = IsEnglish(alias);
+            // bool isEnglish = IsEnglish(alias);
             if (isEnglish)
             {
                 //_english.Add(language);
                 AddEnglishAliasToDatabase(area!, alias, area.Description);
             }
-            //_foreign.Add(language);
-            AddForeignAliasToDatabase(area!, alias, area.Description, language);
+            else
+            {
+                //_foreign.Add(language);
+                AddForeignAliasToDatabase(area!, alias, area.Description, language);
+            }
         });
 
         /*
@@ -523,6 +540,84 @@ internal class Program
                 return false;
         }
         return true;
+    }
+
+    private static string? ToEnglish(string name)
+    {
+        var chars = name.ToCharArray();
+        for (var i=0; i<chars.Length; ++i)
+        {
+            var c = chars[i];
+            if (c < 0x0020)         // 0000-001F  -- control characters, no good
+                return null;
+            else if (c < 0x007F)         // 0020-007E  -- printable characters, no change
+                continue;
+            else if (c < 0x00A0)         // 007F-009F  -- control characters, no good
+                return null;
+            else if (c == 0x00A0)        // 00A0 - non-breaking space
+                chars[i] = ' ';
+            else if (c < 0x00AD)         
+                return null;
+            else if (c == 0x00AD)         
+                chars[i] = '-';
+            else if (c < 0x00C0)         // 00A1-00BF  -- weird characters, no good
+                return null;
+            else if (c < 0x00C6)
+                chars[i] = 'A';     // 0060-00C5 -- A's with accents
+            else if (c == 0x00C6)
+                return null;    // 0066 -- AE
+            else if (c == 0x00C7)
+                chars[i] = 'C';    // 0067 -- AE
+            else if (c < 0x00CC)
+                chars[i] = 'E';     // 00C8-00CB -- E's with accents
+            else if (c < 0x00D0)
+                chars[i] = 'I';     // 00CC-00CF -- I's with accents
+            else if (c == 0x00D0)
+                return null;
+            else if (c == 0x00D1)
+                chars[i] = 'N';     // 00D1 
+            else if (c < 0x00D7)
+                chars[i] = 'O';     
+            else if (c == 0x00D7)
+                return null;    
+            else if (c == 0x00D8)
+                chars[i] = 'O';    
+            else if (c < 0x00DD)
+                chars[i] = 'U';    
+            else if (c < 0x00E0)
+                return null;    
+            else if (c < 0x00E6)
+                chars[i] = 'a';    
+            else if (c == 0x00E6)
+                return null;
+            else if (c == 0x00E7)
+                chars[i] = 'c';    
+            else if (c < 0x00EC)
+                chars[i] = 'e';    
+            else if (c < 0x00F0)
+                chars[i] = 'i';    
+            else if (c == 0x00F0)
+                chars[i] = 'o';    
+            else if (c == 0x00F1)
+                chars[i] = 'n';    
+            else if (c < 0x00F7)
+                chars[i] = 'u';    
+            else if (c == 0x00F7)
+                return null;   
+            else if (c == 0x00F8)
+                chars[i] = 'o';    
+            else if (c < 0x00FD)
+                chars[i] = 'u';    
+            else if (c == 0x00FD)
+                chars[i] = 'y';    
+            else if (c == 0x00FE)
+                return null;
+            else if (c == 0x00FF)
+                chars[i] = 'y';  
+            else
+                return null;
+        }
+        return new string(chars);
     }
 
     private static string SplitData(string line)

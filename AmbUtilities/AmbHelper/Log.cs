@@ -101,6 +101,12 @@ public static class Log
     }
 
 
+    public static void Dispose()
+    {
+        ApplicationLog.Dispose();
+        ErrorLog.Dispose();
+    }
+
 }
 
 
