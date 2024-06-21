@@ -3,7 +3,6 @@ using System.Data.Common;
 using System.Data.SqlClient;
 using System.Diagnostics;
 
-
 namespace AmbHelper;
 
 public class AmbDbConnection : DbConnection
@@ -276,6 +275,14 @@ public class AmbDbConnection : DbConnection
         ExecuteReader(query, r => result = build(r));
         return result;
     }   
+
+    public T? SelectOne<T>(string query, Func<IDataReader, T> build) where T : class
+    {
+        T? result = default;
+        ExecuteReader(query, r => result = build(r));
+        return result;
+    }   
+
 
     public long GetNextOid()
     {

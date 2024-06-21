@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "ImportGeographyFromGeoNames": {
+      "commandName": "Project",
+      "commandLineArgs": "-keep -continue -step:11",
+      "workingDirectory": "..\\..\\"
+    }
+  }
+}

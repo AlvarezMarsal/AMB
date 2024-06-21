@@ -2,9 +2,9 @@
 using System.Data;
 using AmbHelper;
 using System.Globalization;
-using static AmbHelper.Logs;
 
-namespace ImportLocations;
+
+namespace ImportGeographyFromGeoNames;
 
 internal partial class Program
 {
@@ -12,23 +12,24 @@ internal partial class Program
     private static readonly Dictionary<long, Entry> AreasById = new ();
     private static string? _server = ".";
     private static string? _database = "AMBenchmark_DB";
-    private static bool _quick = false;
     private static bool _dump = false;
+    private static bool _keep = false;
+    private static bool _continue = false;
     private static AmbDbConnection? _connection;
     private static readonly DateTime CreationDate = DateTime.Now;
     private static readonly string CreationDateAsString;
     private static long _creatorId = 100;
     private static int _practiceAreaId = 2501;
-    private static int _step = 0;
     private static readonly Guid CreationSession = Guid.NewGuid();
     private static readonly string CreationSessionAsString;
-    // private static long _populationCutoff = 1000;
+    private static long _populationCutoff = 1000;
     private static Dictionary<string, string> CountryToContinent = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     private static readonly List<string> delayedStates = [];
     private static readonly List<string> delayedCounties = [];
     private static readonly List<string> delayedCities = [];
     private static HashSet<long> UninhabitedCounties = new HashSet<long>();
     private static HashSet<long> UninhabitedStates = new HashSet<long>();
+    private static int _step = 0;
 
     static Program()
     {
@@ -42,79 +43,100 @@ internal partial class Program
 
         foreach (var arg in args)
         {
-            if (arg == "-quick")
-                _quick = true;
-            else if (arg == "-dump")
+            if (arg == "-dump")
                 _dump = true;
-            // else if (arg.StartsWith("-cutoff:"))
-            //    ParseCmdLineValue(arg, ref _populationCutoff);
+            else if (arg == "-keep")
+                _keep = true;
+            else if (arg == "-continue")
+                _continue = true;
             else if (arg.StartsWith("-cutoff:"))
-                ParseCmdLineValue(arg, ref _step);
+                ParseCmdLineValue(arg, ref _populationCutoff);
             else if (arg.StartsWith("-creator:"))
                 ParseCmdLineValue(arg, ref _creatorId);
-             else if (arg.StartsWith("-practice:"))
+            else if (arg.StartsWith("-practice:"))
                 ParseCmdLineValue(arg, ref _practiceAreaId);
-           else if (_server == null)
+            else if (arg.StartsWith("-step:"))
+                ParseCmdLineValue(arg, ref _step);
+            else if (_server == null)
                 _server = arg;
             else if (_database == null)
                 _database = arg;
             else
             {
-                Console.WriteLine("ImportLocationsFromWeb [-quick] server database");
+                Console.WriteLine("ImportLocationsFromWeb [-keep] [-dump] server database");
                 return;
             }
         }
 
         _server ??= ".";
         _database ??= "AMBenchmark_DB";
+        if (_step > 0)
+            _continue = true;
 
         try
         {
             _connection = new AmbDbConnection($"Server={_server};Database={_database};Integrated Security=True;");
 
+            if (!_continue)
+                SetUpTempTables();
+ 
+            // Go through the input files and populate the temp tables
             var done = false;
             for (/**/; !done; ++_step)
             {
-                Log.WriteLine("STEP " + _step);
+                Log.WriteLine("Starting STEP " + _step);
                 Log.Indent();
 
                 switch (_step)
                 {
-                    case 0: ImportContinents(); break;
-                    case 1: ImportGeographyLocations(); break;
-                    case 2: ImportAliases(); break;
-                    case 3: ImportCountryCodes(); break;
-                    case 4: ImportCities(); break;
-
-                    case 5:
-                        foreach (var line in delayedStates)
-                            ProcessStateRecord(line, false);
-                        foreach (var line in delayedCounties)
-                            ProcessCountyRecord(line, false);
-                        foreach (var line in delayedCities)
-                            ProcessCityRecord(line, false);
-                        break;
-
-                    default:
-                        done = true; break;
+                    case 0:  ImportContinents(); break;
+                    case 1:  SplitAllCountriesFile(); break;
+                    case 2:  ImportCountriesFromAllCountriesFile(); break;
+                    case 3:  ImportFromAllCountriesPartialFile("ADM1.txt"); break;
+                    case 4:  ImportFromAllCountriesPartialFile("ADM2.txt"); break;
+                    case 5:  ImportFromAllCountriesPartialFile("ADM3.txt"); break;
+                    case 6:  ImportFromAllCountriesPartialFile("ADM4.txt"); break;
+                    case 7:  ImportFromAllCountriesPartialFile("ADM5.txt"); break;
+                    case 8:  ImportGeographyLocations(); break;
+                    case 9:  ImportCities(); break;
+                    case 10: ImportAdmin5(); break;
+                    //case 11: DeleteUninhabitedAreas(); break;
+                    case 11: ExportCountriesToBenchmark(); break;
+                    case 12: ImportCountryCodes(); break;
+                    // case 13: ImportAliases(); break;
+                   default: done = true; break;
                 }
 
                 Log.Outdent();
+                Log.WriteLine("STEP " + _step + " completed");
             }
+
+            /*
+            foreach (var line in delayedStates)
+                ProcessStateRecord(line, false);
+            foreach (var line in delayedCounties)
+                ProcessCountyRecord(line, false);
+            foreach (var line in delayedCities)
+                ProcessCityRecord(line, false);
 
             Log.WriteLine("Uninhabited counties: " + UninhabitedCounties.Count);
             Log.WriteLine("Uninhabited states: " + UninhabitedStates.Count);
 
             if (_dump)
                 Dump();
+            */
         }
         catch (Exception e)
         {
-            _connection?.Dispose();
             Log.Console = true;
-            Error.WriteLine(e);
+            Log.Error(e);
         }
-
+        finally
+        {
+            if (!_keep && !_continue)
+                TearDownTempTables();
+            _connection?.Dispose();
+        }
         Log.Dispose();
     }
 
@@ -138,10 +160,117 @@ internal partial class Program
         }
     }
 
+    private static void SetUpTempTables()
+    {
+        TearDownTempTables();
+
+        var cmd = """
+                    CREATE TABLE [dbo].[t_TempGeographyImportTable](
+                        [GeoNamesId] [bigint] NOT NULL,
+                        [BenchmarkId] [bigint] NULL,
+                        [Type] [nvarchar](12) NOT NULL,
+                        [CountryCode] [nvarchar](12) NOT NULL,
+                        [Admin1] [nvarchar](100) NULL,
+                        [Admin2] [nvarchar](100) NULL,
+                        [Admin3] [nvarchar](100) NULL,
+                        [Admin4] [nvarchar](100) NULL,
+                        [Admin5] [nvarchar](100) NULL,
+                        [Population] [bigint] NOT NULL,
+                        [AsciiName] [nvarchar](100) NOT NULL,
+                        [Name] [nvarchar](100) NOT NULL,
+                        [Combined] [nvarchar](400) NOT NULL,
+                        [Mark] [nchar] NULL,
+                        [BenchmarkIdUniquenessEnforcer] AS ISNULL([BenchmarkId], [GeoNamesId] * -1),
+                        PRIMARY KEY CLUSTERED 
+                        (
+                            [GeoNamesId] ASC
+                        ) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+                         CONSTRAINT [TGIT_BenchmarkId] UNIQUE NONCLUSTERED 
+                        (
+                            [BenchmarkIdUniquenessEnforcer] ASC
+                        ) 
+                        WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+                    ) ON [PRIMARY]
+                """;
+        _connection!.ExecuteNonQuery(cmd);
+
+        cmd = """
+                CREATE NONCLUSTERED INDEX [TGIT_CountryCodeIndex] ON [dbo].[t_TempGeographyImportTable](
+                    [CountryCode] ASC
+                ) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+            """;
+         _connection!.ExecuteNonQuery(cmd);
+
+        cmd = """
+                CREATE NONCLUSTERED INDEX [TGIT_Admin1Index] ON [dbo].[t_TempGeographyImportTable](
+                    [CountryCode] ASC, [Admin1] ASC
+                ) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+            """;
+         _connection!.ExecuteNonQuery(cmd);
+
+        cmd = """
+                CREATE NONCLUSTERED INDEX [TGIT_Admin2Index] ON [dbo].[t_TempGeographyImportTable](
+                    [CountryCode] ASC, [Admin1] ASC, [Admin2] ASC
+                ) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+            """;
+         _connection!.ExecuteNonQuery(cmd);
+
+        cmd = """
+                CREATE NONCLUSTERED INDEX [TGIT_Admin3Index] ON [dbo].[t_TempGeographyImportTable](
+                    [CountryCode] ASC, [Admin1] ASC, [Admin2] ASC, [Admin3] ASC
+                ) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+            """;
+         _connection!.ExecuteNonQuery(cmd);
+
+        cmd = """
+                CREATE NONCLUSTERED INDEX [TGIT_Admin4Index] ON [dbo].[t_TempGeographyImportTable](
+                    [CountryCode] ASC, [Admin1] ASC, [Admin2] ASC, [Admin3] ASC, [Admin4] ASC
+                ) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+            """;
+         _connection!.ExecuteNonQuery(cmd);
+
+        cmd = """
+                CREATE NONCLUSTERED INDEX [TGIT_Admin5Index] ON [dbo].[t_TempGeographyImportTable](
+                    [CountryCode] ASC, [Admin1] ASC, [Admin2] ASC, [Admin3] ASC, [Admin4] ASC, [Admin5] ASC
+                ) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+            """;
+         _connection!.ExecuteNonQuery(cmd);
+    }
+
+    private static void TearDownTempTables()
+    {
+        var cmd = "IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[t_TempGeographyImportTable]') AND type in (N'U')) " +
+                  "DROP INDEX [TGIT_Admin1Index] ON [dbo].[t_TempGeographyImportTable]";
+        _connection!.ExecuteNonQuery(cmd);
+
+        cmd = "IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[t_TempGeographyImportTable]') AND type in (N'U')) " +
+              "DROP INDEX [TGIT_Admin2Index] ON [dbo].[t_TempGeographyImportTable]";
+        _connection!.ExecuteNonQuery(cmd);
+
+        cmd = "IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[t_TempGeographyImportTable]') AND type in (N'U')) " +
+              "DROP INDEX [TGIT_Admin3Index] ON [dbo].[t_TempGeographyImportTable]";
+        _connection!.ExecuteNonQuery(cmd);
+
+        cmd = "IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[t_TempGeographyImportTable]') AND type in (N'U')) " +
+              "DROP INDEX [TGIT_Admin4Index] ON [dbo].[t_TempGeographyImportTable]";
+        _connection!.ExecuteNonQuery(cmd);
+
+        cmd = "IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[t_TempGeographyImportTable]') AND type in (N'U')) " +
+                  "DROP INDEX [TGIT_Admin5Index] ON [dbo].[t_TempGeographyImportTable]";
+        _connection!.ExecuteNonQuery(cmd);
+
+        cmd = "IF EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[t_TempGeographyImportTable]') AND type in (N'U')) " +
+              "DROP INDEX [TGIT_CountryCodeIndex] ON [dbo].[t_TempGeographyImportTable]";
+        _connection!.ExecuteNonQuery(cmd);
+
+        cmd = "IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[t_TempGeographyImportTable]') AND type in (N'U')) " +
+              "DROP TABLE [dbo].[t_TempGeographyImportTable]";
+        _connection!.ExecuteNonQuery(cmd);
+    }
+
     private static void ImportContinents()
     {
-        const string c2c = "CountriesToContinents.txt";
-        ProcessLines("../../../../../", c2c, (line) =>
+        ProcessLines(".", "CountriesToContinents.txt", (line) =>
         {
             var fields = line.Split('\t', StringSplitOptions.TrimEntries);
             var countryCode = fields[0].Trim();
@@ -155,24 +284,63 @@ internal partial class Program
         Log.Flush();
     }
 
-    private static void ImportGeographyLocations()
+    private static void SplitAllCountriesFile()
     {
-        const string allCountries = "allCountries";
-        DownloadFile("https://download.geonames.org/export/dump/" + allCountries + ".zip");
-        UnzipFile(allCountries + ".zip");
-
-        using var cleaned = File.CreateText($"{allCountries}/processed.txt");
+        const string folder = "allCountries";
         var outputs = new Dictionary<string, StreamWriter>();
 
         // split the lines across several files
-        ProcessLines(allCountries, allCountries + ".txt", (line) =>
+        ProcessLines(folder, "allCountries.txt", (line) =>
         {
             var x = SplitData(line);
             if (x != "")
             {
-                cleaned.WriteLine(line);
+                //cleaned.WriteLine(line);
                 if (!outputs.TryGetValue(x, out var output))
-                    outputs.Add(x, output = File.CreateText($"{allCountries}/{x}.txt"));
+                    outputs.Add(x, output = File.CreateText($"{folder}/{x}.txt"));
+                output.WriteLine(line);
+            }
+        });
+
+        foreach (var output in outputs.Values)
+            output.Close();
+    }
+
+    private static void ImportCountriesFromAllCountriesFile()
+    {
+        const string folder = "allCountries";
+        ProcessLines(folder, "PCLI.txt", ProcessAllCountriesLine);
+        ProcessLines(folder, "PCLD.txt", ProcessAllCountriesLine);
+        ProcessLines(folder, "TERR.txt", ProcessAllCountriesLine);
+        ProcessLines(folder, "PCLIX.txt", ProcessAllCountriesLine);
+        ProcessLines(folder, "PCLS.txt", ProcessAllCountriesLine);
+        ProcessLines(folder, "PCLF.txt", ProcessAllCountriesLine);
+        ProcessLines(folder, "PCL.txt", ProcessAllCountriesLine);        
+        Log.Flush();
+    }
+
+    private static void ImportFromAllCountriesPartialFile(string filename)
+    {
+        const string folder = "allCountries";
+        ProcessLines(folder, filename, ProcessAllCountriesLine);
+        Log.Flush();
+    }
+
+    private static void ImportGeographyLocations()
+    {
+        const string folder = "allCountries";
+        //using var cleaned = File.CreateText($"/allCountries/processed.txt");
+        var outputs = new Dictionary<string, StreamWriter>();
+
+        // split the lines across several files
+        ProcessLines(folder, "allCountries.txt", (line) =>
+        {
+            var x = SplitData(line);
+            if (x != "")
+            {
+                //cleaned.WriteLine(line);
+                if (!outputs.TryGetValue(x, out var output))
+                    outputs.Add(x, output = File.CreateText($"{folder}/{x}.txt"));
                 output.WriteLine(line);
             }
         });
@@ -180,44 +348,94 @@ internal partial class Program
         foreach (var output in outputs.Values)
             output.Close();
 
-        ProcessLines(allCountries, "PCLI.txt", line => ProcessCountryRecord(line, false));
-        ProcessLines(allCountries, "PCLD.txt", line => ProcessCountryRecord(line, true));
-        ProcessLines(allCountries, "TERR.txt", line => ProcessCountryRecord(line, true));
-        ProcessLines(allCountries, "PCLIX.txt", line => ProcessCountryRecord(line, false));
-        ProcessLines(allCountries, "PCLS.txt", line => ProcessCountryRecord(line, false));
-        ProcessLines(allCountries, "PCLF.txt", line => ProcessCountryRecord(line, false));
-        ProcessLines(allCountries, "PCL.txt", line => ProcessCountryRecord(line, false));        
-        ProcessLines(allCountries, "ADM1.txt", line => ProcessStateRecord(line, true));
+        ProcessLines(folder, "PCLI.txt", ProcessAllCountriesLine);
+        ProcessLines(folder, "PCLD.txt", ProcessAllCountriesLine);
+        ProcessLines(folder, "TERR.txt", ProcessAllCountriesLine);
+        ProcessLines(folder, "PCLIX.txt", ProcessAllCountriesLine);
+        ProcessLines(folder, "PCLS.txt", ProcessAllCountriesLine);
+        ProcessLines(folder, "PCLF.txt", ProcessAllCountriesLine);
+        ProcessLines(folder, "PCL.txt", ProcessAllCountriesLine);        
+        ProcessLines(folder, "ADM1.txt", ProcessAllCountriesLine);
         // ProcessLines(allCountries, "ADM1H.txt", line => ProcessStateRecord(line, true));
-        ProcessLines(allCountries, "ADM2.txt", line => ProcessCountyRecord(line, true));
+        ProcessLines(folder, "ADM2.txt", ProcessAllCountriesLine);
         // ProcessLines(allCountries, "ADM2H.txt", line => ProcessCountyRecord(line, true));
-        // ProcessLines(allCountries, "PPL.txt", line => ProcessCityRecord(line, true));
+        ProcessLines(folder, "ADM3.txt", ProcessAllCountriesLine);
+        ProcessLines(folder, "ADM4.txt", ProcessAllCountriesLine);
+        ProcessLines(folder, "ADM5.txt", ProcessAllCountriesLine);
+        // ProcessLines(folder, "PPL.txt", ProcessAllCountriesLine);
         Log.Flush();
     }
 
     private static void ImportCities()
     {
-        const string cities = "cities500";
-        DownloadFile("https://download.geonames.org/export/dump/" + cities + ".zip");
-        UnzipFile(cities + ".zip");
+        const string folder = "cities500";
 
         // split the lines across several files
-        ProcessLines(cities, cities + ".txt", (line) =>
-        {
-            ProcessCityRecord(line, true);
-        });
-
+        ProcessLines(folder, "cities500.txt", ProcessAllCountriesLine);
         Log.Flush();
+    }
+
+    private static void ProcessAllCountriesLine(string line)
+    {
+        var fields = line.Split('\t');
+        if (fields.Length != 19)
+        {
+            Log.Error("Bad line in allCountries.txt: " + line);
+            return;
+        }
+
+        var admin = new string[4] { "NULL", "NULL", "NULL", "NULL" };
+        var combined = "N'" + fields[FieldIndex.CountryCode];
+        for (var i = 0; i < 4; ++i)
+        {
+            var a = fields[FieldIndex.Admin1 + i].Trim();
+            if (a.Length == 0)
+                break;
+            a = a.Replace("'", "''");
+            admin[i] = "N'" + a + "'";
+            combined += "." + a;
+        }
+        combined += "'";
+
+        var name = fields[FieldIndex.Name].Replace("'", "''");
+        var asciiName = fields[FieldIndex.AsciiName].Replace("'", "''");
+
+        var cmd = $"""
+                   IF NOT EXISTS (SELECT * FROM [dbo].[t_TempGeographyImportTable] WHERE [GeoNamesId] = {fields[FieldIndex.Id]})
+                   INSERT INTO [dbo].[t_TempGeographyImportTable]
+                   ([GeoNamesId], [Type], [CountryCode], [Admin1], [Admin2], [Admin3], [Admin4], [Admin5], [Population], [AsciiName], [Name], [Combined], [Mark])
+                   VALUES
+                   ({fields[FieldIndex.Id]}, '{fields[FieldIndex.FeatureCode]}', '{fields[FieldIndex.CountryCode]}', 
+                    {admin[0]}, {admin[1]}, {admin[2]}, {admin[3]}, NULL, {fields[FieldIndex.Population]}, N'{asciiName}', N'{name}', {combined}, NULL)
+                """;
+        _connection!.ExecuteNonQuery(cmd);
+    }
+
+    private static void ImportAdmin5()
+    {
+        const string folder = "adminCode5";
+        var outputs = new Dictionary<string, StreamWriter>();
+
+        // split the lines across several files
+        ProcessLines(folder, "adminCode5.txt", (line) =>
+        {
+            var parts = line.Split('\t', StringSplitOptions.TrimEntries);
+            var cmd = $"""
+                   UPDATE [dbo].[t_TempGeographyImportTable]
+                   SET [Admin5] = N'{parts[1]}', [Combined] = [Combined] + N'.{parts[1]}'
+                   WHERE [GeoNamesId] = {parts[0]} AND [Admin3] IS NOT NULL AND [Admin4] IS NOT NULL
+                """; 
+            var result = _connection!.ExecuteNonQuery(cmd);    
+            //if (result != 1)
+            //    Log.Error($"Failed to update Admin5 for {parts[0]}");
+        });
     }
 
 
     private static void ImportCountryCodes()
     {
-        const string countryInfo = "countryInfo";
-        DownloadFile("https://download.geonames.org/export/dump/" + countryInfo + ".txt");
-
         // split the lines across several files
-        ProcessLines(".", countryInfo + ".txt", (line) =>
+        ProcessLines(".", "countryInfo.txt", (line) =>
         {
             var fields = line.Split('\t', StringSplitOptions.TrimEntries);
             var i = 0;
@@ -250,13 +468,88 @@ internal partial class Program
             }
             else
             {
-                Error.WriteLine("ERROR: Unknown country: " + iso2 + " " + country + "    country (" + geonameid + ")");
+                Log.Error("ERROR: Unknown country: " + iso2 + " " + country + "    country (" + geonameid + ")");
             }
         });
         Log.Flush();
     }
 
+    private static void DeleteUninhabitedAreas()
+    {
+        // Mark all areas inhabited
+        var cmd = "UPDATE t_TempGeographyImportTable SET Mark = 'I'";
+        _connection!.ExecuteNonQuery(cmd);
 
+        // Mark the admin areas as uninhabited
+        cmd = "UPDATE t_TempGeographyImportTable SET Mark = 'U' WHERE [Type] LIKE 'ADM%'";
+        _connection!.ExecuteNonQuery(cmd);
+
+        // Mark the parents of inhabited areas as inhabited
+        while (true)
+        {
+            cmd = "UPDATE t_TempGeographyImportTable SET Mark = 'I' WHERE [Combined] IN (SELECT [Combined] FROM t_TempGeographyImportTable WHERE [Mark] = 'I')";
+            var result = _connection!.ExecuteNonQuery(cmd);
+            if (result == 0)
+                break;
+        }
+
+        // Mark uninhabited areas as dead
+        cmd = "UPDATE t_TempGeographyImportTable SET Mark = 'X' WHERE Mark='U'";
+        _connection!.ExecuteNonQuery(cmd);
+    }
+
+    private static void ExportCountriesToBenchmark()
+    {
+        var cmd = "SELECT GeoNamesId FROM [t_TempGeographyImportTable] WHERE [BenchmarkId] IS NULL AND [Type] NOT LIKE 'ADM%' AND [Type] NOT LIKE 'PPL%'";
+        var gnis = _connection!.ExecuteReader(cmd, (reader) => reader.GetInt64(0));
+
+        foreach (var gni in gnis)
+        {
+            cmd = $"SELECT CountryCode, Name, AsciiName FROM [t_TempGeographyImportTable] WHERE [GeoNamesId] = {gni}";
+            var temp = _connection.SelectOne(cmd, reader => new { GeoNamesId = gni, CountryCode = reader.GetString(0), Name = reader.GetString(1), AsciiName = reader.GetString(2) });
+
+            {
+                var cmd = $"""
+                    INSERT INTO [dbo].[t_Benchmark]
+                    ([CreatorId], [PracticeAreaId], [CreationDate], [CreationSession], [Description], [Type], [Status], [IsDeleted])
+                    VALUES
+                    ({_creatorId}, {_practiceAreaId}, '{CreationDateAsString}', '{CreationSessionAsString}', N'{area.Name}', 'Country', 'Active', 0)
+                """;
+                _connection!.ExecuteNonQuery(cmd);
+
+                cmd = $"""
+                    UPDATE [dbo].[t_TempGeographyImportTable]
+                    SET [BenchmarkId] = (SELECT [Id] FROM [dbo].[t_Benchmark] WHERE [CreatorId] = {_creatorId} AND [PracticeAreaId] = {_practiceAreaId} AND [CreationDate] = '{CreationDateAsString}' AND [CreationSession] = '{CreationSessionAsString}' AND [Description] = N'{area.Name}')
+                    WHERE [GeoNamesId] = {area.GeoNamesId}
+                """;
+                _connection!.ExecuteNonQuery(cmd);
+            });
+        }
+
+        var cmd = $"""
+                    INSERT INTO [dbo].[t_Benchmark]
+                    ([CreatorId], [PracticeAreaId], [CreationDate], [CreationSession], [Description], [Type], [Status], [IsDeleted])
+                        SELECT DISTINCT {_creat}, {1}, '{2}', '{3}', [Combined], 'Location', 'Active', 0
+                        FROM [dbo].[t_TempGeographyImportTable]
+                        WHERE [Type] NOT LIKE 'ADM%' AND [Type] NOT LIKE 'PPL%'
+                    """;
+        cmd = string.Format(cmd, _creatorId, _practiceAreaId, CreationDateAsString, CreationSessionAsString);
+        _connection!.ExecuteNonQuery(cmd);
+
+        cmd = """
+                    UPDATE [dbo].[t_TempGeographyImportTable]
+                    SET [BenchmarkId] = b.[Id]
+                    FROM [dbo].[t_TempGeographyImportTable] t
+                    JOIN [dbo].[t_Benchmark] b ON b.[CreatorId] = {0} AND b.[PracticeAreaId] = {1} AND b.[CreationDate] = '{2}' AND b.[CreationSession] = '{3}' AND b.[Description] = t.[Combined]
+                    WHERE t.[Mark] = 'I'
+                """;
+        cmd = string.Format(cmd, _creatorId, _practiceAreaId, CreationDateAsString, CreationSessionAsString);
+        _connection!.ExecuteNonQuery(cmd);
+    }
+
+
+
+    /*
     private static void ProcessCountryRecord(string line, bool optional)
     {
         var fields = line.Split('\t');
@@ -266,7 +559,7 @@ internal partial class Program
         {
             if (optional)
                 return;
-            Error.WriteLine("Duplicate country code: " + countryCode);
+            Log.Error("Duplicate country code: " + countryCode);
         }
         else
         {
@@ -287,11 +580,11 @@ internal partial class Program
             
             if (country.States.ContainsKey(state.Admin1))
             {
-                Error.WriteLine("ERROR: Duplicate state code: " + state.CountryCode + "." + state.Admin1 + "    state (" + state.Id + ")");
+                Log.Error("ERROR: Duplicate state code: " + state.CountryCode + "." + state.Admin1 + "    state (" + state.Id + ")");
             }
             //else if (state.Population < _populationCutoff)
             //{
-            //    Error.WriteLine("State " + state.AsciiName + " [" + state.CountryCode + "." + state.Admin1 + "] has too little population    (" + state.Id + ")");
+            //    Log.Error("State " + state.AsciiName + " [" + state.CountryCode + "." + state.Admin1 + "] has too little population    (" + state.Id + ")");
             //}
             else
             {
@@ -306,7 +599,7 @@ internal partial class Program
             if (permitDelays)
                 delayedStates.Add(line);
             else
-                Error.WriteLine("ERROR: Unknown country code: " + state.CountryCode + "    state (" + state.Id + ")");
+                Log.Error("ERROR: Unknown country code: " + state.CountryCode + "    state (" + state.Id + ")");
         }
     }
 
@@ -321,11 +614,11 @@ internal partial class Program
             {
                 if (state.Counties.ContainsKey(county.Admin2))
                 {
-                    Error.WriteLine("ERROR: Duplicate county code: " + county.CountryCode + "." + county.Admin1 + "." + county.Admin2 + "    county (" + county.Id + ")");
+                    Log.Error("ERROR: Duplicate county code: " + county.CountryCode + "." + county.Admin1 + "." + county.Admin2 + "    county (" + county.Id + ")");
                 }
                 //else if (county.Population < _populationCutoff)
                 //{
-                //    Error.WriteLine("County " + county.AsciiName + " [" + county.CountryCode + "." + county.Admin1 + "." + county.Admin2 + "] has too little population    (" + county.Id + ")");
+                //    Log.Error("County " + county.AsciiName + " [" + county.CountryCode + "." + county.Admin1 + "." + county.Admin2 + "] has too little population    (" + county.Id + ")");
                 //}
                 else
                 {
@@ -340,7 +633,7 @@ internal partial class Program
                 if (permitDelays)
                     delayedCounties.Add(line);
                 else                
-                    Error.WriteLine("ERROR: Unknown state code: " + county.CountryCode + "." + county.Admin1 + "    county (" + county.Id + ")");
+                    Log.Error("ERROR: Unknown state code: " + county.CountryCode + "." + county.Admin1 + "    county (" + county.Id + ")");
             }
         }
         else
@@ -348,7 +641,7 @@ internal partial class Program
             if (permitDelays)
                 delayedCounties.Add(line);
             else            
-                Error.WriteLine("ERROR: Unknown country code: " + county.CountryCode + "    county (" + county.Id + ")");
+                Log.Error("ERROR: Unknown country code: " + county.CountryCode + "    county (" + county.Id + ")");
         }
     }
 
@@ -356,11 +649,11 @@ internal partial class Program
     {
         var fields = line.Split('\t');
         var city = new City(fields);
-        // if ((city.Population > 0) && (city.Population < _populationCutoff))
-        // {
-        //    Error.WriteLine($"City {city.Id} {city.AsciiName} [{city.CountryCode}.{city.Admin1}.{city.Admin2}] has too little population at {city.Population}");
-        // }
-        // else
+        if ((city.Population > 0) && (city.Population < _populationCutoff))
+        {
+            Log.Error($"City {city.Id} {city.AsciiName} [{city.CountryCode}.{city.Admin1}.{city.Admin2}] has too little population at {city.Population}");
+        }
+        else
         {
             if (Countries.TryGetValue(city.CountryCode, out var country))
             {
@@ -402,7 +695,7 @@ internal partial class Program
                         }
                         //else
                         //{
-                        //    Error.WriteLine("ERROR: Unknown county code: " + city.CountryCode + "." + city.Admin1 + "." + city.Admin2 + "    city (" + city.Id + ")");
+                        //    Log.Error("ERROR: Unknown county code: " + city.CountryCode + "." + city.Admin1 + "." + city.Admin2 + "    city (" + city.Id + ")");
                         //}
                     }
                 }
@@ -420,7 +713,7 @@ internal partial class Program
                     }
                     //else
                     //{
-                    //     Error.WriteLine("ERROR: Unknown state code: " + city.CountryCode + "." + city.Admin1+ "    city (" + city.Id + ")");
+                    //     Log.Error("ERROR: Unknown state code: " + city.CountryCode + "." + city.Admin1+ "    city (" + city.Id + ")");
                     //}
                 }
             }
@@ -429,10 +722,11 @@ internal partial class Program
                 if (permitDelays)
                     delayedCities.Add(line);
                 else               
-                    Error.WriteLine("ERROR: Unknown country code: " + city.CountryCode+ "    city (" + city.Id + ")");
+                    Log.Error("ERROR: Unknown country code: " + city.CountryCode+ "    city (" + city.Id + ")");
             }
         }
     }
+    */
 
     //private static HashSet<string> _english = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     //private static HashSet<string> _englishLike = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -441,14 +735,10 @@ internal partial class Program
 
     private static void ImportAliases()
     {
-        const string allAliases = "alternateNamesV2";
-        DownloadFile("https://download.geonames.org/export/dump/" + allAliases + ".zip");
-        UnzipFile(allAliases + ".zip");
-
-        using var cleaned = File.CreateText($"{allAliases}/processed.txt");
+        const string folder = "alternateNamesV2";
 
         // split the lines across several files
-        ProcessLines(allAliases, allAliases + ".txt", (line) =>
+        ProcessLines(folder, "alternateNamesV2.txt", (line) =>
         {
             var fields = line.Split('\t', StringSplitOptions.TrimEntries);
 
@@ -465,17 +755,7 @@ internal partial class Program
                 isEnglish = TryTranslate(alias, out var translated);
                 if (!isEnglish)
                 {
-                    Log.WriteLine("Could not translate [1]: " + alias);
-                    return;
-                }
-                alias = translated;
-            }
-            else
-            {
-                isEnglish = TryTranslate(alias, out var translated);
-                if (!isEnglish)
-                {
-                    Log.WriteLine("Could not translate[2]: " + alias);
+                    Log.WriteLine("Could not translate: " + alias);
                     return;
                 }
                 alias = translated;
@@ -520,17 +800,18 @@ internal partial class Program
         var fields = line.Split('\t', StringSplitOptions.TrimEntries);
         if (fields.Length != 19)
         {
-            Error.WriteLine($"Expected 19 fields, saw {fields.Length}");
+            Log.Error($"Expected 19 fields, saw {fields.Length}");
             return "";
         }
 
-        var featureClass = fields[6].Trim();            //    : see http://www.geonames.org/export/codes.html, char(1)
+        var featureClass = fields[FieldIndex.FeatureClass].Trim();            //    : see http://www.geonames.org/export/codes.html, char(1)
         if ((featureClass != "A") && (featureClass != "P") && featureClass != "")
             return "";
-        var featureCode = fields[7].Trim();           // feature code      : see http://www.geonames.org/export/codes.html, varchar(10)
+        var featureCode = fields[FieldIndex.FeatureCode].Trim();           // feature code      : see http://www.geonames.org/export/codes.html, varchar(10)
         return (featureCode == "") ? "X" : featureCode.ToUpper();
     }
 
+    /*
     private static bool DownloadFile(string url)
     {
         var slash = url.LastIndexOf('/');
@@ -548,8 +829,8 @@ internal partial class Program
         }
         catch (Exception ex)
         {
-            Error.WriteLine($"Exception while downloading file: {filename} from {url}");
-            Error.WriteLine(ex);
+            Log.Error($"Exception while downloading file: {filename} from {url}");
+            Log.Error(ex);
             return false;
         }
     }
@@ -577,11 +858,12 @@ internal partial class Program
         }
         catch (Exception ex)
         {
-            Error.WriteLine($"Exception while unzipping file: {zipFilename}");
-            Error.WriteLine(ex);
+            Log.Error($"Exception while unzipping file: {zipFilename}");
+            Log.Error(ex);
             return false;
         }
     }
+    */
 
     private static void ProcessLines(string folder, string filename, Action<string> action)
     {
@@ -605,14 +887,16 @@ internal partial class Program
                     ++line;
                     if (line2.StartsWith("#"))
                         continue;
+                    if ((line > 0) && (line % 1000 == 0))
+                        Log.WriteLine($"Processing line {line}");
                     try
                     {
                         action(line2);
                     }
                     catch (Exception e)
                     {
-                        Error.WriteLine($"Exception while processing line {line}");
-                        Error.WriteLine(e);
+                        Log.Error($"Exception while processing line {line}");
+                        Log.Error(e);
                         //Log.Outdent();
                         if (Debugger.IsAttached)
                             Debugger.Break();
@@ -637,15 +921,15 @@ internal partial class Program
         catch (Exception ex)
         {
             Log.Outdent();
-            Error.WriteLine($"Exception while processing file: {filename}");
-            Error.WriteLine(ex);
+            Log.Error($"Exception while processing file: {filename}");
+            Log.Error(ex);
         }
     }
 
 
     private static long _worldId = 0;
     private static Dictionary<string, long> _continents = new (); // benchmark name -> benchmark id
-    private static string _inContenents = "";
+    private static string _inContinents = "";
 
     private static void AddContinentsToDatabase()
     {
@@ -675,25 +959,25 @@ internal partial class Program
             }
         }
 
-        _inContenents  = "[PID] IN (" + string.Join(", ", _continents.Values) + ")";
+        _inContinents  = "[PID] IN (" + string.Join(", ", _continents.Values) + ")";
     }
 
     private static void AddCountryToDatabase(Country entry)
     {
         var name = entry.AsciiName.Replace("'", "''");
         var lname = name.ToLower();
-        var c = _connection!.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE LOWER([NAME]) = '{lname}' AND {_inContenents}", (r) => r.GetInt64(0));
+        var c = _connection!.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE LOWER([NAME]) = '{lname}' AND {_inContinents}", (r) => r.GetInt64(0));
         if (!c.HasValue)
         {
             c = _connection!.SelectOneValue("SELECT L.[OID] FROM [dbo].[t_GeographicLocationAlias] A " + 
                                             "JOIN [dbo].[t_GeographicLocation] L ON (L.[OID] = A.[GeographicLocationID]) " +
-                                           $"WHERE LOWER(A.[Alias]) = '{lname}' AND L.{_inContenents}", 
+                                           $"WHERE LOWER(A.[Alias]) = '{lname}' AND L.{_inContinents}", 
                                            (r) => r.GetInt64(0));
             if (!c.HasValue)
             {
                 c = _connection!.SelectOneValue("SELECT L.[OID] FROM [dbo].[t_GeographicLocationAlias] A " + 
                                                 "JOIN [dbo].[t_GeographicLocation] L ON (L.[OID] = A.[GeographicLocationID]) " +
-                                               $"WHERE LOWER(A.[Alias]) = '{entry.CountryCode.ToLower()}' AND L.{_inContenents}", 
+                                               $"WHERE LOWER(A.[Alias]) = '{entry.CountryCode.ToLower()}' AND L.{_inContinents}", 
                                            (r) => r.GetInt64(0));
                 if (!c.HasValue)
                 {

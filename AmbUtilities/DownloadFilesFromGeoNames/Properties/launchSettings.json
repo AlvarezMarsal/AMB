@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "DownloadFilesFromGeoNames": {
+      "commandName": "Project",
+      "workingDirectory": "..\\..\\"
+    }
+  }
+}

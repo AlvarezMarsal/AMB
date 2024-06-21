@@ -1,171 +1,118 @@
-﻿using System.Diagnostics;
+﻿namespace AmbHelper;
 
-namespace AmbHelper;
-
-public static class Log
+public static class Logs
 {
-    public static readonly LogFile ApplicationLog;
-    public static readonly LogFile ErrorLog;
-    public static bool Debug { get; set; } = true;
-    public static bool Console { get; set; } = true;
+    public static readonly ILogWriter Log;
+    public static readonly ILogWriter Error;
+
     private static readonly char[] LineSeparators = ['\r', '\n'];
 
-    static Log()
+    static Logs()
     {
         var args = Environment.GetCommandLineArgs();
         var exe = args[0];
         var filename = Path.GetFileNameWithoutExtension(exe);
-        ApplicationLog = new LogFile(filename);
-        ErrorLog = new LogFile(filename + ".Errors");
-    }
-
-    public static bool Enabled { get => ApplicationLog.Enabled; set => ApplicationLog.Enabled = value; } 
-
-    public static LogFile WriteLine(string message)
-    {
-        Output(message, false);
-        return ApplicationLog;
-    }
-
-    public static LogFile WriteLine(Exception e)
-    {
-        Output(e.ToString(), false);
-        return ApplicationLog;
-    }
-
-    public static LogFile WriteLine()
-    {
-        Output("", false);
-        return ApplicationLog;
-    }
-
-    public static LogFile Flush()
-    {
-        ErrorLog.Flush();
-        ApplicationLog.Flush();
-        return ApplicationLog;
-    }
-
-    public static LogFile Indent(int n=1) => ApplicationLog.Indent(n);
-
-    public static LogFile Outdent(int n=1) => ApplicationLog.Outdent(n);
-
-    public static LogFile Error(string message)
-    {
-        Output(message, true);
-        return ApplicationLog;
-    }
-
-    public static LogFile Error(Exception e)
-    {
-        var s = e.ToString();
-        Output(s, true);
-        return ApplicationLog;
-    }
-   
-    private static void Output(string text, bool error)
-    {
-        if (text.IndexOfAny(LineSeparators) < 0)
-        {
-            Really(text);
-            return;
-        }
-
-        var lines = text.Split(LineSeparators, StringSplitOptions.RemoveEmptyEntries);
-        foreach (var line in lines)
-        {
-            var trimmed = line.Trim();
-            if (trimmed.Length > 0)
-                Really(trimmed);
-        }
-
-        return;
-
-        void Really(string txt)
-        {
-            if (error)
-            {
-                ErrorLog.WriteLine(txt);
-                ErrorLog.Flush();
-            }
-
-            if (Console)
-                System.Console.WriteLine(txt);
-
-            if (error || Debug)
-                System.Diagnostics.Debug.WriteLine(txt);
-
-            if (ApplicationLog.Enabled)
-                ApplicationLog.WriteLine(txt);
-        }
+        Log = new LogFile(filename);
+        Error = new ErrorLogFile(filename + ".Errors", Log);
     }
 
 
-    public static void Dispose()
-    {
-        ApplicationLog.Dispose();
-        ErrorLog.Dispose();
-    }
 
 }
 
-
-public class LogFile : IDisposable
+public interface ILogWriter : IDisposable
 {
-    private StreamWriter _logFile;
+    bool Debug { get; set; }
+    bool Console { get; set; }
+    bool Enabled { get; set; }
+
+    ILogWriter WriteLine();
+    ILogWriter WriteLine(string text);
+    ILogWriter WriteLine(Exception ex);
+    ILogWriter WriteLine(string text, Exception ex);
+
+    ILogWriter Indent(int n=1);
+    ILogWriter Outdent(int n=1);
+    ILogWriter Flush();
+
+}
+
+public abstract class BaseLogWriter : ILogWriter
+{
     private int _indentLevel;
-    private string _indentString = "";
-    private bool _disposed = false;
+    protected string IndentString = "";
+    protected bool Disposed = false;
+    private static readonly char[] LineSeperators = { '\r', '\n' };
     public bool Enabled { get; set; } = true;
-    private DateTime _openTime;
+    public bool Debug { get; set; } = true;
+    public bool Console { get; set; } = true;
 
-    public LogFile(string name)
+    public BaseLogWriter()
     {
-        var filename = name + ".txt";
-        if (File.Exists(filename))
-            File.Delete(filename);
-        _logFile = File.CreateText(filename);
-        _openTime = DateTime.Now;
-        _logFile.WriteLine($"Log file opened at {_openTime}");
-
-        AtExit.Add(() => { _logFile.Dispose(); });
+        AtExit.Add(() => { Dispose(); });
     }
 
-    public LogFile WriteLine(string message)
+    public ILogWriter WriteLine() => WriteLine("");
+    public ILogWriter WriteLine(Exception ex) => WriteLine(ex.ToString());
+    public ILogWriter WriteLine(string message, Exception ex) { WriteLine(message); return WriteLine(ex); }
+
+    public ILogWriter WriteLine(string message)
     {
         if (Enabled)
         {
-            _logFile.Write(_indentString);
-            _logFile.WriteLine(message);
+            if (message.IndexOfAny(LineSeperators) >= 0)
+            {
+                OutputLine(message);
+            }
+            else
+            {
+                var lines = message.Split(LineSeperators, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var line in lines)
+                {
+                    OutputLine(line);
+                }
+            }
         }
+
         return this;
     }
 
-    public void Dispose()
+    protected virtual void OutputLine(string line)
     {
-        if (!_disposed)
+        if (Console)
         {
-            _disposed = true;
-            var closeTime = DateTime.Now;
-            _logFile.WriteLine($"Log file closed at {closeTime}");
-            var d = closeTime - _openTime;
-            _logFile.WriteLine($"Duration {d}");
-            _logFile.Flush();
-            _logFile.Dispose();
+            if (line.Length > 0)
+                System.Console.Write(IndentString);
+            System.Console.WriteLine(line);
+        }
+
+        if (Debug)
+        {
+            if (line.Length > 0)
+                System.Diagnostics.Debug.Write(IndentString);
+            System.Diagnostics.Debug.WriteLine(line);
         }
     }
 
-    public LogFile Flush()
+    public virtual void Dispose()
     {
-        _logFile.Flush();
+        if (!Disposed)
+        {
+            Disposed = true;
+            Flush();
+        }
+    }
+
+    public virtual ILogWriter Flush()
+    {
         return this;
     }
 
-    public LogFile Indent(int n=1)  => SetIndentation(_indentLevel + n);
+    public ILogWriter Indent(int n=1)  => SetIndentation(_indentLevel + n);
 
-    public LogFile Outdent(int n=1) => SetIndentation(_indentLevel - n);
+    public ILogWriter Outdent(int n=1) => SetIndentation(_indentLevel - n);
 
-    private LogFile SetIndentation(int newIndentLevel)
+    private ILogWriter SetIndentation(int newIndentLevel)
     {
         if (newIndentLevel < 0)
             newIndentLevel = 0;
@@ -174,12 +121,95 @@ public class LogFile : IDisposable
         if (_indentLevel != newIndentLevel)
         {
             _indentLevel = newIndentLevel;
-            _indentString = new string(' ', _indentLevel * 4);
+            IndentString = new string(' ', _indentLevel * 4);
         }
         return this;
-
     }
 }
 
 
+public class LogFile : BaseLogWriter
+{
+    protected StreamWriter Writer;
+    private DateTime _openTime;
 
+    public LogFile(string name)
+    {
+        var filename = name + ".txt";
+        if (File.Exists(filename))
+            File.Delete(filename);
+        Writer = File.CreateText(filename);
+        _openTime = DateTime.Now;
+        Writer.WriteLine($"Log file opened at {_openTime}");
+    }
+
+    public override void Dispose()
+    {
+        if (!Disposed)
+        {
+            var closeTime = DateTime.Now;
+            WriteLine($"Log file closed at {closeTime}");
+            var d = closeTime - _openTime;
+            WriteLine($"Duration {d}");
+            base.Dispose();
+        }
+    }
+
+    public override ILogWriter Flush()
+    {
+        Writer.Flush();
+        return this;
+    }
+
+    protected override void OutputLine(string line)
+    {
+        if (line.Length > 0)
+            Writer.Write(IndentString);
+        Writer.WriteLine(line);
+        base.OutputLine(line);
+    }
+}
+
+
+public class ErrorLogFile : LogFile, IDisposable
+{
+    private ILogWriter _applicationLogWriter;
+
+    public ErrorLogFile(string name, ILogWriter appLog) : base(name)
+    {
+        _applicationLogWriter = appLog;
+    }
+
+    protected override void OutputLine(string line)
+    {
+        Writer.Write(IndentString);
+        Writer.WriteLine(line);
+
+        if (Console && !(_applicationLogWriter.Enabled && _applicationLogWriter.Console))
+        {
+            if (line.Length > 0)
+                System.Console.Write(IndentString);
+            System.Console.WriteLine(line);
+        }
+
+        if (Debug && !(_applicationLogWriter.Enabled && _applicationLogWriter.Debug))
+        {
+            if (line.Length > 0)
+                System.Diagnostics.Debug.Write(IndentString);
+            System.Diagnostics.Debug.WriteLine(line);
+        }
+    }
+
+    public override void Dispose()
+    {
+        _applicationLogWriter.Dispose();
+        base.Dispose();
+    }
+
+    public override ILogWriter Flush()
+    {
+        _applicationLogWriter.Flush();
+        base.Flush();
+        return this;
+    }
+}
