@@ -1,1 +1,1 @@
-"C:\Binaries\DbSmo.exe" USE1DEVICRSQL01 PeerAMid -d -x t_AMBenchmarkSystemAudit -x t_Trans*
+"C:\Binaries\DbSmo.exe" USE1DEVDRPSQL01 AMBenchmark_DB -d -x t_AMBenchmarkSystemAudit
