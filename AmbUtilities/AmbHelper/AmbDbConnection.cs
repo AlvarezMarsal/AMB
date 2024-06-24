@@ -116,8 +116,7 @@ public class AmbDbConnection : DbConnection
         }
         catch (Exception e)
         {
-            Error.WriteLine($"AmbDbConnection: Exception thrown by non-query \"{sql}\"");
-            Error.WriteLine(e.ToString());
+            Error.WriteLine($"AmbDbConnection: Exception thrown by non-query \"{sql}\"", e);
             Error.Flush();
             if (Debugger.IsAttached)
                 Debugger.Break();

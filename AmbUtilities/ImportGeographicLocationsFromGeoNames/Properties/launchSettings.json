@@ -1,0 +1,17 @@
+{
+  "profiles": {
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    },
+    "Step 1": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 1",
+      "workingDirectory": "..\\"
+    },
+    "Fresh": {
+      "commandName": "Project",
+      "workingDirectory": "..\\"
+    }
+  }
+}

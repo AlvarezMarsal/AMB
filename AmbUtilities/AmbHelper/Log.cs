@@ -16,8 +16,11 @@ public static class Logs
         Error = new ErrorLogFile(filename + ".Errors", Log);
     }
 
-
-
+    public static void Dispose()
+    {
+        Log.Dispose();
+        Error.Dispose();
+    }
 }
 
 public interface ILogWriter : IDisposable
