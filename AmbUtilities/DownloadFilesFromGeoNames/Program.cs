@@ -2,6 +2,7 @@
 using System.Data;
 using AmbHelper;
 using System.Globalization;
+using static AmbHelper.Logs;
 
 namespace DownloadFilesFromGeoNames;
 
@@ -142,7 +143,7 @@ internal class Program
 
     static void Main(string[] args)
     {
-        Log.Console = false;
+        Logs.Log.Console = false;
 
         foreach (var arg in args)
         {
@@ -179,7 +180,7 @@ internal class Program
         catch (Exception e)
         {
             Log.Console = true;
-            Log.Error(e);
+            Error.WriteLine(e);
         }
 
         Log.Dispose();
@@ -228,8 +229,7 @@ internal class Program
         }
         catch (Exception ex)
         {
-            Log.Error($"Exception while downloading file: {filename} from {url}");
-            Log.Error(ex);
+            Error.WriteLine($"Exception while downloading file: {filename} from {url}", ex);
             return false;
         }
     }
@@ -251,8 +251,7 @@ internal class Program
         }
         catch (Exception ex)
         {
-            Log.Error($"Exception while unzipping file: {zipFilename}");
-            Log.Error(ex);
+            Error.WriteLine($"Exception while unzipping file: {zipFilename}", ex);
             return false;
         }
     }

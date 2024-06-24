@@ -2,7 +2,7 @@
 using System.Security.Cryptography;
 using AmbHelper;
 using ImportJobTitles;
-using OfficeOpenXml.FormulaParsing.Excel.Functions.Logical;
+using static AmbHelper.Logs;
 
 namespace ImportLocations
 {

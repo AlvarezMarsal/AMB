@@ -2,6 +2,7 @@
 using AmbHelper;
 using OfficeOpenXml;
 using static AmbHelper.Settings;
+using static AmbHelper.Logs;
 
 namespace ImportJobTitles
 {

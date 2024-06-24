@@ -2,6 +2,7 @@
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using static AmbHelper.Logs;
 
 namespace AmbHelper;
 
@@ -9,27 +10,11 @@ public class AmbDbConnection : DbConnection
 {
     public readonly SqlConnection SqlConnection;
     private readonly Dictionary<string, string> _connectionStringParts;
-    public LogFile? AppLog { get; private set; }
-    public LogFile? ErrLog { get; private set; }
     private const string GetNextOidProc = "[dbo].[sp_internalGetNextOid]";
     private const string GetNextOidsProc = "[dbo].[sp_internalGetNextOids]";
 
     public AmbDbConnection(string connectionString)
-        : this(connectionString, AmbHelper.Log.ApplicationLog, AmbHelper.Log.ErrorLog)
     {
-    }
-
-    /*
-    public AmbDbConnection(string connectionString, string logfile)
-        : this(connectionString, new LogFile(logfile))
-    {
-    }
-    */
-
-    private AmbDbConnection(string connectionString, LogFile? appLog, LogFile? errLog)
-    {
-        AppLog = appLog;
-        ErrLog = errLog;
 
         var parts = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries);
         _connectionStringParts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -45,25 +30,6 @@ public class AmbDbConnection : DbConnection
 
         SqlConnection = new SqlConnection(connectionString);
         SqlConnection.Open();
-
-        /*
-        var proc = $"""
-                    CREATE OR ALTER PROCEDURE {GetNextOidProc}
-                        (@oid BIGINT OUTPUT)
-                    AS
-                    SET NOCOUNT ON
-                    BEGIN
-                        SELECT @oid = [NextOID] FROM [t_AMBenchmarkSystem] WITH(TABLOCKX, HOLDLOCK);
-                        UPDATE [t_AMBenchmarkSystem] SET [NextOID] = ([NextOID] + 1);
-                    END
-                    """;
-
-        ExecuteNonQuery(proc);
-
-        var db = _connectionStringParts["Database"];
-        var grant = $"GRANT EXEC ON {db}.{GetNextOidProc} TO PUBLIC";
-        ExecuteNonQuery(grant);
-        */
     }
 
 #pragma warning disable CS8765 // Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
@@ -114,16 +80,15 @@ public class AmbDbConnection : DbConnection
             var cmd = SqlConnection.CreateCommand();
             cmd.CommandText = sql;
             if (log)
-                AppLog?.WriteLine($"AmbDbConnection: created command \"{sql}\"");
+                Log.WriteLine($"AmbDbConnection: created command \"{sql}\"");
             return cmd;
         }
         catch (Exception e)
         {
             if (log)
             {
-                ErrLog?.WriteLine($"AmbDbConnection: Exception while creating command \"{sql}\"");
-                ErrLog?.WriteLine(e.ToString());
-                ErrLog?.Flush();
+                Error.WriteLine($"AmbDbConnection: Exception while creating command \"{sql}\"", e);
+                Error.Flush();
                 if (Debugger.IsAttached)
                     Debugger.Break();
             }
@@ -146,14 +111,14 @@ public class AmbDbConnection : DbConnection
             using var cmd = SqlConnection.CreateCommand();
             cmd.CommandText = sql;
             var result = cmd.ExecuteNonQuery();
-            AppLog?.WriteLine($"AmbDbConnection: {result} rows affected by non-query \"{sql}\"");
+            Log.WriteLine($"AmbDbConnection: {result} rows affected by non-query \"{sql}\"");
             return result;
         }
         catch (Exception e)
         {
-            ErrLog?.WriteLine($"AmbDbConnection: Exception thrown by non-query \"{sql}\"");
-            ErrLog?.WriteLine(e.ToString());
-            ErrLog?.Flush();
+            Error.WriteLine($"AmbDbConnection: Exception thrown by non-query \"{sql}\"");
+            Error.WriteLine(e.ToString());
+            Error.Flush();
             if (Debugger.IsAttached)
                 Debugger.Break();
             return -1;
@@ -169,14 +134,14 @@ public class AmbDbConnection : DbConnection
             cmd.CommandText = sql;
             var result = cmd.ExecuteScalar();
             var r = result?.ToString() ?? "null";
-            AppLog?.WriteLine($"AmbDbConnection: value {r} returned by scalar command \"{sql}\"");
+            Log.WriteLine($"AmbDbConnection: value {r} returned by scalar command \"{sql}\"");
             return result;
         }
         catch (Exception e)
         {
-            ErrLog?.WriteLine($"AmbDbConnection: Exception thrown by scalar command \"{sql}\"");
-            ErrLog?.WriteLine(e.ToString());
-            ErrLog?.Flush();
+            Error.WriteLine($"AmbDbConnection: Exception thrown by scalar command \"{sql}\"");
+            Error.WriteLine(e.ToString());
+            Error.Flush();
             if (Debugger.IsAttached)
                 Debugger.Break();
             throw;
@@ -193,16 +158,16 @@ public class AmbDbConnection : DbConnection
             using var cmd = SqlConnection.CreateCommand();
             cmd.CommandText = sql;
             if (log)
-                AppLog?.WriteLine($"AmbDbConnection: executing reader \"{sql}\"");
+                Log.WriteLine($"AmbDbConnection: executing reader \"{sql}\"");
             return cmd.ExecuteReader();
         }
         catch (Exception e)
         {
             if (log)
             {
-                ErrLog?.WriteLine($"AmbDbConnection: Exception thrown by reader \"{sql}\"");
-                ErrLog?.WriteLine(e.ToString());
-                ErrLog?.Flush();
+                Error.WriteLine($"AmbDbConnection: Exception thrown by reader \"{sql}\"");
+                Error.WriteLine(e.ToString());
+                Error.Flush();
                 if (Debugger.IsAttached)
                     Debugger.Break();
             }
@@ -224,17 +189,17 @@ public class AmbDbConnection : DbConnection
                     action(reader);
                 }
                 if (count == 1)
-                    AppLog?.WriteLine($"AmbDbConnection: 1 read from reader \"{sql}\"");
+                    Log.WriteLine($"AmbDbConnection: 1 read from reader \"{sql}\"");
                 else
-                    AppLog?.WriteLine($"AmbDbConnection: {count} reads from reader \"{sql}\"");
+                    Log.WriteLine($"AmbDbConnection: {count} reads from reader \"{sql}\"");
                 // _log?.Flush();
             }
         }
         catch (Exception e)
         {
-            ErrLog?.WriteLine($"AmbDbConnection: Exception thrown by reader \"{sql}\"");
-            ErrLog?.WriteLine(e.ToString());
-            ErrLog?.Flush();
+            Error.WriteLine($"AmbDbConnection: Exception thrown by reader \"{sql}\"");
+            Error.WriteLine(e.ToString());
+            Error.Flush();
             if (Debugger.IsAttached)
                 Debugger.Break();
             throw;

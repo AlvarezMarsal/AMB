@@ -11,7 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImportJobTitles", "ImportJo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImportLocationsFromWeb", "ImportLocationsFromWeb\ImportLocationsFromWeb.csproj", "{7D7BBEBA-BD43-4579-A831-C54A7D6EC0C6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DownloadFilesFromGeoNames", "DownloadFilesFromGeoNames\DownloadFilesFromGeoNames.csproj", "{BD95B071-B757-404B-B76E-3DD6D823CE37}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DownloadFilesFromGeoNames", "DownloadFilesFromGeoNames\DownloadFilesFromGeoNames.csproj", "{BD95B071-B757-404B-B76E-3DD6D823CE37}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImportGeographicLocationsFromGeoNames", "ImportGeographicLocationsFromGeoNames\ImportGeographicLocationsFromGeoNames.csproj", "{EF1171F3-DA3F-459C-92C7-32DDDAFB0340}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +41,10 @@ Global
 		{BD95B071-B757-404B-B76E-3DD6D823CE37}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD95B071-B757-404B-B76E-3DD6D823CE37}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD95B071-B757-404B-B76E-3DD6D823CE37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF1171F3-DA3F-459C-92C7-32DDDAFB0340}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF1171F3-DA3F-459C-92C7-32DDDAFB0340}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF1171F3-DA3F-459C-92C7-32DDDAFB0340}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF1171F3-DA3F-459C-92C7-32DDDAFB0340}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
