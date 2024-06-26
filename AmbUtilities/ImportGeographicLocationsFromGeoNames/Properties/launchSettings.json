@@ -33,9 +33,14 @@
       "commandLineArgs": "-step 5",
       "workingDirectory": "..\\"
     },
-    "Step 5 X": {
+    "Step 6": {
       "commandName": "Project",
-      "commandLineArgs": "-step 5 -line 6110000",
+      "commandLineArgs": "-step 6",
+      "workingDirectory": "..\\"
+    },
+    "Step 7": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 7",
       "workingDirectory": "..\\"
     }
   }

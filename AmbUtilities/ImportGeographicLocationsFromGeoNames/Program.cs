@@ -22,17 +22,15 @@ internal partial class Program
     private static bool _quick = false;
     private static bool _dump = false;
     */
-    private static readonly DateTime CreationDate = DateTime.Now;
-    /*
-    private static readonly string CreationDateAsString;
-    */
+    private readonly DateTime _creationDate;
+    private readonly string _creationDateAsString;
+    private readonly Guid _creationSession = Guid.NewGuid();
+    private readonly string _creationSessionAsString;
     private long _creatorId = 100;
     private int _practiceAreaId = 2501;
     private int _step = 0;
     private bool _keep = false;
     /*
-    private static readonly Guid CreationSession = Guid.NewGuid();
-    private static readonly string CreationSessionAsString;
     // private static long _populationCutoff = 1000;
     private static Dictionary<string, string> CountryToContinent = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     private static readonly List<string> delayedStates = [];
@@ -41,14 +39,12 @@ internal partial class Program
     private static HashSet<long> UninhabitedCounties = new HashSet<long>();
     private static HashSet<long> UninhabitedStates = new HashSet<long>();
     */
-    private static HashSet<long>? GeoNameIds;
-    /*
-    static Program()
-    {
-        CreationDateAsString = CreationDate.ToString();
-        CreationSessionAsString = CreationSession.ToString();
-    }
-    */
+    private HashSet<long>? GeoNameIds;
+    private long _worldId = 20000;
+    private Dictionary<string, string> _continentNameToAbbreviation;
+    private Dictionary<string, long> _continentAbbreviationToId = new (StringComparer.OrdinalIgnoreCase);
+    readonly Dictionary<long, long> _previousChildIndex = new();
+
 
     static void Main(string[] args)
     {
@@ -69,6 +65,25 @@ internal partial class Program
 
     private Program()
     {
+        _creationDate = DateTime.Now;
+        _creationDateAsString = _creationDate.ToString(CultureInfo.InvariantCulture);
+        _creationSession = Guid.NewGuid();
+        _creationSessionAsString = _creationSession.ToString();
+
+        _continentNameToAbbreviation = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Europe", "EU" },
+            { "Middle East", "ME" },
+            { "Central Asia", "CA" },
+            { "North America", "NA" },
+            { "Latin America", "LA" },
+            { "Africa", "AF" },
+            { "Antarctica", "AN" },
+            { "North Asia", "NO" },
+            { "Southeast Asia & Australia (SEAA)", "SA" }
+        };
+
+        _continentAbbreviationToId = new (StringComparer.OrdinalIgnoreCase);
     }
 
     private void Run(string[] args)
@@ -179,15 +194,34 @@ internal partial class Program
                                 var from = ParseDateTime(fields[i++], MinDateTime);
                                 var to = ParseDateTime(fields[i++], MaxDateTime);
 
-                                if ((CreationDate >= from) && (CreationDate < to))
+                                if ((_creationDate >= from) && (_creationDate < to))
                                     InsertGeoNamesAlternateName(0, geonameId, language, translated!, isPreferredName, isShortName, isColloquial, isHistoric, from, to, lineNumber);
                             }
                         }
                     });
                     break;
 
+                case 6: 
+                    ImportContinents(); 
+                    break;
+
+                case 7: 
+                    ImportCountries(); 
+                    break;
+
+                case 8: 
+                    //ImportStates(); 
+                    break;
+
+                case 9: 
+                    //ImportCounties(); 
+                    break;
+
+                case 10: 
+                    //ImportCities(); 
+                    break;
+
                 /*
-                case 0: ImportContinents(); break;
                 case 1: ImportGeographyLocations(); break;
                 case 2: ImportAliases(); break;
                 case 3: ImportCountryCodes(); break;
@@ -209,6 +243,7 @@ internal partial class Program
             }
 
             Log.Outdent();
+            Log.Flush();
         }
 
         /*
@@ -526,25 +561,6 @@ internal partial class Program
 
     #endregion
 
-    /*
-    private static void ImportContinents()
-    {
-        const string c2c = "CountriesToContinents.txt";
-        ProcessLines("../../../../../", c2c, (line) =>
-        {
-            var fields = line.Split('\t', StringSplitOptions.TrimEntries);
-            var countryCode = fields[0].Trim();
-            if (countryCode != "")
-            {
-                var continent = fields[2].Trim();
-                CountryToContinent.Add(countryCode, continent);
-            }
-        });
-        AddContinentsToDatabase();
-        Log.Flush();
-    }
-    */
-
     #region Import From GeoNames
 
     private void ImportFromGeoNamesFile(string filename)
@@ -664,7 +680,6 @@ internal partial class Program
                 Error.WriteLine($"Exception while processing line {lineNumber}", e);
             }
         }
-
     }
 
     #endregion
@@ -678,22 +693,7 @@ internal partial class Program
             var iso = fields[0];
             var country = fields[1];
             var continent = fields[2];
-
-            var bmContinent = continent switch 
-            {
-                "Europe" => "EU",
-                "Middle East" => "ME",
-                "Central Asia" => "CA",
-                "North America" => "NA",
-                "Latin America" => "LA",
-                "Africa" => "AF",
-                "Antarctica" => "AN",
-                "Southeast Asia & Australia (SEAA)" => "SA",
-                "North Asia" => "NO",
-                _ => throw new Exception("Unknown continent: " + continent)
-            };
-
-
+            var bmContinent = _continentNameToAbbreviation[continent];
             var result = Connection.ExecuteNonQuery(
                 $"""
                     UPDATE [dbo].[t_GeoNames]
@@ -704,8 +704,146 @@ internal partial class Program
     }
 
     #endregion
+    
+    private void ImportContinents()
+    {
+        // Get the world
+        var w = Connection.SelectOneValue("SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] IS NULL", (r) => r.GetInt64(0));
+        if (!w.HasValue)
+            throw new Exception("World not found");
 
-    /*
+        _worldId = w.Value;
+        LoadExistingContinentIds();
+        foreach (var kvp in _continentNameToAbbreviation)
+        {
+            if (_continentAbbreviationToId.ContainsKey(kvp.Value))
+                continue;
+            var index = NextChildIndex(_worldId);
+            var id = Connection.GetNextOid();
+            Connection!.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocation] " +
+                "([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorId],[PracticeAreaID],[CreationSession]) " +
+                "VALUES " +
+                $"({id}, {_worldId}, 1, N'{kvp.Key}', {index}, N'{kvp.Key}', '{_creationDateAsString}', {_creatorId}, {_practiceAreaId}, '{_creationSessionAsString}')");
+            _continentAbbreviationToId.Add(kvp.Value, id);
+            AddAliasToDatabase(id, kvp.Key, kvp.Key);
+        }
+
+        //_inContenents  = "[PID] IN (" + string.Join(", ", _continents.Values) + ")";
+    }
+
+    private void LoadExistingContinentIds()
+    {
+        if (_continentAbbreviationToId.Count > 0)
+            return;
+        foreach (var kvp in _continentNameToAbbreviation)
+        {
+            var id = Connection.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {_worldId} AND [Name] = N'{kvp.Key}'", (r) => r.GetInt64(0));
+            if (id.HasValue)
+            {
+                _continentAbbreviationToId.Add(kvp.Value, id.Value);
+                AddAliasToDatabase(id.Value, kvp.Key, kvp.Key);
+            }
+        }
+    }
+
+    private void ImportCountries()
+    {
+        LoadExistingContinentIds();
+        /*
+        // First, read the existing ones from Benchmark
+        var countryIds = Connection.Select(
+            $"""
+                SELECT A.[OID], A.[Name]
+                FROM [dbo].[t_GeographicLocation] A 
+                WHERE [PID] IN (SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {_worldId})
+            """, (r) => new { Oid=r.GetInt64(0), Name=r.GetString(1) });
+
+        // For each of those countries, the name must be in the GeoNames tables.
+        // Use this to set the benchmark ID in the GeoNames table.
+        foreach (var cid in countryIds)
+        {
+            var name = cid.Name;
+            var geonameId = Connection.SelectOneValue(
+                $"""
+                    SELECT [GeoNameId]
+                    FROM [dbo].[t_GeoNamesAlternateNames]
+                    WHERE [AlternateName] = N'{cid.Name}'
+                 """, (r) => r.GetInt64(0));
+
+            if (!geonameId.HasValue)
+                throw new Exception("Country not found in GeoNames: " + name);
+            Connection.ExecuteNonQuery(
+                $"""
+                    UPDATE [dbo].[t_GeoNames]
+                        SET [BenchmarkId] = {cid.Oid}
+                        WHERE [GeoNameId] = {geonameId}
+
+                 """);
+        }
+        */
+        // Now, process those countries NOT already in Benchmark
+        ImportFlatTextFile("countryInfo.txt", '\t', 19, (lineNumber, fields) =>
+        {
+            var i = 0;
+            var iso = fields[i++];
+            var iso3 = fields[i++];
+            var isoNumeric = fields[i++];
+            var fips = fields[i++];
+            var country = fields[i++];
+            var capital = fields[i++];
+            var area = fields[i++];
+            var population = fields[i++];
+            var continent = fields[i++];
+            var tld = fields[i++];
+            var currencyCode = fields[i++];
+            var currencyName = fields[i++];
+            var phone = fields[i++];
+            var postalCodeFormat = fields[i++];
+            var postalCodeRegex = fields[i++];
+            var languages = fields[i++];
+            var geonameId = long.Parse(fields[i++]);
+            var neighbours = fields[i++];
+            var equivalentFipsCode = fields[i++];
+
+            var c = Connection.SelectOne(
+                $"""
+                    SELECT [Continent]
+                    FROM [dbo].[t_GeoNames]
+                    WHERE [GeoNameId] = {geonameId}
+                 """, (r) => r.GetString(0));
+            var parentId = _continentAbbreviationToId[c!];
+            var oid = AddGeographicLocationToDatabase(parentId, country);
+            AddAliasToDatabase(oid, iso, country);
+            AddAliasToDatabase(oid, iso3, country);
+        });
+    }
+
+    private long AddGeographicLocationToDatabase(long parentId, string asciiName)
+    {
+        var oid = Connection!.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId} AND [Name] = N'{asciiName}'",
+            (r) => r.GetInt64(0), false);
+        if (oid.HasValue)
+            return oid.Value;
+
+        var index = NextChildIndex(parentId);
+        oid = Connection.GetNextOid();
+        var name = asciiName.Replace("'", "''");
+
+        Connection!.ExecuteNonQuery(
+            $"""
+                INSERT INTO [dbo].[t_GeographicLocation]
+                    ([OID], [PID], [IsSystemOwned], [Name], [Index], [Description], [CreationDate], [CreatorId], [PracticeAreaID], [CreationSession])
+                VALUES
+                    ({oid.Value}, {parentId}, 1, N'{name}', {index}, N'{name}', '{_creationDateAsString}', {_creatorId}, {_practiceAreaId}, '{_creationSessionAsString}')
+             """, false);   
+
+        // We use the GeoNames AsciiName as the GL's name, and as the first (primary) alias
+        AddAliasToDatabase(oid.Value, asciiName);
+        return oid.Value;
+    }
+
+
+   /*
     private static void ImportCities()
     {
         const string cities = "cities500";
@@ -1027,132 +1165,6 @@ internal partial class Program
     }
 
     /*
-    private static string SplitData(string line)
-    {
-        var fields = line.Split('\t', StringSplitOptions.TrimEntries);
-        if (fields.Length != 19)
-        {
-            Error.WriteLine($"Expected 19 fields, saw {fields.Length}");
-            return "";
-        }
-
-        var featureClass = fields[6].Trim();            //    : see http://www.geonames.org/export/codes.html, char(1)
-        if ((featureClass != "A") && (featureClass != "P") && featureClass != "")
-            return "";
-        var featureCode = fields[7].Trim();           // feature code      : see http://www.geonames.org/export/codes.html, varchar(10)
-        return (featureCode == "") ? "X" : featureCode.ToUpper();
-    }
-
-    private static bool DownloadFile(string url)
-    {
-        var slash = url.LastIndexOf('/');
-        var filename = url.Substring(slash + 1);
-        if (_quick && File.Exists(filename))
-            return true;
-        try
-        {
-            using var client = new HttpClient();
-            using var s = client.GetStreamAsync(url);
-            using var fs = new FileStream(filename, FileMode.OpenOrCreate);
-            s.Result.CopyTo(fs);
-            Log.WriteLine($"Downloaded file: {filename} from {url}");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Error.WriteLine($"Exception while downloading file: {filename} from {url}");
-            Error.WriteLine(ex);
-            return false;
-        }
-    }
-
-    private static bool UnzipFile(string zipFilename, string? directory = null)
-    {
-        var name = Path.GetFileNameWithoutExtension(zipFilename);
-        try
-        {
-            directory ??= name;
-            if (_quick)
-            {
-                if (Directory.Exists(directory) && File.Exists(Path.Combine(directory, name + ".txt")))
-                    return true;
-            }
-            else
-            {
-                if (Directory.Exists(directory))
-                    Directory.Delete(directory, true);
-                Directory.CreateDirectory(directory);
-            }
-            System.IO.Compression.ZipFile.ExtractToDirectory(zipFilename, directory + "\\");
-            Log.WriteLine($"Unzipped file: {zipFilename}");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Error.WriteLine($"Exception while unzipping file: {zipFilename}");
-            Error.WriteLine(ex);
-            return false;
-        }
-    }
-
-    private static void ProcessLines(string folder, string filename, Action<string> action)
-    {
-        try
-        {   
-            var path = Path.GetFullPath(folder);
-            var files = Directory.GetFiles(path, filename);
-            foreach (var file in files)
-            {
-                Log.WriteLine($"Processing file {filename}");
-                Log.Indent();
-
-                int line = 1;
-                using var f = File.OpenText(file);
-                while (true)
-                {
-                    var line2 = f.ReadLine();
-                    if (line2 == null)
-                        break;
-                    //Log.WriteLine($"Processing line {line}").Indent();
-                    ++line;
-                    if (line2.StartsWith("#"))
-                        continue;
-                    try
-                    {
-                        action(line2);
-                    }
-                    catch (Exception e)
-                    {
-                        Error.WriteLine($"Exception while processing line {line}");
-                        Error.WriteLine(e);
-                        //Log.Outdent();
-                        if (Debugger.IsAttached)
-                            Debugger.Break();
-                    }
-                    finally
-                    {
-                        //Log.Outdent();
-                    }
-                }
-
-                Log.Outdent();
-                Log.WriteLine($"End of {filename} after {line} lines");
-
-                //Log.WriteLine("Excluded feature codes: ").Indent();
-                //var efc = ExcludedFeatureCodes.ToList();
-                //efc.Sort();
-                //foreach (var x in efc)
-                //    Log.WriteLine(x);
-                //Log.Outdent();
-            }
-        }
-        catch (Exception ex)
-        {
-            Log.Outdent();
-            Error.WriteLine($"Exception while processing file: {filename}");
-            Error.WriteLine(ex);
-        }
-    }
 
 
     private static long _worldId = 0;
@@ -1161,33 +1173,6 @@ internal partial class Program
 
     private static void AddContinentsToDatabase()
     {
-        var w = _connection!.SelectOneValue("SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] IS NULL", (r) => r.GetInt64(0));
-        if (!w.HasValue)
-            throw new Exception("World not found");
-        _worldId = w.Value;
-        _continents = _connection.Select($"SELECT [OID], [NAME] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {_worldId}", (r) => new Tuple<string, long>(r.GetString(1), r.GetInt64(0)));
-        var ctc = new HashSet<string>(CountryToContinent.Values, StringComparer.OrdinalIgnoreCase);
-
-        foreach (var continent in ctc)
-        {
-            if (!_continents.ContainsKey(continent))
-            {
-                var index = NextChildIndex(_worldId);
-                var oid = _connection.GetNextOid();
-                _connection!.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocation] " +
-                    "([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorId],[PracticeAreaID],[CreationSession]) " +
-                    "VALUES " +
-                    $"({oid}, {_worldId}, 1,'{continent}', {index}, '{continent}', '{CreationDateAsString}', {_creatorId}, {_practiceAreaId}, '{CreationSessionAsString}')");
-                _continents.Add(continent, oid);
-                AddAliasToDatabase(oid, continent, continent, 500);
-            }
-            else
-            {
-                AddAliasToDatabase(_continents[continent], continent, continent, 500);
-            }
-        }
-
-        _inContenents  = "[PID] IN (" + string.Join(", ", _continents.Values) + ")";
     }
 
     private static void AddCountryToDatabase(Country entry)
@@ -1243,10 +1228,10 @@ internal partial class Program
                 AddAliasToDatabase(entry.BenchmarkId, translation!, entry.AsciiName, 500);
     }
 
+    */
 
-    static readonly Dictionary<long, long> _previousChildIndex = new();
 
-    private static long NextChildIndex(long parentId)
+    private long NextChildIndex(long parentId)
     {
         long nextIndex;
         if (_previousChildIndex.ContainsKey(parentId))
@@ -1255,7 +1240,7 @@ internal partial class Program
         }
         else
         {
-            var i = _connection!.ExecuteScalar($"SELECT MAX([Index]) FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId}");
+            var i = Connection.ExecuteScalar($"SELECT MAX([Index]) FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId}", false);
             if (i is int j)
             {
                 nextIndex = j;
@@ -1280,7 +1265,7 @@ internal partial class Program
         return nextIndex; 
     }
 
-
+    /*
     private static string[] EndingRedundancies = new string[] { " Region", " District", " Province", " County", " Parish" }; // need to have a space before each one
 
     private static void AddStateToDatabase(Country country, Division1 state)
@@ -1347,40 +1332,43 @@ internal partial class Program
             }
         }
     }
+    */
 
-    private static long memoBenchmarkId;
-    private static long memoLanguageId;
-    private static string memoAlias = "";
+    //private static long memoBenchmarkId;
+    //private static long memoLanguageId;
+    //private static string memoAlias = "";
 
-    private static void AddAliasToDatabase(long benchmarkId, string alias, string description, long languageId)
+    private void AddAliasToDatabase(long benchmarkId, string alias, string? description = null, long languageId = 500)
     {
+        description ??= alias;
         // There are a LOT of duplicates, so we can skip them
-        if ((benchmarkId == memoBenchmarkId) && (languageId == memoLanguageId) && (alias == memoAlias))
-            return;
-        memoBenchmarkId = benchmarkId;
-        memoLanguageId = languageId;
-        memoAlias = alias;
+        //if ((benchmarkId == memoBenchmarkId) && (languageId == memoLanguageId) && (alias == memoAlias))
+        //    return;
+        //memoBenchmarkId = benchmarkId;
+        //memoLanguageId = languageId;
+        //memoAlias = alias;
 
         var name = alias.Replace("'", "''");
         var lname = name.ToLower();
-        var c = _connection!.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocationAlias] WHERE LOWER([Alias]) = '{lname}' AND [GeographicLocationId] = {benchmarkId}", (r) => r.GetInt64(0));
+        var c = Connection.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocationAlias] WHERE LOWER([Alias]) = '{lname}' AND [GeographicLocationId] = {benchmarkId}", (r) => r.GetInt64(0));
         if (c.HasValue)
             return;
 
         var createAsPrimary = (languageId == 500);
-        var c2 = _connection.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocationAlias] WHERE [IsPrimary] = 1 AND [GeographicLocationId] = {benchmarkId}", (r) => r.GetInt64(0));
+        var c2 = Connection.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocationAlias] WHERE [IsPrimary] = 1 AND [GeographicLocationId] = {benchmarkId}", (r) => r.GetInt64(0));
         if (c2.HasValue)
             createAsPrimary = false;
         var p = createAsPrimary ? 1 : 0;
 
-        var oid = _connection.GetNextOid();
+        var oid = Connection.GetNextOid();
         description = description.Replace("'", "''");
         _connection!.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocationAlias] " +
             "([OID],[Alias],[Description],[IsSystemOwned],[IsPrimary],[CreationDate],[CreatorId],[PracticeAreaID],[GeographicLocationID],[LID],[CreationSession]) " +
             "VALUES " +
-            $"({oid}, '{name}', '{description}', 1, {p}, '{CreationDateAsString}', {_creatorId}, {_practiceAreaId}, {benchmarkId}, {languageId},'{CreationSessionAsString}')");
+            $"({oid}, '{name}', '{description}', 1, {p}, '{_creationDateAsString}', {_creatorId}, {_practiceAreaId}, {benchmarkId}, {languageId},'{_creationSessionAsString}')");
     }
 
+    /*
     private static void Dump()
     {
         using var file = File.CreateText("Dump.txt");
