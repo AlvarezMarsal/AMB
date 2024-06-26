@@ -41,9 +41,11 @@ internal partial class Program
     */
     private HashSet<long>? GeoNameIds;
     private long _worldId = 20000;
-    private Dictionary<string, string> _continentNameToAbbreviation;
-    private Dictionary<string, long> _continentAbbreviationToId = new (StringComparer.OrdinalIgnoreCase);
-    readonly Dictionary<long, long> _previousChildIndex = new();
+    private readonly Dictionary<string, string> _continentNameToAbbreviation;
+    private readonly Dictionary<string, long> _continentAbbreviationToId = new (StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, long> _geoNameCountryCodesToIds = new (StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<long, long> _geoNameCountryIdsToBenchmarkIds= new ();
+    private readonly Dictionary<long, long> _previousChildIndex = new ();
 
 
     static void Main(string[] args)
@@ -210,7 +212,7 @@ internal partial class Program
                     break;
 
                 case 8: 
-                    //ImportStates(); 
+                    ImportStates(); 
                     break;
 
                 case 9: 
@@ -815,19 +817,85 @@ internal partial class Program
             var oid = AddGeographicLocationToDatabase(parentId, country);
             AddAliasToDatabase(oid, iso, country);
             AddAliasToDatabase(oid, iso3, country);
+            _geoNameCountryCodesToIds.Add(iso, geonameId);
+            _geoNameCountryIdsToBenchmarkIds.Add(geonameId, oid);
         });
     }
 
+    private void ImportStates()
+    {
+        LoadGeoNameCountries();
+ 
+        foreach (var kvp in _geoNameCountryCodesToIds)
+        {
+            var names = Connection.Select(
+                $"""
+                    SELECT [Name]
+                    FROM [dbo].[t_GeoNames]
+                    WHERE [FeatureCode] = N'ADM1' AND [CountryCode] = N'{kvp.Key}'
+                 """, (r) => r.GetString(0));
+
+            var parentId = _geoNameCountryIdsToBenchmarkIds[kvp.Value];
+            foreach (var name in names)
+            {
+                AddGeographicLocationToDatabase(parentId, name);
+            }
+        }
+    }
+
+
+    private void LoadGeoNameCountries()
+    {
+        if (_geoNameCountryCodesToIds.Count > 0)
+            return;
+
+        Connection.ExecuteReader(
+            $"""
+                SELECT [GeoNameId], [CountryCode], [BenchmarkId]
+                FROM [dbo].[t_GeoNames]
+                WHERE [FeatureCode] IN 
+                    (
+                        --'LTER', --	leased area	a tract of land leased to another country, usually for military installations
+                        'PCL', --	political entity	
+                        'PCLD', --	dependent political entity	
+                        'PCLF', --	freely associated state	
+                        --'PCLH', --	historical political entity	a former political entity
+                        'PCLI', --	independent political entity	
+                        'PCLIX', --	section of independent political entity	
+                        'PCLS', --	semi-independent political entity	
+                        --'PRSH', --	parish	an ecclesiastical district
+                        'TERR' --	territory	
+                    )
+            """, 
+            r =>
+            {
+                var id = r.GetInt64(0);
+                var cc = r.GetString(1);
+                var bm = r.GetInt64(2);
+
+                if (string.IsNullOrWhiteSpace(cc))
+                {
+                    Log.WriteLine($"Invalid country code for {id}");
+                }
+                else
+                {
+                    _geoNameCountryCodesToIds.Add(cc, id);
+                    _geoNameCountryIdsToBenchmarkIds.Add(id, bm);
+                }
+            });
+    }
+  
+
     private long AddGeographicLocationToDatabase(long parentId, string asciiName)
     {
-        var oid = Connection!.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId} AND [Name] = N'{asciiName}'",
+        var name = asciiName.Replace("'", "''");
+        var oid = Connection!.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId} AND [Name] = N'{name}'",
             (r) => r.GetInt64(0), false);
         if (oid.HasValue)
             return oid.Value;
 
         var index = NextChildIndex(parentId);
         oid = Connection.GetNextOid();
-        var name = asciiName.Replace("'", "''");
 
         Connection!.ExecuteNonQuery(
             $"""

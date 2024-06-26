@@ -38,9 +38,14 @@
       "commandLineArgs": "-step 6",
       "workingDirectory": "..\\"
     },
-    "Step 7": {
+    "Step 7 - Import Countries": {
       "commandName": "Project",
       "commandLineArgs": "-step 7",
+      "workingDirectory": "..\\"
+    },
+    "Step 8 - Import States": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 8",
       "workingDirectory": "..\\"
     }
   }
