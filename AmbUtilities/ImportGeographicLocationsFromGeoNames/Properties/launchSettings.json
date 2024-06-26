@@ -12,6 +12,31 @@
     "Fresh": {
       "commandName": "Project",
       "workingDirectory": "..\\"
+    },
+    "Step 2": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 2",
+      "workingDirectory": "..\\"
+    },
+    "Step 3": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 3",
+      "workingDirectory": "..\\"
+    },
+    "Step 4": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 4",
+      "workingDirectory": "..\\"
+    },
+    "Step 5": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 5",
+      "workingDirectory": "..\\"
+    },
+    "Step 5 X": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 5 -line 6110000",
+      "workingDirectory": "..\\"
     }
   }
 }

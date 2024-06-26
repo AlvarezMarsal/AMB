@@ -56,8 +56,8 @@ public abstract class BaseLogWriter : ILogWriter
     }
 
     public ILogWriter WriteLine() => WriteLine("");
-    public ILogWriter WriteLine(Exception ex) => WriteLine(ex.ToString());
-    public ILogWriter WriteLine(string message, Exception ex) { WriteLine(message); return WriteLine(ex); }
+    public ILogWriter WriteLine(Exception ex) => WriteLine(ex.ToString()).Flush();
+    public ILogWriter WriteLine(string message, Exception ex) => WriteLine(message).WriteLine(ex);
 
     public ILogWriter WriteLine(string message)
     {

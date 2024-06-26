@@ -70,10 +70,7 @@ public class AmbDbConnection : DbConnection
         return SqlConnection.CreateCommand();
     }
 
-    public SqlCommand CreateCommand(string sql)
-        => CreateCommand(sql, true);
-
-    private SqlCommand CreateCommand(string sql, bool log)
+    public SqlCommand CreateCommand(string sql, bool log = false)
     {
         try
         {
@@ -103,34 +100,47 @@ public class AmbDbConnection : DbConnection
         base.Dispose(disposing);
     }
 
-    public int ExecuteNonQuery(string sql)
+    public int ExecuteNonQuery(string sql, bool log = true)
     {
         //_log?.WriteLine($"AmbDbConnection: executing non-query \"{sql}\"");
         try
         {
-            using var cmd = SqlConnection.CreateCommand();
-            cmd.CommandText = sql;
-            var result = cmd.ExecuteNonQuery();
-            Log.WriteLine($"AmbDbConnection: {result} rows affected by non-query \"{sql}\"");
-            return result;
+            using var cmd = CreateCommand(sql, log);
+            return ExecuteNonQuery(cmd, log);
         }
-        catch (Exception e)
+        catch
         {
-            Error.WriteLine($"AmbDbConnection: Exception thrown by non-query \"{sql}\"", e);
-            Error.Flush();
-            if (Debugger.IsAttached)
-                Debugger.Break();
             return -1;
         }
     }
 
-    public object? ExecuteScalar(string sql)
+    public int ExecuteNonQuery(SqlCommand cmd, bool log = true)
+    {
+        //_log?.WriteLine($"AmbDbConnection: executing non-query \"{sql}\"");
+        try
+        {
+            var result = cmd.ExecuteNonQuery();
+            if (log)
+                Log.WriteLine($"AmbDbConnection: {result} rows affected by non-query \"{cmd.CommandText}\"");
+            return result;
+        }
+        catch (Exception e)
+        {
+            Error.WriteLine($"AmbDbConnection: Exception thrown by non-query \"{cmd.CommandText}\"", e);
+            Error.Flush();
+            if (Debugger.IsAttached)
+               Debugger.Break();
+            return -1;
+        }
+    }
+
+
+    public object? ExecuteScalar(string sql, bool log = true)
     {
         //_log?.WriteLine($"AmbDbConnection: executing scalar \"{sql}\"");
         try
         {
-            using var cmd = SqlConnection.CreateCommand();
-            cmd.CommandText = sql;
+            using var cmd = CreateCommand(sql, log);
             var result = cmd.ExecuteScalar();
             var r = result?.ToString() ?? "null";
             Log.WriteLine($"AmbDbConnection: value {r} returned by scalar command \"{sql}\"");
@@ -147,14 +157,11 @@ public class AmbDbConnection : DbConnection
         }
     }
 
-    public SqlDataReader ExecuteReader(string sql)
-        => ExecuteReader(sql, true);
-
-    private SqlDataReader ExecuteReader(string sql, bool log)
+    public SqlDataReader ExecuteReader(string sql, bool log = true)
     {
         try
         {
-            using var cmd = SqlConnection.CreateCommand();
+            using var cmd = CreateCommand(sql, log);
             cmd.CommandText = sql;
             if (log)
                 Log.WriteLine($"AmbDbConnection: executing reader \"{sql}\"");
@@ -175,11 +182,11 @@ public class AmbDbConnection : DbConnection
     }
 
 
-    public void ExecuteReader(string sql, Action<SqlDataReader> action)
+    public void ExecuteReader(string sql, Action<SqlDataReader> action, bool log = true)
     {
         try
         {           
-            using (var reader = ExecuteReader(sql, false))
+            using (var reader = ExecuteReader(sql, log))
             {
                 int count = 0;
                 while (reader.Read())
@@ -206,49 +213,49 @@ public class AmbDbConnection : DbConnection
     }
 
 
-    public IEnumerable<T> ExecuteReader<T>(string sql, Func<SqlDataReader, T> func)
+    public IEnumerable<T> ExecuteReader<T>(string sql, Func<SqlDataReader, T> func, bool log = true)
     {
         var list = new List<T>();
-        ExecuteReader(sql, r => list.Add(func(r)));
+        ExecuteReader(sql, r => list.Add(func(r)), log);
         return list;
     }
     
     
-    public List<T> Select<T>(string query, Func<IDataReader, T> build)
+    public List<T> Select<T>(string query, Func<IDataReader, T> build, bool log = true)
     {
         var list = new List<T>();
-        ExecuteReader(query, r => list.Add(build(r)));
+        ExecuteReader(query, r => list.Add(build(r)), log);
         return list;
 
     }
 
-    public Dictionary<TKey, TValue> Select<TKey, TValue>(string query, Func<IDataReader, Tuple<TKey, TValue>> build) where TKey : notnull
+    public Dictionary<TKey, TValue> Select<TKey, TValue>(string query, Func<IDataReader, Tuple<TKey, TValue>> build, bool log=true) where TKey : notnull
     {
         var d = new Dictionary<TKey, TValue>();
         ExecuteReader(query, r =>
         {
             var tuple = build(r);
             d.Add(tuple.Item1, tuple.Item2);
-        });
+        }, log);
         return d;
     }
 
-    public T? SelectOneValue<T>(string query, Func<IDataReader, T> build) where T : struct
+    public T? SelectOneValue<T>(string query, Func<IDataReader, T> build, bool log = true) where T : struct
     {
         T? result = default;
-        ExecuteReader(query, r => result = build(r));
+        ExecuteReader(query, r => result = build(r), log);
         return result;
     }   
 
-    public T? SelectOne<T>(string query, Func<IDataReader, T> build) where T : class
+    public T? SelectOne<T>(string query, Func<IDataReader, T> build, bool log = true) where T : class
     {
         T? result = default;
-        ExecuteReader(query, r => result = build(r));
+        ExecuteReader(query, r => result = build(r), log);
         return result;
     }   
 
 
-    public long GetNextOid()
+    public long GetNextOid(bool log = false)
     {
         /*
         using var command = CreateCommand(GetNextOidProc, false);
@@ -260,17 +267,17 @@ public class AmbDbConnection : DbConnection
         Log?.WriteLine($"AmbDbConnection: new oid {oid}");
         return oid;
         */
-        return GetNextOidCached();
+        return GetNextOidCached(log);
     }
 
     private const int CachedOidCount = 100; 
     private static readonly Queue<long> _cachedOids = new Queue<long>(CachedOidCount);
 
-    public long GetNextOidCached()
+    public long GetNextOidCached(bool log = false)
     {
         if (_cachedOids.Count == 0)
         {
-            using var command = CreateCommand(GetNextOidsProc, false);
+            using var command = CreateCommand(GetNextOidsProc, log);
             command.CommandType = CommandType.StoredProcedure;
             command.Parameters.Add("@count", SqlDbType.Int, 4).Value = CachedOidCount;
             using var reader = command.ExecuteReader();
