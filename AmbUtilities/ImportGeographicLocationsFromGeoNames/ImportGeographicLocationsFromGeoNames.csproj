@@ -11,4 +11,10 @@
     <ProjectReference Include="..\AmbHelper\AmbHelper.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="GeoNames.sql">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

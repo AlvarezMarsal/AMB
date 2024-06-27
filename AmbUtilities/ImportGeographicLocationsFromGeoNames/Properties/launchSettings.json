@@ -4,48 +4,48 @@
       "commandName": "WSL2",
       "distributionName": ""
     },
-    "Step 1": {
-      "commandName": "Project",
-      "commandLineArgs": "-step 1",
-      "workingDirectory": "..\\"
-    },
     "Fresh": {
       "commandName": "Project",
       "workingDirectory": "..\\"
     },
-    "Step 2": {
+    "Step 0 - Download": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 0",
+      "workingDirectory": "..\\"
+    },
+    "Step 1 - AllCountries.txt": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 1\r\n",
+      "workingDirectory": "..\\"
+    },
+    "Step 2 - Cities.txt": {
       "commandName": "Project",
       "commandLineArgs": "-step 2",
       "workingDirectory": "..\\"
     },
-    "Step 3": {
+    "Step 3 - CountryInfo.txt": {
       "commandName": "Project",
-      "commandLineArgs": "-step 3",
+      "commandLineArgs": "-step 3\r\n",
       "workingDirectory": "..\\"
     },
-    "Step 4": {
+    "Step 4 - CountriesToContinents.txt": {
       "commandName": "Project",
       "commandLineArgs": "-step 4",
       "workingDirectory": "..\\"
     },
-    "Step 5": {
+    "Step 5 - AlternateNames.txt": {
       "commandName": "Project",
       "commandLineArgs": "-step 5",
       "workingDirectory": "..\\"
     },
-    "Step 6": {
+    "Step 6 - Continents": {
       "commandName": "Project",
       "commandLineArgs": "-step 6",
       "workingDirectory": "..\\"
     },
-    "Step 7 - Import Countries": {
+    "Step 7 - Countries": {
       "commandName": "Project",
       "commandLineArgs": "-step 7",
-      "workingDirectory": "..\\"
-    },
-    "Step 8 - Import States": {
-      "commandName": "Project",
-      "commandLineArgs": "-step 8",
       "workingDirectory": "..\\"
     }
   }

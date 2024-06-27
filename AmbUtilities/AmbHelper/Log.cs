@@ -187,6 +187,7 @@ public class ErrorLogFile : LogFile, IDisposable
     {
         Writer.Write(IndentString);
         Writer.WriteLine(line);
+        Writer.Flush();
 
         if (Console && !(_applicationLogWriter.Enabled && _applicationLogWriter.Console))
         {

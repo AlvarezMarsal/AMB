@@ -14,8 +14,10 @@ internal partial class Program
     private string _server = ".";
     private string _database = "AMBenchmark_DB";
     private int _line = 0;
-    private AmbDbConnection? _connection;
-    private AmbDbConnection Connection => _connection!;
+    private AmbDbConnection? _connectionA;
+    private AmbDbConnection ConnectionA => _connectionA!;
+    private AmbDbConnection? _connectionG;
+    private AmbDbConnection ConnectionG => _connectionG!;
     static DateTime MinDateTime = new DateTime(1800, 1, 1);
     static DateTime MaxDateTime = new DateTime(2999, 1, 1);
    /*
@@ -39,7 +41,7 @@ internal partial class Program
     private static HashSet<long> UninhabitedCounties = new HashSet<long>();
     private static HashSet<long> UninhabitedStates = new HashSet<long>();
     */
-    private HashSet<long>? GeoNameIds;
+    private readonly HashSet<long> _geoNameIds = new();
     private long _worldId = 20000;
     private readonly Dictionary<string, string> _continentNameToAbbreviation;
     private readonly Dictionary<string, long> _continentAbbreviationToId = new (StringComparer.OrdinalIgnoreCase);
@@ -132,77 +134,43 @@ internal partial class Program
         if (_step > 0)
             _keep = true;
 
-        _connection = new AmbDbConnection($"Server={_server};Database={_database};Integrated Security=True;");
-
-        if (!_keep)
-            CreateDatabaseTables();
+        _connectionA = new AmbDbConnection($"Server={_server};Database={_database};Integrated Security=True;");
+        _connectionG = new AmbDbConnection($"Server={_server};Database=GeoNames;Integrated Security=True;");
 
         var done = false;
         for (/**/; !done; ++_step)
         {
-            Log.WriteLine("STEP " + _step);
+            Log.WriteLine("STEP " + _step).Flush();
             Log.Indent();
 
             switch (_step)
             {
+                /* GeoNames Import */
                 case 0:
                     DownloadFiles();
                     break;
 
                 case 1:
-                    ImportFromGeoNamesFile("allcountries\\allcountries.txt");
+                    ImportFromAllCountriesFile();
                     break;
 
                 case 2:
-                    ImportFromGeoNamesFile("cities500\\cities500.txt", f =>
-                    {
-                        // If the population is less than 500, set it to 500
-                        var pop = long.TryParse(f[14], out var p) ? p : 0;
-                        if (pop < 500)
-                            f[14] = "500";
-                    });
+                    ImportFromCitiesFile();
                     break;
 
                case 3:
-                    ImportGeoNamesCountryInfo("countryInfo.txt");
+                    ImportFromCountryInfoFile();
                     break;
 
                case 4:
-                    ImportCountriesToContinents("..\\CountriesToContinents.txt");
+                    ImportCountriesToContinentsFile();
                     break;
 
                case 5:
-                    SetUpGeoNameIds();
-                    ImportFlatTextFile("alternateNamesV2\\alternateNamesV2.txt", '\t', 10, (lineNumber, fields) =>
-                    {
-                        var i = 0;
-                        var alternateNameId = long.Parse(fields[i++]);
-                        var geonameId = long.Parse(fields[i++]);
-                        if ((GeoNameIds == null) || GeoNameIds.Contains(geonameId))
-                        {
-                            var language = fields[i++];
-                            if (language is "he" or "ru" or "ar" or "uk" or "zh" or "tt" 
-                                                 or "kk" or "fr_1793" or "fa" or "el" 
-                                                 or "xmf" or "bg" or "link" or "wkdt")
-                                return;
-                            var alternateName = fields[i++];
-                            if (TryTranslate(alternateName, out var translated))
-                            {
-                                var isPreferredName = fields[i++] == "1";
-                                var isShortName = fields[i++] == "1";
-                                var isColloquial = fields[i++] == "1";
-                                var isHistoric = fields[i++] == "1";
-
-                                var from = ParseDateTime(fields[i++], MinDateTime);
-                                var to = ParseDateTime(fields[i++], MaxDateTime);
-
-                                if ((_creationDate >= from) && (_creationDate < to))
-                                    InsertGeoNamesAlternateName(0, geonameId, language, translated!, isPreferredName, isShortName, isColloquial, isHistoric, from, to, lineNumber);
-                            }
-                        }
-                    });
+                    ImportAlternateNamesFile();
                     break;
 
+                /* Benchmark Import */
                 case 6: 
                     ImportContinents(); 
                     break;
@@ -216,7 +184,7 @@ internal partial class Program
                     break;
 
                 case 9: 
-                    //ImportCounties(); 
+                    ImportCounties(); 
                     break;
 
                 case 10: 
@@ -257,13 +225,6 @@ internal partial class Program
         */
     }
 
-    private void SetUpGeoNameIds()
-    {
-        if (GeoNameIds != null)
-            return;
-        GeoNameIds = new HashSet<long>();
-        Connection.ExecuteReader("SELECT GeoNameId FROM [dbo].[t_GeoNames]", r => GeoNameIds!.Add(r.GetInt64(0)));
-    }
 
     private static DateTime ParseDateTime(string text, DateTime defaultValue)
     {
@@ -320,397 +281,14 @@ internal partial class Program
     #endregion
     */
 
-    #region Download Files
-
-    private void DownloadFiles()
-    {
-        DownloadAndUnzip("allCountries.zip");
-        DownloadAndUnzip("cities500.zip");
-        DownloadAndUnzip("countryInfo.txt");
-        DownloadAndUnzip("alternateNamesV2.zip");
-
-        void DownloadAndUnzip(string filename)
-        {
-            DownloadFile("https://download.geonames.org/export/dump/" + filename);
-            if (filename.EndsWith(".zip"))
-                UnzipFile(filename);
-        }
-    }
-
-    private bool DownloadFile(string url)
-    {
-        var slash = url.LastIndexOf('/');
-        var filename = url.Substring(slash + 1);
-
-        try
-        {
-            Log.WriteLine($"Downloading file: {filename} from {url}");
-            using var client = new HttpClient();
-            using var s = client.GetStreamAsync(url);
-            using var fs = new FileStream(filename, FileMode.OpenOrCreate);
-            s.Result.CopyTo(fs);
-            Log.WriteLine($"Download complete");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Error.WriteLine($"Exception while downloading file: {filename} from {url}", ex);
-            return false;
-        }
-    }
-
-    private bool UnzipFile(string zipFilename, string? directory = null)
-    {
-        var name = Path.GetFileNameWithoutExtension(zipFilename);
-        try
-        {
-            directory ??= name;
-
-            if (Directory.Exists(directory))
-                Directory.Delete(directory, true);
-            Directory.CreateDirectory(directory);
-
-            System.IO.Compression.ZipFile.ExtractToDirectory(zipFilename, directory + "\\");
-            Log.WriteLine($"Unzipped file: {zipFilename}");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Error.WriteLine($"Exception while unzipping file: {zipFilename}", ex);
-            return false;
-        }
-    }
-
-    #endregion
-
-    #region Database creation
-
-    private void CreateDatabaseTables()
-    {
-        Connection.ExecuteNonQuery(
-           """
-                IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[t_GeoNames]') AND type in (N'U'))
-                    DROP TABLE [dbo].[t_GeoNames]
-            """);
-
-        Connection.ExecuteNonQuery(
-           """
-                CREATE TABLE [dbo].[t_GeoNames](
-                    [GeoNameId] bigint NOT NULL,
-                    [Name] nvarchar(200) NOT NULL,
-                    [AsciiName] nvarchar(200) NOT NULL,
-                    [AlternateNames] nvarchar(MAX) NOT NULL,
-                    [Latitude] [float] NOT NULL,
-                    [Longitude] [float] NOT NULL,
-                    [FeatureClass] [nchar] NOT NULL,
-                    [FeatureCode] nvarchar(10) NOT NULL,
-                    [CountryCode] nchar(2) NOT NULL,
-                    [CC2] nvarchar(200) NOT NULL,
-                    [Admin1Code] nvarchar(20) NOT NULL,
-                    [Admin2Code] nvarchar(80) NOT NULL,
-                    [Admin3Code] nvarchar(20) NOT NULL,
-                    [Admin4Code] nvarchar(20) NOT NULL,
-                    [Admin5Code] nvarchar(20) NOT NULL,
-                    [Population] bigint NOT NULL,
-                    [Elevation] int NOT NULL,
-                    [Dem] nvarchar(20) NOT NULL,
-                    [Timezone] nvarchar(40) NOT NULL,
-                    [ModificationDate] datetime NOT NULL,
-                    [Continent] nchar(2) NOT NULL,
-                    [BenchmarkId] bigint NOT NULL,
-                    [LineNumber] int NOT NULL
-
-                    CONSTRAINT [PK_t_GeoNames] PRIMARY KEY CLUSTERED 
-                    (
-                        [GeoNameId] ASC
-                    ) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-                ) ON [PRIMARY]
-            """);
-
-         Connection.ExecuteNonQuery(
-            """
-                IF  EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[t_GeoNamesAlternateNames]') AND type in (N'U'))
-                    DROP TABLE [dbo].[t_GeoNamesAlternateNames]
-            """);
-
-        Connection.ExecuteNonQuery(
-           """
-                CREATE TABLE [dbo].[t_GeoNamesAlternateNames](
-                    [AlternateNameId] bigint NULL,
-                    [GeoNameId] bigint NOT NULL,
-                    [Language] nvarchar(7) NOT NULL,
-                    [AlternateName] nvarchar(400) NOT NULL,
-                    [IsPreferredName] bit NOT NULL,
-                    [IsShortName] bit NOT NULL,
-                    [IsColloquial] bit NOT NULL,
-                    [IsHistoric] bit NOT NULL,
-                    [From] datetime NOT NULL,
-                    [To] datetime NOT NULL,
-                    [LineNumber] int NOT NULL
-
-                    CONSTRAINT [PK_t_GeoNamesAlternateNames] PRIMARY KEY CLUSTERED 
-                    (
-                        [GeoNameId] ASC,
-                        [AlternateName] ASC
-                    ) WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-                ) ON [PRIMARY]
-            """);
-
-        Connection.ExecuteNonQuery(
-           """
-                CREATE OR ALTER PROCEDURE [dbo].[sp_InsertUpdateGeoName]
-                    @GeoNameId bigint,
-                    @Name nvarchar(200),
-                    @AsciiName  nvarchar(200),
-                    @AlternateNames  nvarchar(MAX),
-                    @Latitude  float ,
-                    @Longitude  float ,
-                    @FeatureClass  nchar ,
-                    @FeatureCode  nvarchar(10),
-                    @CountryCode  nchar(2),
-                    @CC2  nvarchar(200),
-                    @Admin1Code  nvarchar(20),
-                    @Admin2Code  nvarchar(80),
-                    @Admin3Code  nvarchar(20),
-                    @Admin4Code  nvarchar(20),
-                    @Admin5Code  nvarchar(20),
-                    @Population  bigint,
-                    @Elevation  int,
-                    @Dem  nvarchar(20),
-                    @Timezone  nvarchar(40),
-                    @ModificationDate  datetime,
-                    @Continent  nchar(2),
-                    @LineNumber int
-                AS
-                BEGIN
-                    IF NOT EXISTS (SELECT * FROM [dbo].[t_GeoNames] WHERE [GeoNameId] = @GeoNameId)
-                    BEGIN
-                        INSERT INTO [dbo].[t_GeoNames] (
-                            [GeoNameId], [Name], [AsciiName], [AlternateNames], [Latitude], [Longitude], [FeatureClass], [FeatureCode], 
-                            [CountryCode], [CC2], [Admin1Code], [Admin2Code], [Admin3Code], [Admin4Code], [Admin5Code], [Population], [Elevation], 
-                            [Dem], [Timezone], [ModificationDate], [Continent], [BenchmarkId], [LineNumber]
-                        ) VALUES (
-                            @GeoNameId , @Name , @AsciiName , @AlternateNames , @Latitude , @Longitude , @FeatureClass , @FeatureCode , 
-                            @CountryCode , @CC2 , @Admin1Code , @Admin2Code , @Admin3Code , @Admin4Code , @Admin5Code , @Population , @Elevation , 
-                            @Dem, @Timezone, @ModificationDate, @Continent, 0, @LineNumber
-                        )
-                    END
-                    ELSE
-                    BEGIN
-                        UPDATE [dbo].[t_GeoNames]
-                            SET [Population] = @Population
-                        WHERE [GeoNameId] = @GeoNameId AND [Population] < @Population
-                    END
-                END            
-            """);
-
-        Connection.ExecuteNonQuery(
-           """
-                CREATE OR ALTER PROCEDURE [dbo].[sp_InsertUpdateGeoNameAlternateName]
-                    @AlternateNameId bigint = 0,
-                    @GeoNameId bigint,
-                    @Language nvarchar(7) = N'',
-                    @AlternateName nvarchar(400),
-                    @IsPreferredName bit = 0,
-                    @IsShortName bit = 0,
-                    @IsColloquial bit = 0,
-                    @IsHistoric bit = 0,
-                    @From datetime = '1700-01-01',
-                    @To datetime = '2999-12-31',
-                    @LineNumber int
-                AS
-                BEGIN
-                    IF NOT EXISTS (SELECT * FROM [dbo].[t_GeoNamesAlternateNames] WHERE [GeoNameId] = @GeoNameId AND [AlternateName] = @AlternateName)
-                    BEGIN
-                        IF EXISTS (SELECT * FROM [dbo].[t_GeoNames] WHERE [GeoNameId] = @GeoNameId)
-                        BEGIN
-                            INSERT INTO [dbo].[t_GeoNamesAlternateNames] (
-                                [AlternateNameId], [GeoNameId], [Language], [AlternateName], [IsPreferredName], [IsShortName], [IsColloquial], [IsHistoric], [From], [To], [LineNumber]
-                            ) VALUES (
-                                @AlternateNameId, @GeoNameId, @Language, @AlternateName, @IsPreferredName, @IsShortName, @IsColloquial,@IsHistoric, @From, @To, @LineNumber
-                            )
-                        END
-                    END
-                END
-            """);
-    }
+   
 
 
-    private void InsertGeoNamesAlternateName(long altenativeNameId, long geonameId, string language, string name,
-                    bool isPreferredName, bool isShortName, bool isColloguial, bool isHistoric,
-                    DateTime from, DateTime to, int lineNumber)
-    {
-        using var command = Connection.CreateCommand("[dbo].[sp_InsertUpdateGeoNameAlternateName]", false);
-        command.CommandType = CommandType.StoredProcedure;
-
-        command.Parameters.Add("@AlternateNameId", SqlDbType.BigInt, 8).Value = altenativeNameId;
-        command.Parameters.Add("@GeoNameId", SqlDbType.BigInt, 8).Value = geonameId;
-        command.Parameters.Add("@Language", SqlDbType.NVarChar, 7).Value = language;
-        command.Parameters.Add("@AlternateName", SqlDbType.NText).Value = name;
-        command.Parameters.Add("@IsPreferredName", SqlDbType.Bit).Value = isPreferredName ? 1 : 0;
-        command.Parameters.Add("@IsShortName", SqlDbType.Bit).Value = isShortName ? 1 : 0;
-        command.Parameters.Add("@IsColloquial", SqlDbType.Bit).Value = isColloguial ? 1 : 0;
-        command.Parameters.Add("@IsHistoric", SqlDbType.Bit).Value = isHistoric ? 1 : 0;
-        command.Parameters.Add("@From", SqlDbType.DateTime).Value = from;
-        command.Parameters.Add("@To", SqlDbType.DateTime).Value = to;
-        command.Parameters.Add("@LineNumber", SqlDbType.Int).Value = lineNumber;
-
-        Connection.ExecuteNonQuery(command, false);
-    }
-
-    private void InsertGeoNamesAlternateName(long geonameId, string name, int lineNumber)
-        => InsertGeoNamesAlternateName(0, geonameId, "", name, false, false, false, false, MinDateTime, MaxDateTime, lineNumber);
-
-    #endregion
-
-    #region Import From GeoNames
-
-    private void ImportFromGeoNamesFile(string filename)
-        => ImportFromGeoNamesFile(filename, _ => { });
- 
-    private void ImportFromGeoNamesFile(string filename, Action<string[]>? updateFields)
-    {
-        ImportFlatTextFile(filename, '\t', 19, (lineNumber, fields) =>
-        {
-            if (fields[6].Length < 1)
-                return;
-            var featureClass = fields[6][0];
-            if (featureClass is not ('A' or 'P'))
-                return;
-
-            if (updateFields != null)
-                updateFields(fields);
-
-            using var command = Connection.CreateCommand("[dbo].[sp_InsertUpdateGeoName]");
-            command.CommandType = CommandType.StoredProcedure;
-            var i = 0;
-            command.Parameters.Add("@GeoNameId", SqlDbType.BigInt, 8).Value = long.Parse(fields[i++]);
-            command.Parameters.Add("@Name", SqlDbType.NVarChar, 200).Value = fields[i++];
-            command.Parameters.Add("@AsciiName", SqlDbType.NVarChar, 200).Value = fields[i++];
-            command.Parameters.Add("@AlternateNames", SqlDbType.NText).Value = fields[i++];
-            command.Parameters.Add("@Latitude", SqlDbType.Float).Value = double.Parse(fields[i++]);
-            command.Parameters.Add("@Longitude", SqlDbType.Float).Value = double.Parse(fields[i++]);
-            command.Parameters.Add("@FeatureClass", SqlDbType.NChar).Value = featureClass; 
-            i++;
-            command.Parameters.Add("@FeatureCode", SqlDbType.NVarChar, 10).Value = fields[i++];
-            command.Parameters.Add("@CountryCode", SqlDbType.NVarChar, 2).Value = fields[i++];
-            command.Parameters.Add("@CC2", SqlDbType.NVarChar, 200).Value = fields[i++];
-            command.Parameters.Add("@Admin1Code", SqlDbType.NVarChar, 20).Value = fields[i++];
-            command.Parameters.Add("@Admin2Code", SqlDbType.NVarChar, 80).Value = fields[i++];
-            command.Parameters.Add("@Admin3Code", SqlDbType.NVarChar, 20).Value = fields[i++];
-            command.Parameters.Add("@Admin4Code", SqlDbType.NVarChar, 20).Value = fields[i++];
-            command.Parameters.Add("@Admin5Code", SqlDbType.NVarChar, 20).Value = "";
-            command.Parameters.Add("@Population", SqlDbType.BigInt, 8).Value = long.Parse(fields[i++]);
-            command.Parameters.Add("@Elevation", SqlDbType.Int, 4).Value = int.TryParse(fields[i++], out var elevation) ? elevation : 0;
-            command.Parameters.Add("@Dem", SqlDbType.NVarChar, 20).Value = fields[i++];
-            command.Parameters.Add("@Timezone", SqlDbType.NVarChar, 40).Value = fields[i++];
-            command.Parameters.Add("@ModificationDate", SqlDbType.DateTime).Value = DateTime.Parse(fields[i++]);
-            command.Parameters.Add("@Continent", SqlDbType.NVarChar, 2).Value = "";
-            command.Parameters.Add("@LineNumber", SqlDbType.Int).Value = lineNumber;
-            command.ExecuteNonQuery();
-        });
-
-    }
-
-    private void ImportGeoNamesCountryInfo(string filename)
-    {
-        ImportFlatTextFile(filename, '\t', 19, (lineNumber, fields) =>
-        {
-            var i = 0;
-            var iso = fields[i++];
-            var iso3 = fields[i++];
-            var isoNumeric = fields[i++];
-            var fips = fields[i++];
-            var country = fields[i++];
-            var capital = fields[i++];
-            var area = fields[i++];
-            var population = fields[i++];
-            var continent = fields[i++];
-            var tld = fields[i++];
-            var currencyCode = fields[i++];
-            var currencyName = fields[i++];
-            var phone = fields[i++];
-            var postalCodeFormat = fields[i++];
-            var postalCodeRegex = fields[i++];
-            var languages = fields[i++];
-            var geonameId = long.Parse(fields[i++]);
-            var neighbours = fields[i++];
-            var equivalentFipsCode = fields[i++];
-
-            InsertGeoNamesAlternateName(geonameId, iso, lineNumber);
-            InsertGeoNamesAlternateName(geonameId, iso3, lineNumber);
-            InsertGeoNamesAlternateName(geonameId, country, lineNumber);
-
-            var result = Connection.ExecuteNonQuery(
-                $"""
-                    UPDATE [dbo].[t_GeoNames]
-                        SET [Continent] = N'{continent}'
-                        WHERE [GeoNameId] = {geonameId} OR CountryCode = N'{iso}'
-                 """);
-        });
-    }
-    
-    private void ImportFlatTextFile(string filename, char separator, int fieldCount, Action<int, string[]> process)
-    {
-        var f = File.OpenText(filename);
-        var lineNumber = 0;
-        while (true)
-        {
-            var line = f.ReadLine();
-            if (line == null)
-                break;
-            if (++lineNumber < _line)
-                continue;
-            if ((lineNumber % 100000) == 0)
-                Log.WriteLine($"Line {lineNumber}");
-            _line = 0;
-            if (line.StartsWith("#"))
-                continue;
-            try
-            {
-                var fields = line.Split(separator, StringSplitOptions.TrimEntries);
-                if (fields.Length != fieldCount)
-                {
-                    Error.WriteLine($"Expected {fieldCount} fields, saw {fields.Length} for line {lineNumber}");
-                    continue;
-                }
-
-                process(lineNumber, fields);
-            }
-            catch (Exception e)
-            {
-                Error.WriteLine($"Exception while processing line {lineNumber}", e);
-            }
-        }
-    }
-
-    #endregion
-
-    #region Import local data
-
-   private void ImportCountriesToContinents(string filename)
-    {
-        ImportFlatTextFile(filename, '\t', 3, (_, fields) =>
-        {
-            var iso = fields[0];
-            var country = fields[1];
-            var continent = fields[2];
-            var bmContinent = _continentNameToAbbreviation[continent];
-            var result = Connection.ExecuteNonQuery(
-                $"""
-                    UPDATE [dbo].[t_GeoNames]
-                        SET [Continent] = N'{bmContinent}'
-                        WHERE CountryCode = N'{iso}'
-                 """);
-        });
-    }
-
-    #endregion
     
     private void ImportContinents()
     {
         // Get the world
-        var w = Connection.SelectOneValue("SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] IS NULL", (r) => r.GetInt64(0));
+        var w = ConnectionA.SelectOneValue("SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] IS NULL", (r) => r.GetInt64(0));
         if (!w.HasValue)
             throw new Exception("World not found");
 
@@ -721,8 +299,8 @@ internal partial class Program
             if (_continentAbbreviationToId.ContainsKey(kvp.Value))
                 continue;
             var index = NextChildIndex(_worldId);
-            var id = Connection.GetNextOid();
-            Connection!.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocation] " +
+            var id = ConnectionA.GetNextOid();
+            ConnectionA.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocation] " +
                 "([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorId],[PracticeAreaID],[CreationSession]) " +
                 "VALUES " +
                 $"({id}, {_worldId}, 1, N'{kvp.Key}', {index}, N'{kvp.Key}', '{_creationDateAsString}', {_creatorId}, {_practiceAreaId}, '{_creationSessionAsString}')");
@@ -739,7 +317,7 @@ internal partial class Program
             return;
         foreach (var kvp in _continentNameToAbbreviation)
         {
-            var id = Connection.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {_worldId} AND [Name] = N'{kvp.Key}'", (r) => r.GetInt64(0));
+            var id = ConnectionA.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {_worldId} AND [Name] = N'{kvp.Key}'", (r) => r.GetInt64(0));
             if (id.HasValue)
             {
                 _continentAbbreviationToId.Add(kvp.Value, id.Value);
@@ -807,7 +385,7 @@ internal partial class Program
             var neighbours = fields[i++];
             var equivalentFipsCode = fields[i++];
 
-            var c = Connection.SelectOne(
+            var c = ConnectionG.SelectOne(
                 $"""
                     SELECT [Continent]
                     FROM [dbo].[t_GeoNames]
@@ -828,7 +406,7 @@ internal partial class Program
  
         foreach (var kvp in _geoNameCountryCodesToIds)
         {
-            var names = Connection.Select(
+            var names = ConnectionG.Select(
                 $"""
                     SELECT [Name]
                     FROM [dbo].[t_GeoNames]
@@ -843,61 +421,42 @@ internal partial class Program
         }
     }
 
-
-    private void LoadGeoNameCountries()
+    private void ImportCounties()
     {
-        if (_geoNameCountryCodesToIds.Count > 0)
-            return;
+        LoadGeoNameCountries();
+ 
+        foreach (var kvp in _geoNameCountryCodesToIds)
+        {
+            var names = ConnectionG.Select(
+                $"""
+                    SELECT G.[Name], G.[NAME]
+                    FROM [dbo].[t_GeoNames] G
+                    JOIN [dbo].[t_GeoNames] H A ON G.[GeoNameId] = A.[GeoNameId]
+                    WHERE [FeatureCode] = N'ADM2' AND [CountryCode] = N'{kvp.Key}'
+                 """, (r) => r.GetString(0));
 
-        Connection.ExecuteReader(
-            $"""
-                SELECT [GeoNameId], [CountryCode], [BenchmarkId]
-                FROM [dbo].[t_GeoNames]
-                WHERE [FeatureCode] IN 
-                    (
-                        --'LTER', --	leased area	a tract of land leased to another country, usually for military installations
-                        'PCL', --	political entity	
-                        'PCLD', --	dependent political entity	
-                        'PCLF', --	freely associated state	
-                        --'PCLH', --	historical political entity	a former political entity
-                        'PCLI', --	independent political entity	
-                        'PCLIX', --	section of independent political entity	
-                        'PCLS', --	semi-independent political entity	
-                        --'PRSH', --	parish	an ecclesiastical district
-                        'TERR' --	territory	
-                    )
-            """, 
-            r =>
+            var parentId = _geoNameCountryIdsToBenchmarkIds[kvp.Value];
+            foreach (var name in names)
             {
-                var id = r.GetInt64(0);
-                var cc = r.GetString(1);
-                var bm = r.GetInt64(2);
-
-                if (string.IsNullOrWhiteSpace(cc))
-                {
-                    Log.WriteLine($"Invalid country code for {id}");
-                }
-                else
-                {
-                    _geoNameCountryCodesToIds.Add(cc, id);
-                    _geoNameCountryIdsToBenchmarkIds.Add(id, bm);
-                }
-            });
+                AddGeographicLocationToDatabase(parentId, name);
+            }
+        }
     }
+
   
 
     private long AddGeographicLocationToDatabase(long parentId, string asciiName)
     {
         var name = asciiName.Replace("'", "''");
-        var oid = Connection!.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId} AND [Name] = N'{name}'",
+        var oid = ConnectionA.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId} AND [Name] = N'{name}'",
             (r) => r.GetInt64(0), false);
         if (oid.HasValue)
             return oid.Value;
 
         var index = NextChildIndex(parentId);
-        oid = Connection.GetNextOid();
+        oid = ConnectionA.GetNextOid();
 
-        Connection!.ExecuteNonQuery(
+        ConnectionA.ExecuteNonQuery(
             $"""
                 INSERT INTO [dbo].[t_GeographicLocation]
                     ([OID], [PID], [IsSystemOwned], [Name], [Index], [Description], [CreationDate], [CreatorId], [PracticeAreaID], [CreationSession])
@@ -1216,22 +775,6 @@ internal partial class Program
     }
     */
 
-    private static bool TryTranslate(string name, out string? translation)
-    {
-        var n = name.Normalize(System.Text.NormalizationForm.FormD);
-        var a = n.ToCharArray()
-            .Where(c => (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark) && (c < 0x007F))
-            .ToArray();
-        if (a.Length != name.Length)
-        {
-            translation = name;
-            return false;
-        }
-        //translation = new string(a);
-        translation = name;
-        return true;
-    }
-
     /*
 
 
@@ -1308,7 +851,7 @@ internal partial class Program
         }
         else
         {
-            var i = Connection.ExecuteScalar($"SELECT MAX([Index]) FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId}", false);
+            var i = ConnectionA.ExecuteScalar($"SELECT MAX([Index]) FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId}", false);
             if (i is int j)
             {
                 nextIndex = j;
@@ -1418,19 +961,19 @@ internal partial class Program
 
         var name = alias.Replace("'", "''");
         var lname = name.ToLower();
-        var c = Connection.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocationAlias] WHERE LOWER([Alias]) = '{lname}' AND [GeographicLocationId] = {benchmarkId}", (r) => r.GetInt64(0));
+        var c = ConnectionA.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocationAlias] WHERE LOWER([Alias]) = '{lname}' AND [GeographicLocationId] = {benchmarkId}", (r) => r.GetInt64(0));
         if (c.HasValue)
             return;
 
         var createAsPrimary = (languageId == 500);
-        var c2 = Connection.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocationAlias] WHERE [IsPrimary] = 1 AND [GeographicLocationId] = {benchmarkId}", (r) => r.GetInt64(0));
+        var c2 = ConnectionA.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocationAlias] WHERE [IsPrimary] = 1 AND [GeographicLocationId] = {benchmarkId}", (r) => r.GetInt64(0));
         if (c2.HasValue)
             createAsPrimary = false;
         var p = createAsPrimary ? 1 : 0;
 
-        var oid = Connection.GetNextOid();
+        var oid = ConnectionA.GetNextOid();
         description = description.Replace("'", "''");
-        _connection!.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocationAlias] " +
+        ConnectionA.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocationAlias] " +
             "([OID],[Alias],[Description],[IsSystemOwned],[IsPrimary],[CreationDate],[CreatorId],[PracticeAreaID],[GeographicLocationID],[LID],[CreationSession]) " +
             "VALUES " +
             $"({oid}, '{name}', '{description}', 1, {p}, '{_creationDateAsString}', {_creatorId}, {_practiceAreaId}, {benchmarkId}, {languageId},'{_creationSessionAsString}')");
