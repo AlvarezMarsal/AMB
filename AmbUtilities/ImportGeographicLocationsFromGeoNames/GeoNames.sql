@@ -17,7 +17,10 @@ CREATE TABLE [dbo].[Entity](
 	[Admin2Code] [nvarchar](80) NOT NULL,
 	[Admin3Code] [nvarchar](20) NOT NULL,
 	[Population] [bigint] NOT NULL,
-	[BenchmarkId] [bigint] NOT NULL
+	[BenchmarkId] [bigint] NOT NULL,
+	[ParentGeoNameId] [bigint] NOT NULL,
+	[Continent] [nchar](2) NOT NULL,
+
  CONSTRAINT [PK_Entity] PRIMARY KEY CLUSTERED 
 (
 	[GeoNameId] ASC
@@ -80,9 +83,9 @@ CREATE OR ALTER PROCEDURE [dbo].[InsertEntity]
     @Name nvarchar(200),
     @AsciiName  nvarchar(200),
     @AlternateNames  nvarchar(MAX),
-    @Latitude  float ,
-    @Longitude  float ,
-    @FeatureClass  nchar ,
+    @Latitude  float,
+    @Longitude  float,
+    @FeatureClass  nchar,
     @FeatureCode  nvarchar(10),
     @CountryCode  nchar(2),
     @CC2  nvarchar(200),
@@ -97,7 +100,8 @@ CREATE OR ALTER PROCEDURE [dbo].[InsertEntity]
     @Timezone  nvarchar(40),
     @ModificationDate  datetime,
     @Continent  nchar(2),
-    @LineNumber int
+    @LineNumber int,
+	@ParentGeoNameId bigint = 0
 AS
 BEGIN
     IF NOT EXISTS (SELECT * FROM [dbo].[Entity] WHERE [GeoNameId] = @GeoNameId)
@@ -106,11 +110,11 @@ BEGIN
         INSERT INTO [dbo].[Entity] (
             [GeoNameId], [AsciiName], [FeatureClass], [FeatureCode], 
             [CountryCode], [Admin1Code], [Admin2Code], [Admin3Code], [Population],
-            [BenchmarkId]
+            [BenchmarkId], [ParentGeoNameId]
         ) VALUES (
             @GeoNameId , @AsciiName, @FeatureClass, @FeatureCode, 
             @CountryCode, @Admin1Code, @Admin2Code, @Admin3Code, @Population,
-            0
+            0, @ParentGeoNameId
         )
 
         INSERT INTO [dbo].[EntityExtra] (
@@ -191,6 +195,11 @@ BEGIN
         )
 
     END
+	ELSE
+	BEGIN
+		UPDATE [dbo].[AlternateNameExtra]
+		SET [LineNumber] = @LineNumber
+		WHERE [AlternateNameId] = (SELECT TOP(1) [AlternateNameId] FROM [dbo].[AlternateName] WHERE [GeoNameId] = @GeoNameId)
+	END
 END
 GO
-

@@ -14,10 +14,8 @@ internal partial class Program
     private string _server = ".";
     private string _database = "AMBenchmark_DB";
     private int _line = 0;
-    private AmbDbConnection? _connectionA;
-    private AmbDbConnection ConnectionA => _connectionA!;
-    private AmbDbConnection? _connectionG;
-    private AmbDbConnection ConnectionG => _connectionG!;
+    private AmbDbConnection? _connection;
+    private AmbDbConnection Connection => _connection!;
     static DateTime MinDateTime = new DateTime(1800, 1, 1);
     static DateTime MaxDateTime = new DateTime(2999, 1, 1);
    /*
@@ -134,8 +132,7 @@ internal partial class Program
         if (_step > 0)
             _keep = true;
 
-        _connectionA = new AmbDbConnection($"Server={_server};Database={_database};Integrated Security=True;");
-        _connectionG = new AmbDbConnection($"Server={_server};Database=GeoNames;Integrated Security=True;");
+        _connection = new AmbDbConnection($"Server={_server};Database={_database};Integrated Security=True;");
 
         var done = false;
         for (/**/; !done; ++_step)
@@ -151,11 +148,11 @@ internal partial class Program
                     break;
 
                 case 1:
-                    ImportFromAllCountriesFile();
+                    ImportFromAllCountriesFile1();
                     break;
 
                 case 2:
-                    ImportFromCitiesFile();
+                    // ImportFromCitiesFile();
                     break;
 
                case 3:
@@ -228,28 +225,27 @@ internal partial class Program
 
     private static DateTime ParseDateTime(string text, DateTime defaultValue)
     {
-        if (text == "")
-            return defaultValue;
-
-        if (DateTime.TryParse(text, out var result))
-            return result;
-
-        if (int.TryParse(text, out var number))
-        {
-            if (number < 9999)
-                return new DateTime(Math.Max(number, MinDateTime.Year), 1, 1);
-            if (number < 999999)
-                return new DateTime(number / 100, number % 100, 1);
-            var year = number / 10000;
-            var dm = number % 10000;
-            try
+        try
             {
+            if (text == "")
+                return defaultValue;
+
+            if (DateTime.TryParse(text, out var result))
+                return result;
+
+            if (int.TryParse(text, out var number))
+            {
+                if (number < 9999)
+                    return new DateTime(Math.Max(number, MinDateTime.Year), 1, 1);
+                if (number < 999999)
+                    return new DateTime(number / 100, number % 100, 1);
+                var year = number / 10000;
+                var dm = number % 10000;
                 return new DateTime(year, (dm / 100), dm % 100);
             }
-            catch
-            {
-                return defaultValue;
-            }
+        }
+        catch 
+        { 
         }
 
         return defaultValue;
@@ -281,43 +277,50 @@ internal partial class Program
     #endregion
     */
 
-   
+    #region Import Continents
 
-
-    
     private void ImportContinents()
     {
         // Get the world
-        var w = ConnectionA.SelectOneValue("SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] IS NULL", (r) => r.GetInt64(0));
+        var w = Connection.SelectOneValue("SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] IS NULL", (r) => r.GetInt64(0));
         if (!w.HasValue)
-            throw new Exception("World not found");
+        {
+            _worldId = 20000;
+            Connection.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocation] " +
+                "([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorId],[PracticeAreaID],[CreationSession]) " +
+                "VALUES " +
+                $"({_worldId}, NULL, 1, N'World', 0, N'World', '{_creationDateAsString}', {_creatorId}, {_practiceAreaId}, '{_creationSessionAsString}')");
+            AddAliasToDatabase(_worldId, "World");
+        }
+        else
+        {
+            _worldId = w.Value;
+        }
 
-        _worldId = w.Value;
+        // Create any continents that don't already exist
         LoadExistingContinentIds();
         foreach (var kvp in _continentNameToAbbreviation)
         {
             if (_continentAbbreviationToId.ContainsKey(kvp.Value))
                 continue;
             var index = NextChildIndex(_worldId);
-            var id = ConnectionA.GetNextOid();
-            ConnectionA.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocation] " +
-                "([OID],[PID],[IsSystemOwned],[Name],[Index],[Description],[CreationDate],[CreatorId],[PracticeAreaID],[CreationSession]) " +
+            var id = Connection.GetNextOid();
+            Connection.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocation] " +
+                "([OID], [PID], [IsSystemOwned], [Name], [Index], [Description], [CreationDate], [CreatorId], [PracticeAreaID], [CreationSession]) " +
                 "VALUES " +
                 $"({id}, {_worldId}, 1, N'{kvp.Key}', {index}, N'{kvp.Key}', '{_creationDateAsString}', {_creatorId}, {_practiceAreaId}, '{_creationSessionAsString}')");
             _continentAbbreviationToId.Add(kvp.Value, id);
             AddAliasToDatabase(id, kvp.Key, kvp.Key);
         }
-
-        //_inContenents  = "[PID] IN (" + string.Join(", ", _continents.Values) + ")";
     }
-
+    
     private void LoadExistingContinentIds()
     {
         if (_continentAbbreviationToId.Count > 0)
             return;
         foreach (var kvp in _continentNameToAbbreviation)
         {
-            var id = ConnectionA.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {_worldId} AND [Name] = N'{kvp.Key}'", (r) => r.GetInt64(0));
+            var id = Connection.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {_worldId} AND [Name] = N'{kvp.Key}'", (r) => r.GetInt64(0));
             if (id.HasValue)
             {
                 _continentAbbreviationToId.Add(kvp.Value, id.Value);
@@ -325,6 +328,10 @@ internal partial class Program
             }
         }
     }
+
+    #endregion
+
+    #region Import Countries
 
     private void ImportCountries()
     {
@@ -361,7 +368,8 @@ internal partial class Program
                  """);
         }
         */
-        // Now, process those countries NOT already in Benchmark
+
+        // Now, process those countries not already in Benchmark
         ImportFlatTextFile("countryInfo.txt", '\t', 19, (lineNumber, fields) =>
         {
             var i = 0;
@@ -385,12 +393,16 @@ internal partial class Program
             var neighbours = fields[i++];
             var equivalentFipsCode = fields[i++];
 
-            var c = ConnectionG.SelectOne(
+            var c = Connection.SelectOne(
                 $"""
                     SELECT [Continent]
                     FROM [dbo].[t_GeoNames]
                     WHERE [GeoNameId] = {geonameId}
                  """, (r) => r.GetString(0));
+
+            if (string.IsNullOrWhiteSpace(c))
+                throw new Exception($"Country's continent not found in GeoNames: {geonameId}: {country}");
+
             var parentId = _continentAbbreviationToId[c!];
             var oid = AddGeographicLocationToDatabase(parentId, country);
             AddAliasToDatabase(oid, iso, country);
@@ -400,13 +412,17 @@ internal partial class Program
         });
     }
 
+    #endregion
+
+    #region Import States
+
     private void ImportStates()
     {
         LoadGeoNameCountries();
  
         foreach (var kvp in _geoNameCountryCodesToIds)
         {
-            var names = ConnectionG.Select(
+            var names = Connection.Select(
                 $"""
                     SELECT [Name]
                     FROM [dbo].[t_GeoNames]
@@ -421,13 +437,15 @@ internal partial class Program
         }
     }
 
+    #endregion
+
     private void ImportCounties()
     {
         LoadGeoNameCountries();
  
         foreach (var kvp in _geoNameCountryCodesToIds)
         {
-            var names = ConnectionG.Select(
+            var names = Connection.Select(
                 $"""
                     SELECT G.[Name], G.[NAME]
                     FROM [dbo].[t_GeoNames] G
@@ -448,15 +466,15 @@ internal partial class Program
     private long AddGeographicLocationToDatabase(long parentId, string asciiName)
     {
         var name = asciiName.Replace("'", "''");
-        var oid = ConnectionA.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId} AND [Name] = N'{name}'",
+        var oid = Connection.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId} AND [Name] = N'{name}'",
             (r) => r.GetInt64(0), false);
         if (oid.HasValue)
             return oid.Value;
 
         var index = NextChildIndex(parentId);
-        oid = ConnectionA.GetNextOid();
+        oid = Connection.GetNextOid();
 
-        ConnectionA.ExecuteNonQuery(
+        Connection.ExecuteNonQuery(
             $"""
                 INSERT INTO [dbo].[t_GeographicLocation]
                     ([OID], [PID], [IsSystemOwned], [Name], [Index], [Description], [CreationDate], [CreatorId], [PracticeAreaID], [CreationSession])
@@ -851,7 +869,7 @@ internal partial class Program
         }
         else
         {
-            var i = ConnectionA.ExecuteScalar($"SELECT MAX([Index]) FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId}", false);
+            var i = Connection.ExecuteScalar($"SELECT MAX([Index]) FROM [dbo].[t_GeographicLocation] WHERE [PID] = {parentId}", false);
             if (i is int j)
             {
                 nextIndex = j;
@@ -961,19 +979,19 @@ internal partial class Program
 
         var name = alias.Replace("'", "''");
         var lname = name.ToLower();
-        var c = ConnectionA.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocationAlias] WHERE LOWER([Alias]) = '{lname}' AND [GeographicLocationId] = {benchmarkId}", (r) => r.GetInt64(0));
+        var c = Connection.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocationAlias] WHERE LOWER([Alias]) = '{lname}' AND [GeographicLocationId] = {benchmarkId}", (r) => r.GetInt64(0));
         if (c.HasValue)
             return;
 
         var createAsPrimary = (languageId == 500);
-        var c2 = ConnectionA.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocationAlias] WHERE [IsPrimary] = 1 AND [GeographicLocationId] = {benchmarkId}", (r) => r.GetInt64(0));
+        var c2 = Connection.SelectOneValue($"SELECT [OID] FROM [dbo].[t_GeographicLocationAlias] WHERE [IsPrimary] = 1 AND [GeographicLocationId] = {benchmarkId}", (r) => r.GetInt64(0));
         if (c2.HasValue)
             createAsPrimary = false;
         var p = createAsPrimary ? 1 : 0;
 
-        var oid = ConnectionA.GetNextOid();
+        var oid = Connection.GetNextOid();
         description = description.Replace("'", "''");
-        ConnectionA.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocationAlias] " +
+        Connection.ExecuteNonQuery("INSERT INTO [dbo].[t_GeographicLocationAlias] " +
             "([OID],[Alias],[Description],[IsSystemOwned],[IsPrimary],[CreationDate],[CreatorId],[PracticeAreaID],[GeographicLocationID],[LID],[CreationSession]) " +
             "VALUES " +
             $"({oid}, '{name}', '{description}', 1, {p}, '{_creationDateAsString}', {_creatorId}, {_practiceAreaId}, {benchmarkId}, {languageId},'{_creationSessionAsString}')");

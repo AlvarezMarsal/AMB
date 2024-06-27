@@ -15,7 +15,7 @@
     },
     "Step 1 - AllCountries.txt": {
       "commandName": "Project",
-      "commandLineArgs": "-step 1\r\n",
+      "commandLineArgs": "-step 1",
       "workingDirectory": "..\\"
     },
     "Step 2 - Cities.txt": {

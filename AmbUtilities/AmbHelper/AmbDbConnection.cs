@@ -194,10 +194,13 @@ public class AmbDbConnection : DbConnection
                     ++count;
                     action(reader);
                 }
-                if (count == 1)
-                    Log.WriteLine($"AmbDbConnection: 1 read from reader \"{sql}\"");
-                else
-                    Log.WriteLine($"AmbDbConnection: {count} reads from reader \"{sql}\"");
+                if (log)
+                {
+                    if (count == 1)
+                        Log.WriteLine($"AmbDbConnection: 1 read from reader \"{sql}\"");
+                    else
+                        Log.WriteLine($"AmbDbConnection: {count} reads from reader \"{sql}\"");
+                }
                 // _log?.Flush();
             }
         }

@@ -82,7 +82,7 @@ GG	Guernsey	Europe
 GH	Ghana	Africa
 GI	Gibraltar	Europe
 GL	Greenland	North America
-GM	The Gambia	Africa
+GM	Gambia	Africa
 GN	Guinea	Africa
 GP	Guadeloupe	North America
 GQ	Equatorial Guinea	Africa
@@ -248,24 +248,13 @@ YT	Mayotte	Africa
 ZA	South Africa	Africa
 ZM	Zambia	Africa
 ZW	Zimbabwe	Africa
-	Turkey	Middle East
-	Congo (Kinshasa)	Africa
-	Netherlands	Europe
-	Congo (Brazzaville)	Africa
-	Côte d’Ivoire	Africa
-	Burma	Southeast Asia & Australia (SEAA)
-	Macau	Southeast Asia & Australia (SEAA)
-	Gambia, The	Africa
-	Reunion	Africa
-	Bahamas, The	North America
-	Gaza Strip	Middle East
-	West Bank	Middle East
-	Sao Tome and Principe	Africa
-	Saint Vincent and the Grenadines	North America
-	Micronesia, Federated States of	Southeast Asia & Australia (SEAA)
-	Saint Kitts and Nevis	North America
-	Virgin Islands, British	North America
-	Saint Barthelemy	North America
-	Falkland Islands (Islas Malvinas)	Latin America
-	Svalbard	Europe
-	Saint Helena, Ascension, and Tristan da Cunha	Africa
+TR	Turkey	Middle East
+CI	Côte d’Ivoire	Africa
+MM	Burma	Southeast Asia & Australia (SEAA)
+MO	Macau	Southeast Asia & Australia (SEAA)
+RE	Reunion	Africa
+PS	Gaza Strip	Middle East
+PS	West Bank	Middle East
+ST	Sao Tome and Principe	Africa
+VC	Saint Vincent and the Grenadines	North America
+BL	Saint Barthelemy	North America
