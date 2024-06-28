@@ -30,3 +30,5 @@ obj
 /AmbUtilities/ImportGeographicLocationsFromGeoNames.Errors.txt
 /AmbUtilities/ImportGeographicLocationsFromGeoNames.txt
 /USE1DEVDRPSQL01
+/AmbUtilities/admin1CodesASCII.txt
+/AmbUtilities/admin2Codes.txt
