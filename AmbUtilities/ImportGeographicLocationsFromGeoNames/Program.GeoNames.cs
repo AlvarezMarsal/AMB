@@ -296,7 +296,6 @@ internal partial class Program
             var asciiName = fields[2];
             
             geoNameIdParam.Value = geoNameId;
-            var i = 1;
             nameParam.Value = name;
             asciiNameParam.Value = asciiName;
             alternateNamesParam.Value = "";
@@ -661,10 +660,7 @@ internal partial class Program
                    continue;
                 }
 
-                if (process(lineNumber, fields))
-                    /*tempWriter?.WriteLine(line)*/;
-                //else
-                    //tempWriter?.WriteLine(line);
+                process(lineNumber, fields);
             }
             catch (Exception e)
             {

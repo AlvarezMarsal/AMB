@@ -203,3 +203,78 @@ BEGIN
 	END
 END
 GO
+
+USE [GeoNames]
+GO
+
+/****** Object:  StoredProcedure [dbo].[InsertEntity]    Script Date: 06/28/2024 10:38:09 ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+
+CREATE OR ALTER   PROCEDURE [dbo].[InsertGeographicLocation]
+	@BenchmarkId BIGINT NULL,
+	@ParentId BIGINT NULL,
+	@Name NVARCHAR(512),
+	@CreationDate DATETIME2,
+	@CreatorId INT,
+	@PracticeAreaId INT,
+	@CreationSession UNIQUEIDENTIFIER
+AS
+BEGIN
+
+	IF NOT EXISTS (SELECT * FROM [AMBenchmark_DB].[dbo].[t_GeographicLocation] WHERE [OID] = @BenchmarkId)
+	BEGIN
+
+		DECLARE @Index INT
+
+		SELECT @Index = MAX([Index]) FROM [AMBenchmark_DB].[dbo].[t_GeographicLocation] WHERE [PID] = @ParentId
+		IF @Index IS NULL
+			SET @Index = 0
+		ELSE
+			SET @Index = @Index + 1
+
+		INSERT INTO [AMBenchmark_DB].[dbo].[t_GeographicLocation]
+			([OID], [PID], [IsSystemOwned], [Name], [Index], [Description], [CreationDate], [CreatorID], [PracticeAreaID] ,[CreationSession])
+		VALUES
+			(@BenchmarkId, @ParentId, 1, @Name, @Index, @Name, @CreationDate, @CreatorId, @PracticeAreaId, @CreationSession)
+
+	END
+
+	UPDATE [GeoNames].[dbo].[Entity] SET [BenchmarkId] = @BenchmarkId
+
+	IF NOT EXISTS (SELECT * FROM [AMBenchmark_DB].[dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = @BenchmarkId AND [Alias] = @Name)
+	BEGIN
+
+		DECLARE @AliasOid BIGINT
+		DECLARE @AliasCount INT
+		DECLARE @IsPrimary BIT
+
+		EXEC [AMBenchmark_DB].[dbo].[sp_internalGetNextOID] @AliasOid OUTPUT
+		SET @AliasCount = (SELECT COUNT(*) FROM [AMBenchmark_DB].[dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = @BenchmarkId AND [IsPrimary] = 1)
+
+		IF (@AliasCount = 0)
+			SET @IsPrimary = 1
+		ELSE
+			SET @IsPrimary = 0
+
+		INSERT INTO [AMBenchmark_DB].[dbo].[t_GeographicLocationAlias]
+			([OID], [Alias], [Description], [IsSystemOwned], [IsPrimary], [CreationDate], [CreatorID], [PracticeAreaID] ,[GeographicLocationID], [LID], [CreationSession])
+		VALUES
+			(@AliasOid, @Name, @Name, 1, @IsPrimary, @CreationDate, @CreatorId, @PracticeAreaId, @BenchmarkId, 500, @CreationSession)
+
+	END
+	ELSE
+	BEGIN
+		UPDATE [AMBenchmark_DB].[dbo].[t_GeographicLocationAlias]
+			SET Alias = ''
+			WHERE OID = -1
+	END
+
+END
+GO
+
+
