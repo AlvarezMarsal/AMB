@@ -278,3 +278,66 @@ END
 GO
 
 
+CREATE OR ALTER   PROCEDURE [dbo].[AssignCountryToContinent]
+    @Country nchar(2),
+    @Continent nchar(2)
+AS
+BEGIN
+	DECLARE @C INT
+	DECLARE @ID BIGINT
+
+	SELECT @C = COUNT(E.GeoNameId) 
+	FROM [GeoNames].[dbo].[AlternateName] N
+	JOIN [GeoNames].[dbo].[Entity] E ON E.[GeoNameId] = N.[GeoNameId]
+	WHERE N.[AlternateName] = @Country AND E.[FeatureCode] = 'COUNTRY'
+
+	IF @C = 1 
+	BEGIN
+		SELECT @ID = E.GeoNameId
+		FROM [GeoNames].[dbo].[AlternateName] N
+		JOIN [GeoNames].[dbo].[Entity] E ON E.[GeoNameId] = N.[GeoNameId]
+		WHERE N.[AlternateName] = @Country AND E.[FeatureCode] = 'COUNTRY'
+
+		UPDATE [GeoNames].[dbo].[Entity] 
+		SET [Continent] = @Continent
+		WHERE [GeoNameId] = @ID
+	END
+
+END
+GO
+
+USE [GeoNames]
+GO
+
+
+
+CREATE OR ALTER   PROCEDURE [dbo].[AssignCountryToContinent]
+    @Country nchar(2),
+    @Continent nchar(2)
+AS
+BEGIN
+	DECLARE @C INT
+	DECLARE @ID BIGINT
+
+	SELECT @C = COUNT(E.GeoNameId) 
+	FROM [GeoNames].[dbo].[AlternateName] N
+	JOIN [GeoNames].[dbo].[Entity] E ON E.[GeoNameId] = N.[GeoNameId]
+	WHERE N.[AlternateName] = @Country AND E.[FeatureCode] = 'COUNTRY'
+
+	IF @C = 1 
+	BEGIN
+		SELECT @ID = E.GeoNameId
+		FROM [GeoNames].[dbo].[AlternateName] N
+		JOIN [GeoNames].[dbo].[Entity] E ON E.[GeoNameId] = N.[GeoNameId]
+		WHERE N.[AlternateName] = @Country AND E.[FeatureCode] = 'COUNTRY'
+
+		UPDATE [GeoNames].[dbo].[Entity] 
+		SET [Continent] = @Continent
+		WHERE [GeoNameId] = @ID
+	END
+
+END
+GO
+
+
+

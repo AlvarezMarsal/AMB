@@ -258,3 +258,5 @@ PS	West Bank	Middle East
 ST	Sao Tome and Principe	Africa
 VC	Saint Vincent and the Grenadines	North America
 BL	Saint Barthelemy	North America
+AN	Netherlands Antilles	Latin America
+CS	Serbia and Montenegro	Europe

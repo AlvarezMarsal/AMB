@@ -47,6 +47,26 @@
       "commandName": "Project",
       "commandLineArgs": "-step 7",
       "workingDirectory": "..\\"
+    },
+    "Step 8 - States": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 8",
+      "workingDirectory": "..\\"
+    },
+    "Step 9  - Counties": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 9",
+      "workingDirectory": "..\\"
+    },
+    "Step 10 - Cities": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 10",
+      "workingDirectory": "..\\"
+    },
+    "Step 11 - Aliases": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 11",
+      "workingDirectory": "..\\"
     }
   }
 }

@@ -75,12 +75,14 @@ internal partial class Program
                 FROM [GeoNames].[dbo].[Entity]
                 WHERE [FeatureCode] = N'COUNTRY'
              """, 
-            (r) => (r.GetInt64(0), r.GetString(1), r.GetString(2), r.GetString(3), r.GetInt64(4)));
+            (r) => new { GeoNameId=r.GetInt64(0), AsciiName=r.GetString(1), CountryCode=r.GetString(2), Continent=r.GetString(3), BenchmarkId=r.GetInt64(4)});
 
         using var command = Connection.CreateCommand("[GeoNames].[dbo].[InsertGeographicLocation]", false);
         command.CommandType = CommandType.StoredProcedure;
 
+        var geoNameIdParam = command.Parameters.Add("@GeoNameId", SqlDbType.BigInt, 8);
         var benchmarkIdParam = command.Parameters.Add("@BenchmarkId", SqlDbType.BigInt, 8);
+        benchmarkIdParam.Direction = ParameterDirection.InputOutput;
         var parentIdParam = command.Parameters.Add("@ParentId", SqlDbType.BigInt, 8);
         var nameParam = command.Parameters.Add("@Name", SqlDbType.NVarChar, 512);
         command.Parameters.Add("@PracticeAreaId", SqlDbType.Int).Value = _practiceAreaId;
@@ -90,21 +92,23 @@ internal partial class Program
 
         foreach (var country in countries)
         {
-            var name = country.Item2;
-            var cc = country.Item3;
-            var continent = _continentAbbreviationToId[country.Item4];
-            var oid = country.Item5;
+            try
+            {
+                var continentId = _continentAbbreviationToId[country.Continent];
 
-            if (oid == 0)
-                oid = Connection.GetNextOid();
-            Connection.ExecuteNonQuery($"UPDATE [GeoNames].[dbo].[Entity] SET [BenchmarkId] = {oid} WHERE [GeoNameId] = {country.Item1}");
-            benchmarkIdParam.Value = oid;
-            parentIdParam.Value = continent;
-            nameParam.Value = name;
+                geoNameIdParam.Value = country.GeoNameId;
+                benchmarkIdParam.Value = country.BenchmarkId;
+                parentIdParam.Value = continentId;
+                nameParam.Value = country.AsciiName;
 
-            var result = command.ExecuteNonQuery();
-            if (result < 0)
-                throw new Exception($"Error inserting country {name}");
+                var result = command.ExecuteNonQuery();
+                if (result < 0)
+                    throw new Exception($"Error inserting country {country.AsciiName}");
+            }
+            catch (Exception e)
+            {
+                Error.WriteLine(e);
+            }
         } 
     }
         
@@ -155,27 +159,78 @@ internal partial class Program
     }
     #endif
 
+    private void LoadExistingCountryIds()
+    {
+        if (_countryIds.Count > 0)
+            return;
+        var c = string.Join(",", _continentAbbreviationToId.Values);
+        var d = Connection.Select(
+            $"""
+                SELECT [OID]
+                FROM [dbo].[t_GeographicLocation]
+                WHERE [PID] IN ({c})
+             """, 
+            (r) => r.GetInt64(0));
+        foreach (var  e in d)
+            _countryIds.Add(e);
+    }
+
     #endregion
 
     #region Import States
 
     private void ImportStates()
     {
-        LoadGeoNameCountries();
- 
-        foreach (var kvp in _geoNameCountryCodesToIds)
-        {
-            var names = Connection.Select(
-                $"""
-                    SELECT [Name]
-                    FROM [dbo].[t_GeoNames]
-                    WHERE [FeatureCode] = N'ADM1' AND [CountryCode] = N'{kvp.Key}'
-                 """, (r) => r.GetString(0));
+        var countryCodesToBenchmarkIds = Connection.Select(
+            $"""
+                SELECT [CountryCode], [BenchmarkId]
+                FROM [GeoNames].[dbo].[Entity]
+                WHERE [FeatureCode] = N'COUNTRY'
+             """, 
+            (r) => new KeyValuePair<string, long>(r.GetString(0), r.GetInt64(1)));
 
-            var parentId = _geoNameCountryIdsToBenchmarkIds[kvp.Value];
-            foreach (var name in names)
+        using var command = Connection.CreateCommand("[GeoNames].[dbo].[InsertGeographicLocation]", false);
+        command.CommandType = CommandType.StoredProcedure;
+
+        var geoNameIdParam = command.Parameters.Add("@GeoNameId", SqlDbType.BigInt, 8);
+        var benchmarkIdParam = command.Parameters.Add("@BenchmarkId", SqlDbType.BigInt, 8);
+        benchmarkIdParam.Direction = ParameterDirection.InputOutput;
+        var parentIdParam = command.Parameters.Add("@ParentId", SqlDbType.BigInt, 8);
+        var nameParam = command.Parameters.Add("@Name", SqlDbType.NVarChar, 512);
+        command.Parameters.Add("@PracticeAreaId", SqlDbType.Int).Value = _practiceAreaId;
+        command.Parameters.Add("@CreationDate", SqlDbType.DateTime2).Value = _creationDate;
+        command.Parameters.Add("@CreatorId", SqlDbType.Int).Value = _creatorId;
+        command.Parameters.Add("@CreationSession", SqlDbType.UniqueIdentifier).Value = _creationSession;
+
+ 
+        foreach (var kvp in countryCodesToBenchmarkIds)
+        {
+            Log.WriteLine($"Importing states of {kvp.Key} into Benchmark");
+            var states = Connection.Select(
+                $"""
+                    SELECT [GeoNameId], [AsciiName], [BenchmarkId]
+                    FROM [GeoNames].[dbo].[Entity]
+                    WHERE [FeatureCode] = N'ADM1' AND [CountryCode] = N'{kvp.Key}'
+                 """, 
+                r => new { GeoNameId=r.GetInt64(0), AsciiName=r.GetString(1), BenchmarkId=r.GetInt64(2)});
+
+            foreach (var state in states)
             {
-                AddGeographicLocationToDatabase(parentId, name);
+                try
+                {
+                    geoNameIdParam.Value = state.GeoNameId;
+                    benchmarkIdParam.Value = state.BenchmarkId;
+                    parentIdParam.Value = kvp.Value;
+                    nameParam.Value = state.AsciiName;
+
+                    var result = command.ExecuteNonQuery();
+                    if (result < 0)
+                        throw new Exception("Bad result from InsertGeographicLocation");
+                }
+                catch (Exception ex)
+                {
+                    Error.WriteLine($"Error inserting state {state.AsciiName}", ex);
+                }
             }
         }
     }
@@ -184,27 +239,194 @@ internal partial class Program
 
     private void ImportCounties()
     {
-        LoadGeoNameCountries();
- 
-        foreach (var kvp in _geoNameCountryCodesToIds)
-        {
-            var names = Connection.Select(
-                $"""
-                    SELECT G.[Name], G.[NAME]
-                    FROM [dbo].[t_GeoNames] G
-                    JOIN [dbo].[t_GeoNames] H A ON G.[GeoNameId] = A.[GeoNameId]
-                    WHERE [FeatureCode] = N'ADM2' AND [CountryCode] = N'{kvp.Key}'
-                 """, (r) => r.GetString(0));
+         using var command = Connection.CreateCommand("[GeoNames].[dbo].[InsertGeographicLocation]", false);
+        command.CommandType = CommandType.StoredProcedure;
 
-            var parentId = _geoNameCountryIdsToBenchmarkIds[kvp.Value];
-            foreach (var name in names)
+        var geoNameIdParam = command.Parameters.Add("@GeoNameId", SqlDbType.BigInt, 8);
+        var benchmarkIdParam = command.Parameters.Add("@BenchmarkId", SqlDbType.BigInt, 8);
+        benchmarkIdParam.Direction = ParameterDirection.InputOutput;
+        var parentIdParam = command.Parameters.Add("@ParentId", SqlDbType.BigInt, 8);
+        var nameParam = command.Parameters.Add("@Name", SqlDbType.NVarChar, 512);
+        command.Parameters.Add("@PracticeAreaId", SqlDbType.Int).Value = _practiceAreaId;
+        command.Parameters.Add("@CreationDate", SqlDbType.DateTime2).Value = _creationDate;
+        command.Parameters.Add("@CreatorId", SqlDbType.Int).Value = _creatorId;
+        command.Parameters.Add("@CreationSession", SqlDbType.UniqueIdentifier).Value = _creationSession;
+
+        var countryCodes = Connection.Select(
+            $"""
+                SELECT [CountryCode]
+                FROM [GeoNames].[dbo].[Entity]
+                WHERE [FeatureCode] = N'COUNTRY'
+             """, 
+            (r) => r.GetString(0),
+            false);
+
+        foreach (var countryCode in countryCodes)
+        {
+            var states = Connection.Select(
+                $"""
+                    SELECT [Admin1Code], [BenchmarkId]
+                    FROM [GeoNames].[dbo].[Entity]
+                    WHERE [FeatureCode] = N'ADM1' AND [CountryCode] = N'{countryCode}'
+                 """, 
+                r => new { Admin1Code=r.GetString(0), BenchmarkId=r.GetInt64(1)},
+                false);
+
+            foreach (var state in states)
             {
-                AddGeographicLocationToDatabase(parentId, name);
+                Log.WriteLine($"Importing counties of {countryCode}.{state.Admin1Code} into Benchmark");
+                var counties = Connection.Select(
+                    $"""
+                        SELECT [GeoNameId], [AsciiName], [BenchmarkId]
+                        FROM [GeoNames].[dbo].[Entity]
+                        WHERE [FeatureCode] = N'ADM2' AND [CountryCode] = N'{countryCode}' AND [Admin1Code] = N'{state.Admin1Code}'
+                     """, 
+                    r => new { GeoNameId=r.GetInt64(0), AsciiName=r.GetString(1), BenchmarkId=r.GetInt64(2)},
+                    false);
+
+                foreach (var county in counties)
+                {
+                    try
+                    {
+                        geoNameIdParam.Value = county.GeoNameId;
+                        benchmarkIdParam.Value = county.BenchmarkId;
+                        parentIdParam.Value = state.BenchmarkId;
+                        nameParam.Value = county.AsciiName;
+
+                        var result = command.ExecuteNonQuery();
+                        if (result < 0)
+                            throw new Exception("Bad result from InsertGeographicLocation");
+                    }
+                    catch (Exception ex)
+                    {
+                        Error.WriteLine($"Error inserting county {county.AsciiName}", ex);
+                    }
+                }
             }
         }
     }
 
+    private void ImportCities()
+    {
+        var countryCodesToBenchmarkIds = Connection.Select(
+            $"""
+                SELECT [CountryCode], [BenchmarkId]
+                FROM [GeoNames].[dbo].[Entity]
+                WHERE [FeatureCode] = N'COUNTRY'
+             """, 
+            (r) => new KeyValuePair<string, long>(r.GetString(0), r.GetInt64(1)));
+
+        using var command = Connection.CreateCommand("[GeoNames].[dbo].[InsertGeographicLocation]", false);
+        command.CommandType = CommandType.StoredProcedure;
+
+        var geoNameIdParam = command.Parameters.Add("@GeoNameId", SqlDbType.BigInt, 8);
+        var benchmarkIdParam = command.Parameters.Add("@BenchmarkId", SqlDbType.BigInt, 8);
+        benchmarkIdParam.Direction = ParameterDirection.InputOutput;
+        var parentIdParam = command.Parameters.Add("@ParentId", SqlDbType.BigInt, 8);
+        var nameParam = command.Parameters.Add("@Name", SqlDbType.NVarChar, 512);
+        command.Parameters.Add("@PracticeAreaId", SqlDbType.Int).Value = _practiceAreaId;
+        command.Parameters.Add("@CreationDate", SqlDbType.DateTime2).Value = _creationDate;
+        command.Parameters.Add("@CreatorId", SqlDbType.Int).Value = _creatorId;
+        command.Parameters.Add("@CreationSession", SqlDbType.UniqueIdentifier).Value = _creationSession;
+
+        foreach (var country in countryCodesToBenchmarkIds)
+        {
+            Log.WriteLine($"Importing cities of {country.Key} into Benchmark");
+
+            var cities = Connection.Select(
+                $"""
+                    SELECT C.[GeoNameId], C.[AsciiName], C.[BenchmarkId], /*C.[CountryCode], C.[Admin1Code], C.[Admin2Code],*/ ISNULL(S.[BenchmarkId],0) As [StateBenchmarkId], ISNULL(X.[BenchmarkId],0) As [CountyBenchmarkId]
+                    FROM [GeoNames].[dbo].[Entity] C
+                    LEFT OUTER JOIN [GeoNames].[dbo].[Entity] S ON (S.FeatureCode = 'ADM1' AND S.CountryCode = C.CountryCode AND S.Admin1Code = C.Admin1Code)
+                    LEFT OUTER JOIN [GeoNames].[dbo].[Entity] X ON (X.FeatureCode = 'ADM2' AND X.CountryCode = C.CountryCode AND X.Admin1Code = C.Admin1Code AND X.Admin2Code = C.Admin2Code)
+                    WHERE C.[FeatureCode] <> N'COUNTRY' AND C.[FeatureCode] NOT LIKE N'ADM%' AND C.CountryCode = N'{country.Key}'
+                 """, 
+            (r) => new { GeoNameId=r.GetInt64(0), AsciiName=r.GetString(1), BenchmarkId=r.GetInt64(2), StateId=r.GetInt64(3), CountyId=r.GetInt64(4)},
+            false);
+
+            foreach (var  city in cities)
+            {
+                var parentId = city.CountyId;
+
+                if (parentId == 0)
+                {
+                    parentId = city.StateId;
+                    if (parentId == 0)
+                        parentId = country.Value;
+                }
+
+                try
+                {
+                    geoNameIdParam.Value = city.GeoNameId;
+                    benchmarkIdParam.Value = city.BenchmarkId;
+                    parentIdParam.Value = parentId;
+                    nameParam.Value = city.AsciiName;
+
+                    var result = command.ExecuteNonQuery();
+                    if (result < 0)
+                        throw new Exception("Bad result from InsertGeographicLocation");
+                }
+                catch (Exception ex)
+                {
+                    Error.WriteLine($"Error inserting city {city.AsciiName}", ex);
+                }
+            }
+        }
+    }
   
+    private void ImportAliases()
+    {
+        using var command = Connection.CreateCommand("[GeoNames].[dbo].[InsertGeographicLocationAlias]", false);
+        command.CommandType = CommandType.StoredProcedure;
+
+        var benchmarkIdParam = command.Parameters.Add("@BenchmarkId", SqlDbType.BigInt, 8);
+        var nameParam = command.Parameters.Add("@Name", SqlDbType.NVarChar, 512);
+        command.Parameters.Add("@PracticeAreaId", SqlDbType.Int).Value = _practiceAreaId;
+        command.Parameters.Add("@CreationDate", SqlDbType.DateTime2).Value = _creationDate;
+        command.Parameters.Add("@CreatorId", SqlDbType.Int).Value = _creatorId;
+        command.Parameters.Add("@CreationSession", SqlDbType.UniqueIdentifier).Value = _creationSession;
+
+       var countryCodesToBenchmarkIds = Connection.Select(
+            $"""
+                SELECT [CountryCode], [BenchmarkId]
+                FROM [GeoNames].[dbo].[Entity]
+                WHERE [FeatureCode] = N'COUNTRY'
+             """, 
+            (r) => new KeyValuePair<string, long>(r.GetString(0), r.GetInt64(1)),
+            false);
+
+        foreach (var country in countryCodesToBenchmarkIds)
+        {
+            Log.WriteLine($"Importing aliases of {country.Key} into Benchmark");
+
+            var aliases = Connection.Select(
+                $"""
+                    SELECT E.[GeoNameId], A.[AlternateName]
+                    FROM [GeoNames].[dbo].[AlternateName] A
+                    JOIN [GeoNames].[dbo].[Entity] E ON (E.GeoNameId = A.GeoNameId)
+                    WHERE E.[CountryCode] = N'{country.Key}'
+                 """, 
+                (r) => new { BenchmarkId = r.GetInt64(0), Name = r.GetString(1) },
+                false);
+
+            foreach (var alias in aliases)
+            {
+                try
+                {
+                    benchmarkIdParam.Value = alias.BenchmarkId;
+                    nameParam.Value = alias.Name;
+
+                    var result = command.ExecuteNonQuery();
+                    if (result < 0)
+                        throw new Exception("Bad result from InsertGeographicLocation");
+                }
+                catch (Exception ex)
+                {
+                    Error.WriteLine($"Error inserting alias {alias.BenchmarkId}:{alias.Name}", ex);
+                }
+            }
+        }
+    }
 
     private long AddGeographicLocationToDatabase(long parentId, string asciiName)
     {

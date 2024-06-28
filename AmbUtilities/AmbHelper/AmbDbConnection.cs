@@ -229,8 +229,21 @@ public class AmbDbConnection : DbConnection
         var list = new List<T>();
         ExecuteReader(query, r => list.Add(build(r)), log);
         return list;
-
     }
+
+    public Dictionary<TKey, TValue> Select<TKey, TValue>(string query, Func<IDataReader, KeyValuePair<TKey, TValue>> build, bool log = true)
+        where TKey : notnull
+    {
+        var dictionary = new Dictionary<TKey, TValue>();
+        ExecuteReader(query, r => 
+        {
+            var kvp = build(r);
+            dictionary.Add(kvp.Key, kvp.Value);
+
+        }, log);
+        return dictionary;
+    }
+
 
     public Dictionary<TKey, TValue> Select<TKey, TValue>(string query, Func<IDataReader, Tuple<TKey, TValue>> build, bool log=true) where TKey : notnull
     {

@@ -751,21 +751,9 @@ internal partial class Program
         Connection.ExecuteReader(
             $"""
                 SELECT [GeoNameId], [CountryCode], [BenchmarkId]
-                FROM [dbo].[Entity]
-                WHERE [FeatureCode] IN 
-                    (
-                        --'LTER', --	leased area	a tract of land leased to another country, usually for military installations
-                        'PCL', --	political entity	
-                        'PCLD', --	dependent political entity	
-                        'PCLF', --	freely associated state	
-                        --'PCLH', --	historical political entity	a former political entity
-                        'PCLI', --	independent political entity	
-                        'PCLIX', --	section of independent political entity	
-                        'PCLS', --	semi-independent political entity	
-                        --'PRSH', --	parish	an ecclesiastical district
-                        'TERR' --	territory	
-                    )
-            """, 
+                FROM [GeoNames].[dbo].[Entity]
+                WHERE [FeatureCode] = 'COUNTRY'
+             """, 
             r =>
             {
                 var id = r.GetInt64(0);

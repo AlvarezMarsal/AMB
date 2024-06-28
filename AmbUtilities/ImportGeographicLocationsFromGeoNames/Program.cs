@@ -46,7 +46,7 @@ internal partial class Program
     private readonly Dictionary<string, long> _geoNameCountryCodesToIds = new (StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<long, long> _geoNameCountryIdsToBenchmarkIds= new ();
     private readonly Dictionary<long, long> _previousChildIndex = new ();
-
+    private readonly HashSet<long> _countryIds = new();
 
     static void Main(string[] args)
     {
@@ -185,7 +185,11 @@ internal partial class Program
                     break;
 
                 case 10: 
-                    //ImportCities(); 
+                    ImportCities(); 
+                    break;
+
+                case 11: 
+                    ImportAliases(); 
                     break;
 
                 default:
