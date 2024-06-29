@@ -147,7 +147,7 @@ internal partial class Program
                     DownloadFiles();
                     break;
 
-                case 1:
+               case 1:
                     ImportFromAllCountriesFile1();
                     break;
 
@@ -190,6 +190,10 @@ internal partial class Program
 
                 case 11: 
                     ImportAliases(); 
+                    break;
+
+                case 12: 
+                    Dump(); 
                     break;
 
                 default:

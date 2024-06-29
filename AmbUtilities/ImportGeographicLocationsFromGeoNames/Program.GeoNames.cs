@@ -547,7 +547,8 @@ internal partial class Program
                 var language = fields[i++];
                 if (language is "he" or "ru" or "ar" or "uk" or "zh" or "tt" 
                                         or "kk" or "fr_1793" or "fa" or "el" 
-                                        or "xmf" or "bg" or "link" or "wkdt")
+                                        or "xmf" or "bg" or "link" or "wkdt"
+                                        or "post")
                     return false;
 
                 var alternateName = fields[i++];

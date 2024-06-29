@@ -67,6 +67,11 @@
       "commandName": "Project",
       "commandLineArgs": "-step 11",
       "workingDirectory": "..\\"
+    },
+    "Step 12 - Dump": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 12",
+      "workingDirectory": "..\\"
     }
   }
 }

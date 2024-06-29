@@ -962,19 +962,23 @@ internal partial class Program
             $"({oid}, '{name}', '{description}', 1, {p}, '{_creationDateAsString}', {_creatorId}, {_practiceAreaId}, {benchmarkId}, {languageId},'{_creationSessionAsString}')");
     }
 
-    /*
-    private static void Dump()
+
+    private void Dump()
     {
         using var file = File.CreateText("Dump.txt");
-        Dump(20000, 0, file);
+        DumpChildren(20000, 0, file);
     }
 
-    private static void Dump(long benchmarkId, int indentation, StreamWriter writer)
+    private void DumpChildren(long benchmarkId, int indentation, StreamWriter writer)
     {
-        var oids = _connection!.Select($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {benchmarkId}", (r) => r.GetInt64(0));
+        var oids = Connection.Select($"SELECT [OID] FROM [dbo].[t_GeographicLocation] WHERE [PID] = {benchmarkId}", 
+                                    (r) => r.GetInt64(0),
+                                    false);
         foreach (var oid in oids)
         {
-            var names = _connection.Select($"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid} ORDER BY IsPrimary DESC, Alias", (r) => r.GetString(0));
+            var names = Connection.Select($"SELECT [Alias] FROM [dbo].[t_GeographicLocationAlias] WHERE [GeographicLocationID] = {oid} ORDER BY IsPrimary DESC, Alias", 
+                                          (r) => r.GetString(0),
+                                          false);
             
             for (var i=0; i<indentation; i++)
                 writer.Write("\t");
@@ -990,11 +994,8 @@ internal partial class Program
             }
 
             writer.WriteLine();
-            Dump(oid, indentation + 1, writer);
+            DumpChildren(oid, indentation + 1, writer);
         }
    }
 
-}
-
-*/
 }
