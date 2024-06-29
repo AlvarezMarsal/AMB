@@ -4,6 +4,6 @@
     <DebuggerFlavor>ProjectDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup>
-    <ActiveDebugProfile>Step 0 - Download</ActiveDebugProfile>
+    <ActiveDebugProfile>Step 11 - Aliases</ActiveDebugProfile>
   </PropertyGroup>
 </Project>

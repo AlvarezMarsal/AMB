@@ -433,7 +433,10 @@ GO
 USE [GeoNames]
 GO
 
-/****** Object:  StoredProcedure [dbo].[InsertGeographicLocationAlias]    Script Date: 06/28/2024 16:37:54 ******/
+USE [GeoNames]
+GO
+
+/****** Object:  StoredProcedure [dbo].[InsertGeographicLocationAlias]    Script Date: 06/29/2024 14:41:36 ******/
 SET ANSI_NULLS ON
 GO
 
@@ -444,7 +447,7 @@ GO
 
 
 CREATE OR ALTER       PROCEDURE [dbo].[InsertGeographicLocationAlias]
-	@BenchmarkId BIGINT OUTPUT,
+	@BenchmarkId BIGINT,
 	@Name NVARCHAR(512),
 	@CreationDate DATETIME2,
 	@CreatorId INT,
@@ -472,12 +475,15 @@ BEGIN
 			([OID], [Alias], [Description], [IsSystemOwned], [IsPrimary], [CreationDate], [CreatorID], [PracticeAreaID] ,[GeographicLocationID], [LID], [CreationSession])
 		VALUES
 			(@AliasOid, @Name, @Name, 1, @IsPrimary, @CreationDate, @CreatorId, @PracticeAreaId, @BenchmarkId, 500, @CreationSession)
-
+	END
+	ELSE
+	BEGIN
+		UPDATE [AMBenchmark_DB].[dbo].[t_GeographicLocationAlias] 
+			SET OID = 0
+			WHERE OID = -1
 	END
 
 END
 GO
-
-
 
 

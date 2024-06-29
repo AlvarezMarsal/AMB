@@ -196,7 +196,7 @@ internal partial class Program
             modificationDateParam.Value = DateTime.TryParse(fields[i++], out var md) ? md : _creationDate;
             continentParam.Value = "";
             lineNumberParam.Value = lineNumber;
-            var result = command.ExecuteNonQuery();
+            var result = Connection.ExecuteNonQuery(command, false);
             Debug.Assert(result > 0);
             _geoNameIds.Add(geoNameId);
             return true;
@@ -274,7 +274,7 @@ internal partial class Program
             modificationDateParam.Value = _creationDate;
             continentParam.Value = "";
             lineNumberParam.Value = lineNumber;
-            var result = command.ExecuteNonQuery();
+            var result = Connection.ExecuteNonQuery(command, false);
             Debug.Assert(result > 0);
             _geoNameIds.Add(geoNameId);
             return true;
@@ -317,7 +317,7 @@ internal partial class Program
             modificationDateParam.Value = _creationDate;
             continentParam.Value = "";
             lineNumberParam.Value = lineNumber;
-            var result = command.ExecuteNonQuery();
+            var result = Connection.ExecuteNonQuery(command, false);
             Debug.Assert(result > 0);
             _geoNameIds.Add(geoNameId);
             return true;
@@ -357,7 +357,7 @@ internal partial class Program
             modificationDateParam.Value = DateTime.TryParse(fields[i++], out var md) ? md : _creationDate;
             continentParam.Value = "";
             lineNumberParam.Value = lineNumber;
-            var result = command.ExecuteNonQuery();
+            var result = Connection.ExecuteNonQuery(command, false);
             Debug.Assert(result > 0);
             _geoNameIds.Add(geoNameId);
             return true;
@@ -394,53 +394,6 @@ internal partial class Program
             return true;
         });
     }
-
-
-    /*
-    private void ImportFromGeoNamesFile(string filename, Action<string[]>? updateFields)
-    {
-        ImportFlatTextFile(filename, '\t', 19, (lineNumber, fields) =>
-        {
-            if (fields[6].Length < 1)
-                return;
-            var featureClass = fields[6][0];
-            if (featureClass is not ('A' or 'P'))
-                return;
-
-            if (updateFields != null)
-                updateFields(fields);
-
-            using var command = Connection.CreateCommand("[dbo].[sp_InsertUpdateGeoName]");
-            command.CommandType = CommandType.StoredProcedure;
-            var i = 0;
-            command.Parameters.Add("@GeoNameId", SqlDbType.BigInt, 8).Value = long.Parse(fields[i++]);
-            command.Parameters.Add("@Name", SqlDbType.NVarChar, 200).Value = fields[i++];
-            command.Parameters.Add("@AsciiName", SqlDbType.NVarChar, 200).Value = fields[i++];
-            command.Parameters.Add("@AlternateNames", SqlDbType.NText).Value = fields[i++];
-            command.Parameters.Add("@Latitude", SqlDbType.Float).Value = double.Parse(fields[i++]);
-            command.Parameters.Add("@Longitude", SqlDbType.Float).Value = double.Parse(fields[i++]);
-            command.Parameters.Add("@FeatureClass", SqlDbType.NChar).Value = featureClass; 
-            i++;
-            command.Parameters.Add("@FeatureCode", SqlDbType.NVarChar, 10).Value = fields[i++];
-            command.Parameters.Add("@CountryCode", SqlDbType.NVarChar, 2).Value = fields[i++];
-            command.Parameters.Add("@CC2", SqlDbType.NVarChar, 200).Value = fields[i++];
-            command.Parameters.Add("@Admin1Code", SqlDbType.NVarChar, 20).Value = fields[i++];
-            command.Parameters.Add("@Admin2Code", SqlDbType.NVarChar, 80).Value = fields[i++];
-            command.Parameters.Add("@Admin3Code", SqlDbType.NVarChar, 20).Value = fields[i++];
-            command.Parameters.Add("@Admin4Code", SqlDbType.NVarChar, 20).Value = fields[i++];
-            command.Parameters.Add("@Admin5Code", SqlDbType.NVarChar, 20).Value = "";
-            command.Parameters.Add("@Population", SqlDbType.BigInt, 8).Value = long.Parse(fields[i++]);
-            command.Parameters.Add("@Elevation", SqlDbType.Int, 4).Value = int.TryParse(fields[i++], out var elevation) ? elevation : 0;
-            command.Parameters.Add("@Dem", SqlDbType.NVarChar, 20).Value = fields[i++];
-            command.Parameters.Add("@Timezone", SqlDbType.NVarChar, 40).Value = fields[i++];
-            command.Parameters.Add("@ModificationDate", SqlDbType.DateTime).Value = DateTime.Parse(fields[i++]);
-            command.Parameters.Add("@Continent", SqlDbType.NVarChar, 2).Value = "";
-            command.Parameters.Add("@LineNumber", SqlDbType.Int).Value = lineNumber;
-            command.ExecuteNonQuery();
-        });
-
-    }
-    */
 
     private void ImportFromCountryInfoFile()
     {
@@ -525,12 +478,6 @@ internal partial class Program
             InsertGeoNamesAlternateName(geoNameId, iso, lineNumber);
             InsertGeoNamesAlternateName(geoNameId, iso3, lineNumber);
 
-            //var result = ConnectionG.ExecuteNonQuery(
-            //    $"""
-            //        UPDATE [dbo].[Entity]
-            //            SET [Continent] = N'{continent}'
-            //            WHERE [GeoNameId] = {geoNameId} -- OR CountryCode = N'{iso}'
-            //     """);
         });
     }
 
@@ -701,7 +648,7 @@ internal partial class Program
 
             countryParam.Value = iso;
             continentParam.Value = bmContinent;
-            var result = command.ExecuteNonQuery();
+            var result = Connection.ExecuteNonQuery(command, false);
             if (result < 0)
                 Log.WriteLine($"Country {country} not assigned to continent {continent}");
          });

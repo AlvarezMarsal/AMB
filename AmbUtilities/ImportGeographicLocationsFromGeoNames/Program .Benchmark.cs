@@ -101,7 +101,7 @@ internal partial class Program
                 parentIdParam.Value = continentId;
                 nameParam.Value = country.AsciiName;
 
-                var result = command.ExecuteNonQuery();
+                var result = Connection.ExecuteNonQuery(command, false);
                 if (result < 0)
                     throw new Exception($"Error inserting country {country.AsciiName}");
             }
@@ -223,7 +223,7 @@ internal partial class Program
                     parentIdParam.Value = kvp.Value;
                     nameParam.Value = state.AsciiName;
 
-                    var result = command.ExecuteNonQuery();
+                    var result = Connection.ExecuteNonQuery(command, false);
                     if (result < 0)
                         throw new Exception("Bad result from InsertGeographicLocation");
                 }
@@ -293,7 +293,7 @@ internal partial class Program
                         parentIdParam.Value = state.BenchmarkId;
                         nameParam.Value = county.AsciiName;
 
-                        var result = command.ExecuteNonQuery();
+                        var result = Connection.ExecuteNonQuery(command, false);
                         if (result < 0)
                             throw new Exception("Bad result from InsertGeographicLocation");
                     }
@@ -362,7 +362,7 @@ internal partial class Program
                     parentIdParam.Value = parentId;
                     nameParam.Value = city.AsciiName;
 
-                    var result = command.ExecuteNonQuery();
+                    var result = Connection.ExecuteNonQuery(command, false);
                     if (result < 0)
                         throw new Exception("Bad result from InsertGeographicLocation");
                 }
@@ -397,8 +397,6 @@ internal partial class Program
 
         foreach (var country in countryCodesToBenchmarkIds)
         {
-            Log.WriteLine($"Importing aliases of {country.Key} into Benchmark");
-
             var aliases = Connection.Select(
                 $"""
                     SELECT E.[GeoNameId], A.[AlternateName]
@@ -409,6 +407,8 @@ internal partial class Program
                 (r) => new { BenchmarkId = r.GetInt64(0), Name = r.GetString(1) },
                 false);
 
+            Log.WriteLine($"Importing {aliases.Count} aliases in country {country.Key} into Benchmark");
+
             foreach (var alias in aliases)
             {
                 try
@@ -416,9 +416,9 @@ internal partial class Program
                     benchmarkIdParam.Value = alias.BenchmarkId;
                     nameParam.Value = alias.Name;
 
-                    var result = command.ExecuteNonQuery();
+                    var result = Connection.ExecuteNonQuery(command, false);
                     if (result < 0)
-                        throw new Exception("Bad result from InsertGeographicLocation");
+                        throw new Exception("Bad result from InsertGeographicLocationAlias");
                 }
                 catch (Exception ex)
                 {
