@@ -2,6 +2,7 @@
 using System.Data.Common;
 using System.Data.SqlClient;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using static AmbHelper.Logs;
 
 namespace AmbHelper;
@@ -21,7 +22,6 @@ public class AmbDbConnection : DbConnection
 
     public AmbDbConnection(string connectionString)
     {
-
         var parts = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries);
         _connectionStringParts = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var part in parts)
@@ -38,9 +38,8 @@ public class AmbDbConnection : DbConnection
         SqlConnection.Open();
     }
 
-#pragma warning disable CS8765 // Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
+    [AllowNull]
     public override string ConnectionString { get => SqlConnection.ConnectionString; set => throw new InvalidOperationException(); }
-#pragma warning restore CS8765 // Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
 
     public override string Database => SqlConnection.Database;
 

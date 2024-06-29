@@ -1,5 +1,4 @@
-﻿using System.Data;
-using AmbHelper;
+﻿using AmbHelper;
 using System.Globalization;
 using static AmbHelper.Logs;
 
@@ -7,21 +6,13 @@ namespace ImportGeographicLocationsFromGeoNames;
 
 internal partial class Program
 {
-    /*
-    private static readonly Dictionary<string, Country> Countries = new (StringComparer.OrdinalIgnoreCase);
-    private static readonly Dictionary<long, Entry> AreasById = new ();
-    */
     private string _server = ".";
     private string _database = "AMBenchmark_DB";
     private int _line = 0;
     private AmbDbConnection? _connection;
     private AmbDbConnection Connection => _connection!;
-    static DateTime MinDateTime = new DateTime(1800, 1, 1);
-    static DateTime MaxDateTime = new DateTime(2999, 1, 1);
-   /*
-    private static bool _quick = false;
-    private static bool _dump = false;
-    */
+    private static DateTime MinDateTime = new DateTime(1800, 1, 1);
+    private static DateTime MaxDateTime = new DateTime(2999, 1, 1);
     private readonly DateTime _creationDate;
     private readonly string _creationDateAsString;
     private readonly Guid _creationSession = Guid.NewGuid();
@@ -30,23 +21,14 @@ internal partial class Program
     private int _practiceAreaId = 2501;
     private int _step = 0;
     private bool _keep = false;
-    /*
-    // private static long _populationCutoff = 1000;
-    private static Dictionary<string, string> CountryToContinent = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-    private static readonly List<string> delayedStates = [];
-    private static readonly List<string> delayedCounties = [];
-    private static readonly List<string> delayedCities = [];
-    private static HashSet<long> UninhabitedCounties = new HashSet<long>();
-    private static HashSet<long> UninhabitedStates = new HashSet<long>();
-    */
-    private readonly HashSet<long> _geoNameIds = new();
+    private readonly HashSet<long> _geoNameIds = new ();
     private long _worldId = 20000;
     private readonly Dictionary<string, string> _continentNameToAbbreviation;
     private readonly Dictionary<string, long> _continentAbbreviationToId = new (StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, long> _geoNameCountryCodesToIds = new (StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<long, long> _geoNameCountryIdsToBenchmarkIds= new ();
     private readonly Dictionary<long, long> _previousChildIndex = new ();
-    private readonly HashSet<long> _countryIds = new();
+    private readonly HashSet<long> _countryIds = new ();
 
     static void Main(string[] args)
     {
@@ -204,14 +186,6 @@ internal partial class Program
             Log.Outdent();
             Log.Flush();
         }
-
-        /*
-//            Log.WriteLine("Uninhabited counties: " + UninhabitedCounties.Count);
-//            Log.WriteLine("Uninhabited states: " + UninhabitedStates.Count);
-
-            if (_dump)
-                Dump();
-        */
     }
 
 

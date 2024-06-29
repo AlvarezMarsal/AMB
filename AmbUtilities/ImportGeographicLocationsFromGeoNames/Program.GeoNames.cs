@@ -544,36 +544,6 @@ internal partial class Program
         // If a 'processed' file exists, use it instead.
         // If it doesn't exist, then create a 'temp' file and write to it.
 
-        #if false
-        var fn = Path.GetFullPath(filename);
-        var folder = Path.GetDirectoryName(fn);
-        var f = Path.GetFileNameWithoutExtension(fn);
-        var ext = Path.GetExtension(fn);
-        StreamWriter? tempWriter = null;
-        string tempFilename = "";
-
-        var processedFilename = Path.Combine(folder!, f + ".processed" + ext);
-        if (File.Exists(processedFilename))
-        {
-            if (File.GetLastWriteTimeUtc(processedFilename) >= File.GetLastWriteTimeUtc(fn))
-            {
-                Log.WriteLine($"Using {processedFilename}");
-                filename = processedFilename;
-            }
-            else
-            {
-                File.Delete(processedFilename);
-                tempFilename = Path.Combine(folder!, f + ".temp" + ext);
-                tempWriter = File.CreateText(tempFilename);
-            }
-        }
-        else
-        {
-            tempFilename = Path.Combine(folder!, f + ".temp" + ext);
-            tempWriter = File.CreateText(tempFilename);
-        }
-        #endif
-
         var input = File.OpenText(filename);
         var lineNumber = 0;
         while (true)

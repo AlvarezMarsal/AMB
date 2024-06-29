@@ -4,6 +4,6 @@
     <DebuggerFlavor>ProjectDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup>
-    <ActiveDebugProfile>Step 11 - Aliases</ActiveDebugProfile>
+    <ActiveDebugProfile>Step 1 - AllCountries.txt</ActiveDebugProfile>
   </PropertyGroup>
 </Project>
