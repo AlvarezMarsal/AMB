@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using AmbHelper;
 using System.Globalization;
 using static AmbHelper.Logs;
 using System.Diagnostics;
@@ -66,18 +65,11 @@ internal partial class Program
 
     private void DownloadFiles()
     {
-        DownloadAndUnzip("allCountries.zip");
-        DownloadAndUnzip("cities500.zip");
-        DownloadAndUnzip("countryInfo.txt");
-        DownloadAndUnzip("admin1CodesASCII.txt");
-        DownloadAndUnzip("admin2Codes.txt");
-
-        void DownloadAndUnzip(string filename)
-        {
-            DownloadFile("https://download.geonames.org/export/dump/" + filename);
-            if (filename.EndsWith(".zip"))
-                UnzipFile(filename);
-        }
+        DownloadFile("https://download.geonames.org/export/dump/" + "cities500.zip");
+        UnzipFile("cities500.zip");
+        DownloadFile("https://download.geonames.org/export/dump/" + "countryInfo.txt");
+        DownloadFile("https://download.geonames.org/export/dump/" + "admin1CodesASCII.txt");
+        DownloadFile("https://download.geonames.org/export/dump/" + "admin2Codes.txt");
     }
 
     private bool DownloadFile(string url)
@@ -90,7 +82,8 @@ internal partial class Program
             Log.WriteLine($"Downloading file: {filename} from {url}");
             using var client = new HttpClient();
             using var s = client.GetStreamAsync(url);
-            using var fs = new FileStream(filename, FileMode.OpenOrCreate);
+            var targetFilename = Path.Combine(_workingFolder, filename);
+            using var fs = new FileStream(targetFilename, FileMode.OpenOrCreate);
             s.Result.CopyTo(fs);
             Log.WriteLine($"Download complete");
             return true;
@@ -102,18 +95,12 @@ internal partial class Program
         }
     }
 
-    private bool UnzipFile(string zipFilename, string? directory = null)
+    private bool UnzipFile(string zipFilename)
     {
         var name = Path.GetFileNameWithoutExtension(zipFilename);
         try
         {
-            directory ??= name;
-
-            if (Directory.Exists(directory))
-                Directory.Delete(directory, true);
-            Directory.CreateDirectory(directory);
-
-            System.IO.Compression.ZipFile.ExtractToDirectory(zipFilename, directory + "\\");
+            System.IO.Compression.ZipFile.ExtractToDirectory(zipFilename, _workingFolder);
             Log.WriteLine($"Unzipped file: {zipFilename}");
             return true;
         }
@@ -128,6 +115,7 @@ internal partial class Program
 
     #region Import From GeoNames
 
+    #if false
     private void ImportFromAllCountriesFile()
     {
         LoadGeoNameIds();
@@ -139,7 +127,7 @@ internal partial class Program
         foreach (var fc in _targetedFeatureCodesCity)
             allFeatureCodes.Add(fc);
 
-        using var command = Connection.CreateCommand("[GeoNames].[dbo].[InsertEntity]");
+        using var command = Connection.CreateCommand($"[{_geoNamesDatabase}].[dbo].[InsertEntity]");
         command.CommandType = CommandType.StoredProcedure;
         var geoNameIdParam = command.Parameters.Add("@GeoNameId", SqlDbType.BigInt, 8);
         var nameParam = command.Parameters.Add("@Name", SqlDbType.NVarChar, 200);
@@ -202,8 +190,9 @@ internal partial class Program
             return true;
         });
     }
+    #endif
 
-    private void ImportFromAllCountriesFile1()
+    private void ImportFromAllCountriesFile()
     {
         LoadGeoNameIds();
         var allFeatureCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -214,7 +203,7 @@ internal partial class Program
         foreach (var fc in _targetedFeatureCodesCity)
             allFeatureCodes.Add(fc);
 
-        using var command = Connection.CreateCommand("[GeoNames].[dbo].[InsertEntity]");
+        using var command = Connection.CreateCommand($"[{_geoNamesDatabase}].[dbo].[InsertEntity]");
         command.CommandType = CommandType.StoredProcedure;
         var geoNameIdParam = command.Parameters.Add("@GeoNameId", SqlDbType.BigInt, 8);
         var nameParam = command.Parameters.Add("@Name", SqlDbType.NVarChar, 200);
@@ -324,7 +313,7 @@ internal partial class Program
         });
 
 
-        ImportFlatTextFile("cities500\\cities500.txt", '\t', 19, (lineNumber, fields) =>
+        ImportFlatTextFile("cities500.txt", '\t', 19, (lineNumber, fields) =>
         {
             var geoNameId = long.Parse(fields[0]);
             if (_geoNameIds.Contains(geoNameId))
@@ -380,7 +369,7 @@ internal partial class Program
 
             var result = Connection.ExecuteNonQuery(
                 $"""
-                    UPDATE [GeoNames].[dbo].[Entity]
+                    UPDATE [{_geoNamesDatabase}].[dbo].[Entity]
                         SET [Population] = {population}
                         WHERE [GeoNameId] = {geoNameId}
                  """, false);
@@ -397,7 +386,7 @@ internal partial class Program
 
     private void ImportFromCountryInfoFile()
     {
-        using var command = Connection.CreateCommand("[GeoNames].[dbo].[InsertEntity]");
+        using var command = Connection.CreateCommand($"[{_geoNamesDatabase}].[dbo].[InsertEntity]");
         command.CommandType = CommandType.StoredProcedure;
         var geoNameIdParam = command.Parameters.Add("@GeoNameId", SqlDbType.BigInt, 8);
         var nameParam = command.Parameters.Add("@Name", SqlDbType.NVarChar, 200);
@@ -543,28 +532,28 @@ internal partial class Program
     {
         // If a 'processed' file exists, use it instead.
         // If it doesn't exist, then create a 'temp' file and write to it.
-
-        var input = File.OpenText(filename);
+        var fullFilename = Path.Combine(_workingFolder, filename);
+        var input = File.OpenText(fullFilename);
         var lineNumber = 0;
+
         while (true)
         {
             var line = input.ReadLine();
             if (line == null)
                 break;
-
-            if (++lineNumber < _line)
+            ++lineNumber;
+            /*
+            if (lineNumber < _line)
             {
-                //tempWriter?.WriteLine(line);
                 continue;
             }
-
+            */
             if ((lineNumber % 1000) == 0)
                 Log.WriteLine($"Line {lineNumber}").Flush();
 
-            _line = 0;
+            //_line = 0;
             if (line.StartsWith("#"))
             {
-                //tempWriter?.WriteLine(line);
                 continue;
             }
 
@@ -574,7 +563,6 @@ internal partial class Program
                 if (fields.Length != fieldCount)
                 {
                     Error.WriteLine($"Expected {fieldCount} fields, saw {fields.Length} for line {lineNumber}");
-                    //tempWriter?.WriteLine(line);
                    continue;
                 }
 
@@ -583,27 +571,18 @@ internal partial class Program
             catch (Exception e)
             {
                 Error.WriteLine($"Exception while processing line {lineNumber}", e);
-                //tempWriter?.WriteLine(line);
             }
         }
-
-        #if false
-        if (tempWriter != null)
-        {
-            tempWriter.Close();
-            File.Move(tempFilename, processedFilename);
-        }
-        #endif
     }
 
 
-    #endregion
+#endregion
 
     #region Import local data
 
     private void ImportCountriesToContinentsFile()
     {
-        using var command = Connection.CreateCommand("[GeoNames].[dbo].[AssignCountryToContinent]");
+        using var command = Connection.CreateCommand($"[{_geoNamesDatabase}].[dbo].[AssignCountryToContinent]");
         command.CommandType = CommandType.StoredProcedure;
         var countryParam = command.Parameters.Add("@Country", SqlDbType.NChar, 2);
         var continentParam = command.Parameters.Add("@Continent", SqlDbType.NChar, 2);
@@ -630,7 +609,7 @@ internal partial class Program
     private void LoadGeoNameIds()
     {
         if (_geoNameIds.Count == 0)
-            Connection.ExecuteReader("SELECT GeoNameId FROM [GeoNames].[dbo].[Entity]", r => _geoNameIds!.Add(r.GetInt64(0)), false);
+            Connection.ExecuteReader($"SELECT GeoNameId FROM [{_geoNamesDatabase}].[dbo].[Entity]", r => _geoNameIds!.Add(r.GetInt64(0)), false);
     }
 
 
@@ -638,7 +617,7 @@ internal partial class Program
                     bool isPreferredName, bool isShortName, bool isColloguial, bool isHistoric,
                     DateTime from, DateTime to, int lineNumber)
     {
-        using var command = Connection.CreateCommand("[GeoNames].[dbo].[InsertAlternateName]", false);
+        using var command = Connection.CreateCommand($"[{_geoNamesDatabase}].[dbo].[InsertAlternateName]", false);
         command.CommandType = CommandType.StoredProcedure;
 
         command.Parameters.Add("@AlternateNameId", SqlDbType.BigInt, 8).Value = altenativeNameId;
@@ -669,7 +648,7 @@ internal partial class Program
         Connection.ExecuteReader(
             $"""
                 SELECT [GeoNameId], [CountryCode], [BenchmarkId]
-                FROM [GeoNames].[dbo].[Entity]
+                FROM [{_geoNamesDatabase}].[dbo].[Entity]
                 WHERE [FeatureCode] = 'COUNTRY'
              """, 
             r =>

@@ -12,7 +12,7 @@ public class AmbDbConnection : DbConnection
     public readonly SqlConnection SqlConnection;
     private readonly Dictionary<string, string> _connectionStringParts;
     private const string GetNextOidProc = "[dbo].[sp_internalGetNextOid]";
-    private const string GetNextOidsProc = "[dbo].[sp_internalGetNextOids]";
+    //private const string GetNextOidsProc = "[dbo].[sp_internalGetNextOids]";
     private bool _currentLoggingSettting = true;
     public bool CurrentLoggingSetting
     {

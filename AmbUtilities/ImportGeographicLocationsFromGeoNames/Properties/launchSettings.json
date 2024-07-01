@@ -10,7 +10,7 @@
     },
     "Step 0 - Download": {
       "commandName": "Project",
-      "commandLineArgs": "-step 0",
+      "commandLineArgs": "-step 0 -server USE1DEVICRSQL01",
       "workingDirectory": "..\\"
     },
     "Step 1 - AllCountries.txt": {
@@ -71,6 +71,11 @@
     "Step 12 - Dump": {
       "commandName": "Project",
       "commandLineArgs": "-step 12",
+      "workingDirectory": "..\\"
+    },
+    "Step 70 - Write SQL": {
+      "commandName": "Project",
+      "commandLineArgs": "-step 70 -server USE1DEVICRSQL01",
       "workingDirectory": "..\\"
     }
   }

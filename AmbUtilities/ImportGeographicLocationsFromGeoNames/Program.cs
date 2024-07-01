@@ -7,8 +7,9 @@ namespace ImportGeographicLocationsFromGeoNames;
 internal partial class Program
 {
     private string _server = ".";
-    private string _database = "AMBenchmark_DB";
-    private int _line = 0;
+    private string _benchmarkDatabase = "AMBenchmark_DB";
+    private string _geoNamesDatabase = "GeoNames";
+    //private int _line = 0;
     private AmbDbConnection? _connection;
     private AmbDbConnection Connection => _connection!;
     private static DateTime MinDateTime = new DateTime(1800, 1, 1);
@@ -20,15 +21,17 @@ internal partial class Program
     private long _creatorId = 100;
     private int _practiceAreaId = 2501;
     private int _step = 0;
-    private bool _keep = false;
+    // private bool _keep = false;
     private readonly HashSet<long> _geoNameIds = new ();
     private long _worldId = 20000;
     private readonly Dictionary<string, string> _continentNameToAbbreviation;
+    private readonly Dictionary<string, string> _continentAbbreviationToName;
     private readonly Dictionary<string, long> _continentAbbreviationToId = new (StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, long> _geoNameCountryCodesToIds = new (StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<long, long> _geoNameCountryIdsToBenchmarkIds= new ();
     private readonly Dictionary<long, long> _previousChildIndex = new ();
     private readonly HashSet<long> _countryIds = new ();
+    private string _workingFolder = "";
 
     static void Main(string[] args)
     {
@@ -66,7 +69,9 @@ internal partial class Program
             { "North Asia", "NO" },
             { "Southeast Asia & Australia (SEAA)", "SA" }
         };
-
+        _continentAbbreviationToName = new(StringComparer.OrdinalIgnoreCase);
+        foreach (var kvp in _continentNameToAbbreviation)
+            _continentAbbreviationToName[kvp.Value] = kvp.Key;
         _continentAbbreviationToId = new (StringComparer.OrdinalIgnoreCase);
     }
 
@@ -85,17 +90,19 @@ internal partial class Program
             else if (arg.StartsWith("-server"))
                 _server = args[++i];
             else if (arg.StartsWith("-database"))
-                _database = args[++i];
+                _benchmarkDatabase = args[++i];
             else if (arg.StartsWith("-step"))
                 _step = int.Parse(args[++i]);
-            else if (arg.StartsWith("-line"))
-                _line = int.Parse(args[++i]);
-           else if (_server == null)
+            //else if (arg.StartsWith("-line"))
+            //    _line = int.Parse(args[++i]);
+            else if (arg.StartsWith("-work"))
+                _workingFolder = args[++i];
+            else if (_server == null)
                 _server = arg;
-            else if (_database == null)
-                _database = arg;
-            else if (arg.StartsWith("-keep"))
-                _keep = true;
+            else if (_benchmarkDatabase == null)
+                _benchmarkDatabase = arg;
+            //else if (arg.StartsWith("-keep"))
+            //    _keep = true;
             //if (arg == "-quick")
             //    _quick = true;
             //else if (arg == "-dump")
@@ -111,10 +118,15 @@ internal partial class Program
             }
         }
 
-        if (_step > 0)
-            _keep = true;
+        //if (_step > 0)
+        //    _keep = true;
 
-        _connection = new AmbDbConnection($"Server={_server};Database={_database};Integrated Security=True;");
+        if (_workingFolder == "")
+            _workingFolder = Path.Combine(Path.GetTempPath(), "GeoNames");
+        if (!Directory.Exists(_workingFolder))
+            Directory.CreateDirectory(_workingFolder);
+
+        _connection = new AmbDbConnection($"Server={_server};Database={_benchmarkDatabase};Integrated Security=True;");
 
         var done = false;
         for (/**/; !done; ++_step)
@@ -125,62 +137,63 @@ internal partial class Program
             switch (_step)
             {
                 /* GeoNames Import */
-                case 0:
+                case 10:
                     DownloadFiles();
                     break;
 
-               case 1:
-                    ImportFromAllCountriesFile1();
+               case 20:
+                    ImportFromAllCountriesFile();
                     break;
 
-                case 2:
-                    // ImportFromCitiesFile();
-                    break;
-
-               case 3:
+               case 40:
                     ImportFromCountryInfoFile();
                     break;
 
-               case 4:
+               case 50:
                     ImportCountriesToContinentsFile();
                     break;
 
-               case 5:
+               case 60:
                     ImportAlternateNamesFile();
+                    done = true;
                     break;
 
+                case 70:
+                    WriteImportSql();
+                    done = true;
+                    break;
+
+#if false
                 /* Benchmark Import */
-                case 6: 
+                case 70: 
                     ImportContinents(); 
                     break;
 
-                case 7: 
+                case 80: 
                     ImportCountries(); 
                     break;
 
-                case 8: 
+                case 90: 
                     ImportStates(); 
                     break;
 
-                case 9: 
+                case 100: 
                     ImportCounties(); 
                     break;
 
-                case 10: 
+                case 110: 
                     ImportCities(); 
                     break;
 
-                case 11: 
+                case 120: 
                     ImportAliases(); 
                     break;
 
-                case 12: 
+                case 199: 
                     Dump(); 
+                    done = true;
                     break;
-
-                default:
-                    done = true; 
-                    break;
+#endif
             }
 
             Log.Outdent();

@@ -72,13 +72,13 @@ internal partial class Program
         var countries = Connection.Select(
             $"""
                 SELECT [GeoNameId], [AsciiName], [CountryCode], [Continent], [BenchmarkId]
-                FROM [GeoNames].[dbo].[Entity]
+                FROM [{_geoNamesDatabase}].[dbo].[Entity]
                 WHERE [FeatureCode] = N'COUNTRY'
              """, 
             (r) => new { GeoNameId=r.GetInt64(0), AsciiName=r.GetString(1), CountryCode=r.GetString(2), Continent=r.GetString(3), BenchmarkId=r.GetInt64(4)}, 
             false);
 
-        using var command = Connection.CreateCommand("[GeoNames].[dbo].[InsertGeographicLocation]", false);
+        using var command = Connection.CreateCommand($"[{_geoNamesDatabase}].[dbo].[InsertGeographicLocation]", false);
         command.CommandType = CommandType.StoredProcedure;
 
         var geoNameIdParam = command.Parameters.Add("@GeoNameId", SqlDbType.BigInt, 8);
@@ -139,13 +139,13 @@ internal partial class Program
         var countryCodesToBenchmarkIds = Connection.Select(
             $"""
                 SELECT [CountryCode], [BenchmarkId]
-                FROM [GeoNames].[dbo].[Entity]
+                FROM [{_geoNamesDatabase}].[dbo].[Entity]
                 WHERE [FeatureCode] = N'COUNTRY'
              """, 
             (r) => new KeyValuePair<string, long>(r.GetString(0), r.GetInt64(1)), 
             false);
 
-        using var command = Connection.CreateCommand("[GeoNames].[dbo].[InsertGeographicLocation]", false);
+        using var command = Connection.CreateCommand($"[{_geoNamesDatabase}].[dbo].[InsertGeographicLocation]", false);
         command.CommandType = CommandType.StoredProcedure;
 
         var geoNameIdParam = command.Parameters.Add("@GeoNameId", SqlDbType.BigInt, 8);
@@ -165,7 +165,7 @@ internal partial class Program
             var states = Connection.Select(
                 $"""
                     SELECT [GeoNameId], [AsciiName], [BenchmarkId]
-                    FROM [GeoNames].[dbo].[Entity]
+                    FROM [{_geoNamesDatabase}].[dbo].[Entity]
                     WHERE [FeatureCode] = N'ADM1' AND [CountryCode] = N'{kvp.Key}'
                  """, 
                 r => new { GeoNameId=r.GetInt64(0), AsciiName=r.GetString(1), BenchmarkId=r.GetInt64(2)}, 
@@ -196,7 +196,7 @@ internal partial class Program
 
     private void ImportCounties()
     {
-         using var command = Connection.CreateCommand("[GeoNames].[dbo].[InsertGeographicLocation]", false);
+         using var command = Connection.CreateCommand($"[{_geoNamesDatabase}].[dbo].[InsertGeographicLocation]", false);
         command.CommandType = CommandType.StoredProcedure;
 
         var geoNameIdParam = command.Parameters.Add("@GeoNameId", SqlDbType.BigInt, 8);
@@ -212,7 +212,7 @@ internal partial class Program
         var countryCodes = Connection.Select(
             $"""
                 SELECT [CountryCode]
-                FROM [GeoNames].[dbo].[Entity]
+                FROM [{_geoNamesDatabase}].[dbo].[Entity]
                 WHERE [FeatureCode] = N'COUNTRY'
              """, 
             (r) => r.GetString(0),
@@ -223,7 +223,7 @@ internal partial class Program
             var states = Connection.Select(
                 $"""
                     SELECT [Admin1Code], [BenchmarkId]
-                    FROM [GeoNames].[dbo].[Entity]
+                    FROM [{_geoNamesDatabase}].[dbo].[Entity]
                     WHERE [FeatureCode] = N'ADM1' AND [CountryCode] = N'{countryCode}'
                  """, 
                 r => new { Admin1Code=r.GetString(0), BenchmarkId=r.GetInt64(1)},
@@ -235,7 +235,7 @@ internal partial class Program
                 var counties = Connection.Select(
                     $"""
                         SELECT [GeoNameId], [AsciiName], [BenchmarkId]
-                        FROM [GeoNames].[dbo].[Entity]
+                        FROM [{_geoNamesDatabase}].[dbo].[Entity]
                         WHERE [FeatureCode] = N'ADM2' AND [CountryCode] = N'{countryCode}' AND [Admin1Code] = N'{state.Admin1Code}'
                      """, 
                     r => new { GeoNameId=r.GetInt64(0), AsciiName=r.GetString(1), BenchmarkId=r.GetInt64(2)},
@@ -268,13 +268,13 @@ internal partial class Program
         var countryCodesToBenchmarkIds = Connection.Select(
             $"""
                 SELECT [CountryCode], [BenchmarkId]
-                FROM [GeoNames].[dbo].[Entity]
+                FROM [{_geoNamesDatabase}].[dbo].[Entity]
                 WHERE [FeatureCode] = N'COUNTRY'
              """, 
             (r) => new KeyValuePair<string, long>(r.GetString(0), r.GetInt64(1)), 
             false);
 
-        using var command = Connection.CreateCommand("[GeoNames].[dbo].[InsertGeographicLocation]", false);
+        using var command = Connection.CreateCommand($"[{_geoNamesDatabase}].[dbo].[InsertGeographicLocation]", false);
         command.CommandType = CommandType.StoredProcedure;
 
         var geoNameIdParam = command.Parameters.Add("@GeoNameId", SqlDbType.BigInt, 8);
@@ -294,9 +294,9 @@ internal partial class Program
             var cities = Connection.Select(
                 $"""
                     SELECT C.[GeoNameId], C.[AsciiName], C.[BenchmarkId], /*C.[CountryCode], C.[Admin1Code], C.[Admin2Code],*/ ISNULL(S.[BenchmarkId],0) As [StateBenchmarkId], ISNULL(X.[BenchmarkId],0) As [CountyBenchmarkId]
-                    FROM [GeoNames].[dbo].[Entity] C
-                    LEFT OUTER JOIN [GeoNames].[dbo].[Entity] S ON (S.FeatureCode = 'ADM1' AND S.CountryCode = C.CountryCode AND S.Admin1Code = C.Admin1Code)
-                    LEFT OUTER JOIN [GeoNames].[dbo].[Entity] X ON (X.FeatureCode = 'ADM2' AND X.CountryCode = C.CountryCode AND X.Admin1Code = C.Admin1Code AND X.Admin2Code = C.Admin2Code)
+                    FROM [{_geoNamesDatabase}].[dbo].[Entity] C
+                    LEFT OUTER JOIN [{_geoNamesDatabase}].[dbo].[Entity] S ON (S.FeatureCode = 'ADM1' AND S.CountryCode = C.CountryCode AND S.Admin1Code = C.Admin1Code)
+                    LEFT OUTER JOIN [{_geoNamesDatabase}].[dbo].[Entity] X ON (X.FeatureCode = 'ADM2' AND X.CountryCode = C.CountryCode AND X.Admin1Code = C.Admin1Code AND X.Admin2Code = C.Admin2Code)
                     WHERE C.[FeatureCode] <> N'COUNTRY' AND C.[FeatureCode] NOT LIKE N'ADM%' AND C.CountryCode = N'{country.Key}'
                  """, 
             (r) => new { GeoNameId=r.GetInt64(0), AsciiName=r.GetString(1), BenchmarkId=r.GetInt64(2), StateId=r.GetInt64(3), CountyId=r.GetInt64(4)},
@@ -334,7 +334,7 @@ internal partial class Program
   
     private void ImportAliases()
     {
-        using var command = Connection.CreateCommand("[GeoNames].[dbo].[InsertGeographicLocationAlias]", false);
+        using var command = Connection.CreateCommand($"[{_geoNamesDatabase}].[dbo].[InsertGeographicLocationAlias]", false);
         command.CommandType = CommandType.StoredProcedure;
 
         var benchmarkIdParam = command.Parameters.Add("@BenchmarkId", SqlDbType.BigInt, 8);
@@ -347,7 +347,7 @@ internal partial class Program
        var countryCodesToBenchmarkIds = Connection.Select(
             $"""
                 SELECT [CountryCode], [BenchmarkId]
-                FROM [GeoNames].[dbo].[Entity]
+                FROM [{_geoNamesDatabase}].[dbo].[Entity]
                 WHERE [FeatureCode] = N'COUNTRY'
              """, 
             (r) => new KeyValuePair<string, long>(r.GetString(0), r.GetInt64(1)),
@@ -358,8 +358,8 @@ internal partial class Program
             var aliases = Connection.Select(
                 $"""
                     SELECT E.[GeoNameId], A.[AlternateName]
-                    FROM [GeoNames].[dbo].[AlternateName] A
-                    JOIN [GeoNames].[dbo].[Entity] E ON (E.GeoNameId = A.GeoNameId)
+                    FROM [{_geoNamesDatabase}].[dbo].[AlternateName] A
+                    JOIN [{_geoNamesDatabase}].[dbo].[Entity] E ON (E.GeoNameId = A.GeoNameId)
                     WHERE E.[CountryCode] = N'{country.Key}'
                  """, 
                 (r) => new { BenchmarkId = r.GetInt64(0), Name = r.GetString(1) },

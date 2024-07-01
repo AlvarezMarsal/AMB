@@ -1,4 +1,4 @@
-"\Binaries\DbSmo.exe" USE1DEVDRPSQL01;. GeoNames -d -i 1 -x t_AMBenchmarkSystemAudit
+"\Binaries\DbSmo.exe" USE1DEVDRPSQL01;. GeoNames -d -i 25
 pause
 
 
